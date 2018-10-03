@@ -1,0 +1,42 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+    <h1> Wiki: {{ wikiPage.wiki.name }} :: {% if wikiPage.id %} Edit {% else %} Add {% endif %} Page </h1>
+    {{ form_start(form) }}
+        <div class="row">
+            <div class="col-md-12">
+                <fieldset>
+                    <legend>Info</legend>
+                      {{ form_widget(form) }}
+
+                    <button class="btn btn-success">{{ button_label|default('Save') }}</button>
+                    <a href="{{ path('wiki_page_index',{'wikiName': wikiPage.wiki.name }) }}"   class="btn btn-primary" >
+                        <i class="fa fa-arrow-left" aria-hidden="true"></i>
+                        Back
+                    </a>
+                </fieldset>
+            </div>
+        </div>
+    {{ form_end(form) }}
+{% endblock %}
+
+
+{% block scripts_custom %}
+    <link rel="stylesheet" href="//cdn.jsdelivr.net/editor/0.1.0/editor.css">
+    <script src="//cdn.jsdelivr.net/editor/0.1.0/editor.js"></script>
+    <script src="//cdn.jsdelivr.net/editor/0.1.0/marked.js"></script>
+    <style>
+        .CodeMirror {
+            border: 1px solid #ece9e9;
+            min-height: 600px !important;
+          }
+    </style>
+    <script type="text/javascript" >
+        document.addEventListener('DOMContentLoaded', function() {
+            var editor = new Editor({
+                element: document.getElementById('wiki_page_content'),
+              })
+            editor.render();
+        });
+    </script>
+{% endblock %}

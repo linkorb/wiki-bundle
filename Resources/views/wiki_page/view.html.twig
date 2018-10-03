@@ -1,0 +1,38 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+    <h3>
+        Wiki:
+        <a href="#">
+            {{ wikiPage.wiki.name }}
+        </a>
+        /
+        {{ wikiPage.name }}
+    </h3>
+
+    <div class="buttonbox" >
+        <a href="{{ path('wiki_page_index',{'wikiName':  wikiPage.wiki.name }) }}"  class="btn btn-primary" >
+            <i class="fa fa-arrow-left" aria-hidden="true"></i>
+            Back
+        </a>
+        <a href="{{ path('wiki_page_edit', {'wikiName':  wikiPage.wiki.name,'id': wikiPage.id }) }}" class="btn btn-success">
+            <i class="fa fa-edit" aria-hidden="true"></i>
+            Edit
+        </a>
+        <a href="{{ path('wiki_page_delete', {'wikiName':  wikiPage.wiki.name, 'id': wikiPage.id}) }}" class="btn btn-danger" onclick="return confirm('Are you sure?')">
+            <i class="fa fa-edit" aria-hidden="true"></i>
+            Delete
+        </a>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <fieldset>
+                <div>
+                    {{ wikiPage.content|markdown }}
+                </div>
+            </fieldset>
+        </div>
+    </div>
+
+{% endblock %}
