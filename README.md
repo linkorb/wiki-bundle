@@ -1,1 +1,1 @@
-## Symfony $ WikiBundle
+## Symfony 4 WikiBundle
