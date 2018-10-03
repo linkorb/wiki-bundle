@@ -1,11 +1,11 @@
 <?php
 
-namespace App\WikiBundle\Controller;
+namespace LinkORB\Bundle\WikiBundle\Controller;
 
-use App\WikiBundle\Entity\Wiki;
-use App\WikiBundle\Form\WikiType;
-use App\WikiBundle\Repository\WikiRepository;
-use App\WikiBundle\Resources\Services\WikiEventService;
+use LinkORB\Bundle\WikiBundle\Entity\Wiki;
+use LinkORB\Bundle\WikiBundle\Form\WikiType;
+use LinkORB\Bundle\WikiBundle\Repository\WikiRepository;
+use LinkORB\Bundle\WikiBundle\Resources\Services\WikiEventService;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;

@@ -1,9 +1,9 @@
 <?php
 
-namespace App\WikiBundle\Controller;
+namespace LinkORB\Bundle\WikiBundle\Controller;
 
-use App\WikiBundle\Repository\WikiEventRepository;
-use App\WikiBundle\Repository\WikiRepository;
+use LinkORB\Bundle\WikiBundle\Repository\WikiEventRepository;
+use LinkORB\Bundle\WikiBundle\Repository\WikiRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Routing\Annotation\Route;
 

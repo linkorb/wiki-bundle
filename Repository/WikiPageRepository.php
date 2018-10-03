@@ -1,8 +1,8 @@
 <?php
 
-namespace App\WikiBundle\Repository;
+namespace LinkORB\Bundle\WikiBundle\Repository;
 
-use App\WikiBundle\Entity\WikiPage;
+use LinkORB\Bundle\WikiBundle\Entity\WikiPage;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Symfony\Bridge\Doctrine\RegistryInterface;
 

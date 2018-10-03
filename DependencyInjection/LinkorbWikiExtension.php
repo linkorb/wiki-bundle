@@ -1,6 +1,6 @@
 <?php
 
-namespace App\WikiBundle\DependencyInjection;
+namespace LinkORB\Bundle\WikiBundle\DependencyInjection;
 
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;

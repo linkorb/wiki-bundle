@@ -3,6 +3,6 @@ services:
     # ...
 
   # same as before
-  App\WikiBundle\:
+  LinkORB\Bundle\WikiBundle\:
     resource: '%kernel.project_dir%/Linkorb/WikiBundle/*'
 

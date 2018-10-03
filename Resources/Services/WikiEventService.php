@@ -1,9 +1,9 @@
 <?php
 
-namespace App\WikiBundle\Resources\Services;
+namespace LinkORB\Bundle\WikiBundle\Resources\Services;
 
-use App\WikiBundle\Entity\WikiEvent;
-use App\WikiBundle\Repository\WikiEventRepository;
+use LinkORB\Bundle\WikiBundle\Entity\WikiEvent;
+use LinkORB\Bundle\WikiBundle\Repository\WikiEventRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 
