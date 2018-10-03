@@ -1,0 +1,20 @@
+{
+    "name": "linkorb/wiki-bundle",
+    "description": " Symfony 4 project Wiki Bundle",
+    "homepage": "https://github.com/linkorb/wiki-bundle",
+    "keywords": ["form", "linkorb"],
+    "type": "application",
+    "license": "proprietary",
+    "authors": [
+        {
+          "name": "LinkORB Engineering",
+          "email": "engineering@linkorb.com",
+          "role": "Development"
+        }
+      ],
+    "autoload": {
+        "psr-4": {
+            "App\\WikiBundle\\": ""
+        }
+    }
+}

@@ -1,0 +1,8 @@
+# config/services.yaml
+services:
+    # ...
+
+  # same as before
+  App\WikiBundle\:
+    resource: '%kernel.project_dir%/Linkorb/WikiBundle/*'
+

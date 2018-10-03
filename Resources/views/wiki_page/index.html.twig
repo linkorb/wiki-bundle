@@ -1,0 +1,50 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Wiki: {{ wiki.name }} :Pages {% endblock %}
+
+{% block body %}
+    <h1>Wiki: {{ wiki.name }} :Pages</h1>
+
+    <div class="buttonbox" >
+        <a href="{{ path('wiki_page_add',{'wikiName': wiki.name}) }}" class="btn btn-success">
+            <i class="fa fa-plus" aria-hidden="true"></i>
+            Add
+        </a>
+        <a href="{{ path('wiki_index') }}"   class="btn btn-primary" >
+            <i class="fa fa-arrow-left" aria-hidden="true"></i>
+            Back
+        </a>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <fieldset>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Id</th>
+                            <th>Name</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for wikiPage in wikiPages %}
+                        <tr>
+                            <td>
+                                <a href="{{ path('wiki_page_view',{'wikiName': wiki.name, 'pageName': wikiPage.name}) }}">
+                                    {{ wikiPage.id }}
+                                </a>
+                            </td>
+                            <td>{{ wikiPage.name }}</td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="5">no records found</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </fieldset>
+        </div>
+    </div>
+
+{% endblock %}
