@@ -3,7 +3,7 @@
     "description": " Symfony 4 project Wiki Bundle",
     "homepage": "https://github.com/linkorb/wiki-bundle",
     "keywords": ["form", "linkorb"],
-    "type": "application",
+    "type": "symfony-bundle",
     "license": "proprietary",
     "authors": [
         {

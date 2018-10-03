@@ -17,5 +17,14 @@ class LinkorbWikiExtension extends Extension
 
         $loader = new YamlFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));
         $loader->load('services.yaml');
+
+        $this->addAnnotatedClassesToCompile([
+            '**\\Controller\\',
+
+            // ... but glob patterns are also supported:
+            'App\\WikiBundle\\Controller\\WikiController',
+
+            // ...
+        ]);
     }
 }
