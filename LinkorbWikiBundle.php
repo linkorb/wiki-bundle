@@ -1,6 +1,6 @@
 <?php
 
-namespace App\WikiBundle;
+namespace LinkORB\Bundle\WikiBundle;
 
 use Symfony\Component\HttpKernel\Bundle\Bundle;
 

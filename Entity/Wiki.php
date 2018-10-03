@@ -1,13 +1,13 @@
 <?php
 
-namespace App\WikiBundle\Entity;
+namespace LinkORB\Bundle\WikiBundle\Entity;
 
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
- * @ORM\Entity(repositoryClass="App\WikiBundle\Repository\WikiRepository")
+ * @ORM\Entity(repositoryClass="LinkORB\Bundle\WikiBundle\Repository\WikiRepository")
  */
 class Wiki
 {
@@ -29,7 +29,7 @@ class Wiki
     private $description;
 
     /**
-     * @ORM\OneToMany(targetEntity="App\WikiBundle\Entity\WikiPage", mappedBy="wiki")
+     * @ORM\OneToMany(targetEntity="LinkORB\Bundle\WikiBundle\Entity\WikiPage", mappedBy="wiki")
      */
     private $wikiPages;
 

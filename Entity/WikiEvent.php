@@ -1,11 +1,11 @@
 <?php
 
-namespace App\WikiBundle\Entity;
+namespace LinkORB\Bundle\WikiBundle\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
 
 /**
- * @ORM\Entity(repositoryClass="App\WikiBundle\Repository\WikiEventRepository")
+ * @ORM\Entity(repositoryClass="LinkORB\Bundle\WikiBundle\Repository\WikiEventRepository")
  */
 class WikiEvent
 {

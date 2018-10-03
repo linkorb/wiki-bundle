@@ -1,11 +1,11 @@
 <?php
 
-namespace App\WikiBundle\Entity;
+namespace LinkORB\Bundle\WikiBundle\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
 
 /**
- * @ORM\Entity(repositoryClass="App\WikiBundle\Repository\WikiPageRepository")
+ * @ORM\Entity(repositoryClass="LinkORB\Bundle\WikiBundle\Repository\WikiPageRepository")
  */
 class WikiPage
 {
@@ -17,7 +17,7 @@ class WikiPage
     private $id;
 
     /**
-     * @ORM\ManyToOne(targetEntity="App\WikiBundle\Entity\Wiki", inversedBy="wikiPages")
+     * @ORM\ManyToOne(targetEntity="LinkORB\Bundle\WikiBundle\Entity\Wiki", inversedBy="wikiPages")
      * @ORM\JoinColumn(nullable=false)
      */
     private $wiki;

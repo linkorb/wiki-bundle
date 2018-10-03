@@ -1,9 +1,9 @@
 <?php
 
-namespace App\WikiBundle\Form;
+namespace LinkORB\Bundle\WikiBundle\Form;
 
-use App\WikiBundle\Entity\WikiPage;
-use App\WikiBundle\Repository\WikiPageRepository;
+use LinkORB\Bundle\WikiBundle\Entity\WikiPage;
+use LinkORB\Bundle\WikiBundle\Repository\WikiPageRepository;
 use App\Validator\Constraint\CodeConstraint;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
