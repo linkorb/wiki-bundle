@@ -1,6 +1,6 @@
 {
     "name": "linkorb/wiki-bundle",
-    "description": " Symfony 4 project Wiki Bundle",
+    "description": "Symfony 4 project Wiki Bundle",
     "homepage": "https://github.com/linkorb/wiki-bundle",
     "keywords": ["form", "linkorb"],
     "type": "symfony-bundle",
