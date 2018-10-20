@@ -1,20 +1,29 @@
 {
-    "name": "linkorb/wiki-bundle",
-    "description": "Symfony 4 project Wiki Bundle",
-    "homepage": "https://github.com/linkorb/wiki-bundle",
-    "keywords": ["form", "linkorb"],
-    "type": "symfony-bundle",
-    "license": "proprietary",
-    "authors": [
-        {
-          "name": "LinkORB Engineering",
-          "email": "engineering@linkorb.com",
-          "role": "Development"
-        }
-      ],
-    "autoload": {
-        "psr-4": {
-            "LinkORB\\Bundle\\WikiBundle\\": ""
-        }
+  "name": "linkorb/wiki-bundle",
+  "description": "Symfony 4 project Wiki Bundle",
+  "homepage": "https://github.com/linkorb/wiki-bundle",
+  "keywords": [
+    "form",
+    "linkorb"
+  ],
+  "type": "symfony-bundle",
+  "license": "proprietary",
+  "authors": [
+    {
+      "name": "LinkORB Engineering",
+      "email": "engineering@linkorb.com",
+      "role": "Development"
     }
+  ],
+  "autoload": {
+    "psr-4": {
+      "LinkORB\\Bundle\\WikiBundle\\": ""
+    }
+  },
+  "require": {
+    "doctrine/doctrine-bundle":  "^1.5",
+    "symfony/framework-bundle": "^4.0",
+    "sensio/framework-extra-bundle": "^5.1",
+    "symfony/security-bundle": "^4.0"
+  }
 }

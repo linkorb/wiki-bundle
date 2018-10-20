@@ -5,15 +5,16 @@ namespace LinkORB\Bundle\WikiBundle\Controller;
 use LinkORB\Bundle\WikiBundle\Entity\Wiki;
 use LinkORB\Bundle\WikiBundle\Entity\WikiPage;
 use LinkORB\Bundle\WikiBundle\Form\WikiPageType;
-use LinkORB\Bundle\WikiBundle\Repository\WikiPageRepository;
-use LinkORB\Bundle\WikiBundle\Resources\Services\WikiEventService;
+use LinkORB\Bundle\WikiBundle\Services\WikiEventService;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
 /**
+ * @Security("is_granted('IS_AUTHENTICATED_FULLY')")
  * @Route("/wiki/{wikiName}")
  * @ParamConverter("wiki", options={"mapping"={"wikiName"="name"}})
  */
@@ -22,9 +23,11 @@ class WikiPageController extends Controller
     /**
      * @Route("/pages", name="wiki_page_index", methods="GET")
      */
-    public function index(WikiPageRepository $wikiPageRepository, Wiki $wiki): Response
+    public function index(Wiki $wiki): Response
     {
-        return $this->render('@wiki_bundle/wiki_page/index.html.twig', [
+        $wikiPageRepository = $this->get('LinkORB\Bundle\WikiBundle\Repository\WikiPageRepository');
+
+        return $this->render('@Wiki/wiki_page/index.html.twig', [
             'wikiPages' => $wikiPageRepository->findByWikiId($wiki->getId()),
             'wiki' => $wiki,
         ]);
@@ -33,12 +36,12 @@ class WikiPageController extends Controller
     /**
      * @Route("/pages/add", name="wiki_page_add", methods="GET|POST")
      */
-    public function addAction(Request $request, Wiki $wiki, WikiEventService $wikiEventService): Response
+    public function addAction(Request $request, Wiki $wiki): Response
     {
         $wikiPage = new WikiPage();
         $wikiPage->setWiki($wiki);
 
-        return $this->getEditForm($request, $wikiPage, $wikiEventService);
+        return $this->getEditForm($request, $wikiPage, $this->get('LinkORB\Bundle\WikiBundle\Services\WikiEventService'));
     }
 
     /**
@@ -47,23 +50,23 @@ class WikiPageController extends Controller
      */
     public function viewAction(WikiPage $wikiPage): Response
     {
-        return $this->render('@wiki_bundle/wiki_page/view.html.twig', ['wikiPage' => $wikiPage]);
+        return $this->render('@Wiki/wiki_page/view.html.twig', ['wikiPage' => $wikiPage]);
     }
 
     /**
      * @Route("/pages/{id}/edit", name="wiki_page_edit", methods="GET|POST")
      */
-    public function editAction(Request $request, Wiki $wiki, WikiPage $wikiPage, WikiEventService $wikiEventService): Response
+    public function editAction(Request $request, Wiki $wiki, WikiPage $wikiPage): Response
     {
-        return $this->getEditForm($request, $wikiPage, $wikiEventService);
+        return $this->getEditForm($request, $wikiPage, $this->get('LinkORB\Bundle\WikiBundle\Services\WikiEventService'));
     }
 
     /**
      * @Route("/pages/{id}/delete", name="wiki_page_delete", methods="GET")
      */
-    public function deleteAction(Request $request, Wiki $wiki, WikiPage $wikiPage, WikiEventService $wikiEventService): Response
+    public function deleteAction(Request $request, Wiki $wiki, WikiPage $wikiPage): Response
     {
-        $wikiEventService->createEvent(
+        $this->get('LinkORB\Bundle\WikiBundle\Services\WikiEventService')->createEvent(
             'page.deleted',
             $wikiPage->getWiki()->getId(),
             json_encode([
@@ -124,7 +127,7 @@ class WikiPageController extends Controller
             ]);
         }
 
-        return $this->render('@wiki_bundle/wiki_page/edit.html.twig', [
+        return $this->render('@Wiki/wiki_page/edit.html.twig', [
             'wikiPage' => $wikiPage,
             'form' => $form->createView(),
         ]);

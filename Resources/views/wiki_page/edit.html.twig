@@ -1,4 +1,4 @@
-{% extends 'base.html.twig' %}
+{% extends '@Wiki/base.html.twig' %}
 
 {% block body %}
     <h1> Wiki: {{ wikiPage.wiki.name }} :: {% if wikiPage.id %} Edit {% else %} Add {% endif %} Page </h1>
@@ -22,9 +22,9 @@
 
 
 {% block scripts_custom %}
-    <link rel="stylesheet" href="//cdn.jsdelivr.net/editor/0.1.0/editor.css">
-    <script src="//cdn.jsdelivr.net/editor/0.1.0/editor.js"></script>
-    <script src="//cdn.jsdelivr.net/editor/0.1.0/marked.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/editor/0.1.0/editor.css">
+    <script src="https://cdn.jsdelivr.net/editor/0.1.0/editor.js"></script>
+    <script src="https://cdn.jsdelivr.net/editor/0.1.0/marked.js"></script>
     <style>
         .CodeMirror {
             border: 1px solid #ece9e9;

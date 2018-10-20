@@ -33,7 +33,8 @@ class WikiPageType extends AbstractType
                 'trim' => true,
                 'constraints' => [
                     new Assert\NotBlank(),
-                    new CodeConstraint(),
+                    // TODO: Resolve this
+                    // new CodeConstraint(),
                     new Assert\Callback(
                         function ($name, ExecutionContext $context) use ($wikiPageRepository, $entity) {
                             if ($findEntity = $wikiPageRepository->findOneByWikiIdAndName($entity->getWiki()->getId(), $name)) {

@@ -1,6 +1,6 @@
 <?php
 
-namespace LinkORB\Bundle\WikiBundle\Resources\Services;
+namespace LinkORB\Bundle\WikiBundle\Services;
 
 use LinkORB\Bundle\WikiBundle\Entity\WikiEvent;
 use LinkORB\Bundle\WikiBundle\Repository\WikiEventRepository;
@@ -19,6 +19,7 @@ class WikiEventService
         $this->wikiEventRepository = $wikiEventRepository;
         $this->em = $em;
     }
+
 
     public function createEvent($type, $wikiId, $data, $wikiPageId = null)
     {

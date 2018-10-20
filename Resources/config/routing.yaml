@@ -1,0 +1,11 @@
+wiki:
+  resource: '@WikiBundle/Controller/WikiController.php'
+  type: annotation
+
+wiki_event:
+  resource: '@WikiBundle/Controller/WikiEventController.php'
+  type: annotation
+
+wiki_page:
+  resource: '@WikiBundle/Controller/WikiPageController.php'
+  type: annotation

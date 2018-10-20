@@ -32,7 +32,8 @@ class WikiType extends AbstractType
                 'trim' => true,
                 'constraints' => [
                     new Assert\NotBlank(),
-                    new CodeConstraint(),
+                    // TODO: resolve this
+                    // new CodeConstraint(),
                     new Assert\Callback(
                         function ($name, ExecutionContext $context) use ($wikiRepository, $entity) {
                             if ($findEntity = $wikiRepository->findOneByName($name)) {
