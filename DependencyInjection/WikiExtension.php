@@ -31,7 +31,7 @@ class WikiExtension extends Extension implements PrependExtensionInterface
                     'mappings' => [
                         'WikiBundle' => [
                             'type' => 'annotation',
-                            'dir'  => '%kernel.root_dir%/../vendor/linkorb/wiki-bundle/Entity',
+                            'dir' => '%kernel.root_dir%/../vendor/linkorb/wiki-bundle/Entity',
                             'prefix' => 'LinkORB\\Bundle\\WikiBundle\\Entity',
                         ],
                     ],
