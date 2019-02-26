@@ -6,10 +6,12 @@
     <h1>Wiki</h1>
 
     <div class="buttonbox" >
-        <a href="{{ path('wiki_add') }}" class="btn btn-success">
-            <i class="fa fa-plus" aria-hidden="true"></i>
-            Add
-        </a>
+        {% if is_granted('ROLE_SUPERUSER') %}
+            <a href="{{ path('wiki_add') }}" class="btn btn-success">
+                <i class="fa fa-plus" aria-hidden="true"></i>
+                Add
+            </a>
+        {% endif %}
     </div>
 
     <div class="row">
@@ -27,16 +29,18 @@
                     <tbody>
                     {% for wiki in wikis %}
                         <tr>
-                            <td>{{ wiki.id }}</td>
+                            <td>{{ wiki.id }} </td>
                             <td>{{ wiki.name }}</td>
                             <td>{{ wiki.description }}</td>
                             <td>
-                                <a href="{{ path('wiki_edit', {'wikiName': wiki.name}) }}" class="btn btn-sm btn-primary">
-                                    <i class="fa fa-edit"></i> Edit
-                                </a>
-                                <a href="{{ path('wiki_delete', {'wikiName': wiki.name}) }}" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')" >
-                                    <i class="fa fa-trash"></i> Delete
-                                </a>
+                                {% if is_granted('ROLE_SUPERUSER') %}
+                                    <a href="{{ path('wiki_edit', {'wikiName': wiki.name}) }}" class="btn btn-sm btn-primary">
+                                        <i class="fa fa-edit"></i> Edit
+                                    </a>
+                                    <a href="{{ path('wiki_delete', {'wikiName': wiki.name}) }}" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')" >
+                                        <i class="fa fa-trash"></i> Delete
+                                    </a>
+                                {% endif %}
                                 <a href="{{ path('wiki_page_index', {'wikiName': wiki.name}) }}" class="btn btn-sm btn-success">
                                     <i class="fa fa-files-o"></i> Pages
                                 </a>
