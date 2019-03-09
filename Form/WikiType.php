@@ -52,6 +52,16 @@ class WikiType extends AbstractType
                     new Assert\NotBlank(),
                 ],
             ])
+            ->add('read_role', TextType::class, [
+                'required' => false,
+                'trim' => true,
+                'help' => 'ex. ROLE_EXAMPLE, ROLE_SUPERSUER',
+            ])
+            ->add('write_role', TextType::class, [
+                'required' => false,
+                'trim' => true,
+                'help' => 'ex. ROLE_EXAMPLE, ROLE_SUPERSUER',
+            ])
         ;
     }
 

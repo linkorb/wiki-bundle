@@ -6,10 +6,13 @@
     <h1>Wiki: {{ wiki.name }} :Pages</h1>
 
     <div class="buttonbox" >
-        <a href="{{ path('wiki_page_add',{'wikiName': wiki.name}) }}" class="btn btn-success">
-            <i class="fa fa-plus" aria-hidden="true"></i>
-            Add
-        </a>
+        {% if is_granted('ROLE_SUPERUSER') or writeRole %}
+            <a href="{{ path('wiki_page_add',{'wikiName': wiki.name}) }}" class="btn btn-success">
+                <i class="fa fa-plus" aria-hidden="true"></i>
+                Add
+            </a>
+        {% endif %}
+
         <a href="{{ path('wiki_index') }}"   class="btn btn-primary" >
             <i class="fa fa-arrow-left" aria-hidden="true"></i>
             Back
@@ -30,9 +33,14 @@
                     {% for wikiPage in wikiPages %}
                         <tr>
                             <td>
-                                <a href="{{ path('wiki_page_view',{'wikiName': wiki.name, 'pageName': wikiPage.name}) }}">
+                               {% if is_granted('ROLE_SUPERUSER') or writeRole or readRole %}
+                                    <a href="{{ path('wiki_page_view',{'wikiName': wiki.name, 'pageName': wikiPage.name}) }}">
+                                        {{ wikiPage.id }}
+                                    </a>
+                                {% else %}
                                     {{ wikiPage.id }}
-                                </a>
+                                {% endif %}
+
                             </td>
                             <td>{{ wikiPage.name }}</td>
                         </tr>

@@ -12,6 +12,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 
 /**
  * @Security("is_granted('IS_AUTHENTICATED_FULLY')")
@@ -25,12 +26,16 @@ class WikiPageController extends Controller
      */
     public function index(Wiki $wiki): Response
     {
+        if (!$wikiRoles = $this->getWikiPermission($wiki)) {
+            throw new AccessDeniedException('Access denied!');
+        }
         $wikiPageRepository = $this->get('LinkORB\Bundle\WikiBundle\Repository\WikiPageRepository');
 
-        return $this->render('@Wiki/wiki_page/index.html.twig', [
-            'wikiPages' => $wikiPageRepository->findByWikiId($wiki->getId()),
-            'wiki' => $wiki,
-        ]);
+        $data = $wikiRoles;
+        $data['wikiPages'] = $wikiPageRepository->findByWikiId($wiki->getId());
+        $data['wiki'] = $wiki;
+
+        return $this->render('@Wiki/wiki_page/index.html.twig', $data);
     }
 
     /**
@@ -48,9 +53,20 @@ class WikiPageController extends Controller
      * @Route("/{pageName}", name="wiki_page_view", methods="GET")
      * @ParamConverter("wikiPage", options={"mapping"={"pageName"="name"}})
      */
-    public function viewAction(WikiPage $wikiPage): Response
+    public function viewAction(Wiki $wiki, WikiPage $wikiPage): Response
     {
-        return $this->render('@Wiki/wiki_page/view.html.twig', ['wikiPage' => $wikiPage]);
+        if (!$wikiRoles = $this->getWikiPermission($wiki)) {
+            throw new AccessDeniedException('Access denied!');
+        }
+        if (!$wikiRoles['readRole']) {
+            throw new AccessDeniedException('Access denied!');
+        }
+
+        $data = $wikiRoles;
+        $data['wikiPage'] = $wikiPage;
+        $data['wiki'] = $wiki;
+
+        return $this->render('@Wiki/wiki_page/view.html.twig', $data);
     }
 
     /**
@@ -66,6 +82,13 @@ class WikiPageController extends Controller
      */
     public function deleteAction(Request $request, Wiki $wiki, WikiPage $wikiPage): Response
     {
+        if (!$wikiRoles = $this->getWikiPermission($wiki)) {
+            throw new AccessDeniedException('Access denied!');
+        }
+        if (!$wikiRoles['writeRole']) {
+            throw new AccessDeniedException('Access denied!');
+        }
+
         $this->get('LinkORB\Bundle\WikiBundle\Services\WikiEventService')->createEvent(
             'page.deleted',
             $wikiPage->getWiki()->getId(),
@@ -88,6 +111,13 @@ class WikiPageController extends Controller
 
     protected function getEditForm($request, $wikiPage, WikiEventService $wikiEventService)
     {
+        if (!$wikiRoles = $this->getWikiPermission($wikiPage->getWiki())) {
+            throw new AccessDeniedException('Access denied!');
+        }
+        if (!$wikiRoles['writeRole']) {
+            throw new AccessDeniedException('Access denied!');
+        }
+
         $form = $this->createForm(WikiPageType::class, $wikiPage);
         $form->handleRequest($request);
 
@@ -131,5 +161,43 @@ class WikiPageController extends Controller
             'wikiPage' => $wikiPage,
             'form' => $form->createView(),
         ]);
+    }
+
+    protected function getWikiPermission(Wiki $wiki)
+    {
+        $wikiRoles = ['readRole' => false, 'writeRole' => false];
+        $flag = false;
+
+        if ($this->isGranted('ROLE_SUPERUSER')) {
+            $wikiRoles['readRole'] = true;
+            $wikiRoles['writeRole'] = true;
+            $flag = true;
+        } else {
+            if (!empty($wiki->getReadRole())) {
+                $readArray = explode(',', $wiki->getReadRole());
+                array_walk($readArray, 'trim');
+
+                foreach ($readArray as $read) {
+                    if ($this->isGranted($read)) {
+                        $wikiRoles['readRole'] = true;
+                        $flag = true;
+                    }
+                }
+            }
+
+            if (!empty($wiki->getWriteRole())) {
+                $writeArray = explode(',', $wiki->getWriteRole());
+                array_walk($writeArray, 'trim');
+
+                foreach ($writeArray as $write) {
+                    if ($this->isGranted($write)) {
+                        $flag = true;
+                        $wikiRoles['writeRole'] = true;
+                    }
+                }
+            }
+        }
+
+        return  $flag ? $wikiRoles : false;
     }
 }

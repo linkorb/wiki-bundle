@@ -33,6 +33,16 @@ class Wiki
      */
     private $wikiPages;
 
+    /**
+     * @ORM\Column(type="string", length=255, nullable=true)
+     */
+    private $read_role;
+
+    /**
+     * @ORM\Column(type="string", length=255, nullable=true)
+     */
+    private $write_role;
+
     public function __construct()
     {
         $this->wikiPages = new ArrayCollection();
@@ -96,5 +106,29 @@ class Wiki
         }
 
         return $this;
+    }
+
+    public function setReadRole(?string $read_role): self
+    {
+        $this->read_role = $read_role;
+
+        return $this;
+    }
+
+    public function getReadRole(): ?string
+    {
+        return $this->read_role;
+    }
+
+    public function setWriteRole(?string $write_role): self
+    {
+        $this->write_role = $write_role;
+
+        return $this;
+    }
+
+    public function getWriteRole(): ?string
+    {
+        return $this->write_role;
     }
 }

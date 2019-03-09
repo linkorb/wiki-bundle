@@ -30,6 +30,7 @@ class WikiController extends AbstractController
     }
 
     /**
+     * @Security("has_role('ROLE_SUPERUSER')")
      * @Route("/add", name="wiki_add", methods="GET|POST")
      */
     public function AddAction(Request $request): Response
@@ -40,6 +41,7 @@ class WikiController extends AbstractController
     }
 
     /**
+     * @Security("has_role('ROLE_SUPERUSER')")
      * @Route("/{wikiName}/edit", name="wiki_edit", methods="GET|POST")
      * @ParamConverter("wiki", options={"mapping"={"wikiName"="name"}})
      */
@@ -49,6 +51,7 @@ class WikiController extends AbstractController
     }
 
     /**
+     * @Security("has_role('ROLE_SUPERUSER')")
      * @Route("/{wikiName}/delete", name="wiki_delete", methods="GET")
      * @ParamConverter("wiki", options={"mapping"={"wikiName"="name"}})
      */
