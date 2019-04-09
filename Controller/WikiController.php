@@ -4,6 +4,7 @@ namespace LinkORB\Bundle\WikiBundle\Controller;
 
 use LinkORB\Bundle\WikiBundle\Entity\Wiki;
 use LinkORB\Bundle\WikiBundle\Form\WikiType;
+use LinkORB\Bundle\WikiBundle\Repository\WikiRepository;
 use LinkORB\Bundle\WikiBundle\Services\WikiEventService;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
@@ -21,11 +22,11 @@ class WikiController extends AbstractController
     /**
      * @Route("/", name="wiki_index", methods="GET")
      */
-    public function indexAction(): Response
+    public function indexAction(WikiRepository $wikiRepository): Response
     {
         return $this->render(
             '@Wiki/wiki/index.html.twig',
-            ['wikis' => $this->get('LinkORB\Bundle\WikiBundle\Repository\WikiRepository')->findAll()]
+            ['wikis' => $wikiRepository->findAll()]
         );
     }
 
@@ -33,11 +34,11 @@ class WikiController extends AbstractController
      * @Security("has_role('ROLE_SUPERUSER')")
      * @Route("/add", name="wiki_add", methods="GET|POST")
      */
-    public function AddAction(Request $request): Response
+    public function AddAction(Request $request, WikiEventService $wikiEventService): Response
     {
         $wiki = new Wiki();
 
-        return $this->getEditForm($request, $wiki, $this->get('LinkORB\Bundle\WikiBundle\Services\WikiEventService'));
+        return $this->getEditForm($request, $wiki, $wikiEventService);
     }
 
     /**
@@ -45,9 +46,9 @@ class WikiController extends AbstractController
      * @Route("/{wikiName}/edit", name="wiki_edit", methods="GET|POST")
      * @ParamConverter("wiki", options={"mapping"={"wikiName"="name"}})
      */
-    public function editAction(Request $request, Wiki $wiki): Response
+    public function editAction(Request $request, Wiki $wiki, WikiEventService $wikiEventService): Response
     {
-        return $this->getEditForm($request, $wiki, $this->get('LinkORB\Bundle\WikiBundle\Services\WikiEventService'));
+        return $this->getEditForm($request, $wiki, $wikiEventService);
     }
 
     /**
@@ -55,12 +56,12 @@ class WikiController extends AbstractController
      * @Route("/{wikiName}/delete", name="wiki_delete", methods="GET")
      * @ParamConverter("wiki", options={"mapping"={"wikiName"="name"}})
      */
-    public function deleteAction(Request $request, Wiki $wiki): Response
+    public function deleteAction(Request $request, Wiki $wiki, WikiEventService $wikiEventService): Response
     {
         if (count($wiki->getWikiPages())) {
             $this->addFlash('error', 'The wiki cannot be deleted because of having a wiki-page.');
         } else {
-            $this->get('LinkORB\Bundle\WikiBundle\Services\WikiEventService')
+            $wikiEventService
                 ->createEvent(
                     'wiki.deleted',
                     $wiki->getId(),

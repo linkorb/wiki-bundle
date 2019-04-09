@@ -2,6 +2,8 @@
 
 namespace LinkORB\Bundle\WikiBundle\Controller;
 
+use LinkORB\Bundle\WikiBundle\Repository\WikiEventRepository;
+use LinkORB\Bundle\WikiBundle\Repository\WikiRepository;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Routing\Annotation\Route;
@@ -15,12 +17,12 @@ class WikiEventController extends AbstractController
     /**
      * @Route("/", name="wiki_event_index")
      */
-    public function indexAction($wikiName)
+    public function indexAction($wikiName, WikiRepository $wikiRepository, WikiEventRepository $wikiEventRepository)
     {
-        if (!$wiki = $this->get('LinkORB\Bundle\WikiBundle\Repository\WikiRepository')->findOneByName($wikiName)) {
+        if (!$wiki = $wikiRepository->findOneByName($wikiName)) {
             return $this->redirectToRoute('wiki_index');
         }
-        $wikiEvents = $this->get('LinkORB\Bundle\WikiBundle\Repository\WikiEventRepository')->findByWikiId($wiki->getId());
+        $wikiEvents = $wikiEventRepository->findByWikiId($wiki->getId());
 
         return $this->render('@Wiki/wiki_event/index.html.twig', [
             'wikiEvents' => $wikiEvents,
