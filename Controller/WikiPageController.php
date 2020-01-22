@@ -16,7 +16,7 @@ use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 
 /**
- * @Security("is_granted('IS_AUTHENTICATED_FULLY')")
+ * @Security("is_granted('IS_AUTHENTICATED_FULLY')") *
  * @Route("/wiki/{wikiName}")
  * @ParamConverter("wiki", options={"mapping"={"wikiName"="name"}})
  */
@@ -24,6 +24,7 @@ class WikiPageController extends Controller
 {
     /**
      * @Route("/pages", name="wiki_page_index", methods="GET")
+     * @Security("has_role('ROLE_SUPERUSER') || has_role('ROLE_WIKI') ")
      */
     public function index(Wiki $wiki, WikiPageRepository $wikiPageRepository): Response
     {
@@ -41,6 +42,7 @@ class WikiPageController extends Controller
 
     /**
      * @Route("/pages/add", name="wiki_page_add", methods="GET|POST")
+     * @Security("has_role('ROLE_SUPERUSER') || has_role('ROLE_WIKI') ")
      */
     public function addAction(Request $request, Wiki $wiki, WikiEventService $wikiEventService): Response
     {
@@ -53,6 +55,7 @@ class WikiPageController extends Controller
     /**
      * @Route("/{pageName}", name="wiki_page_view", methods="GET")
      * @ParamConverter("wikiPage", options={"mapping"={"pageName"="name"}})
+     * @Security("has_role('ROLE_SUPERUSER') || has_role('ROLE_WIKI') ")
      */
     public function viewAction(Wiki $wiki, WikiPage $wikiPage): Response
     {
@@ -72,6 +75,7 @@ class WikiPageController extends Controller
 
     /**
      * @Route("/pages/{id}/edit", name="wiki_page_edit", methods="GET|POST")
+     * @Security("has_role('ROLE_SUPERUSER') || has_role('ROLE_WIKI') ")
      */
     public function editAction(Request $request, Wiki $wiki, WikiPage $wikiPage, WikiEventService $wikiEventService): Response
     {
@@ -80,6 +84,7 @@ class WikiPageController extends Controller
 
     /**
      * @Route("/pages/{id}/delete", name="wiki_page_delete", methods="GET")
+     * @Security("has_role('ROLE_SUPERUSER') || has_role('ROLE_WIKI') ")
      */
     public function deleteAction(Request $request, Wiki $wiki, WikiPage $wikiPage, WikiEventService $wikiEventService): Response
     {
