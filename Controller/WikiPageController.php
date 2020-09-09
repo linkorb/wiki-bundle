@@ -5,6 +5,7 @@ namespace LinkORB\Bundle\WikiBundle\Controller;
 use LinkORB\Bundle\WikiBundle\Entity\Wiki;
 use LinkORB\Bundle\WikiBundle\Entity\WikiPage;
 use LinkORB\Bundle\WikiBundle\Form\WikiPageType;
+use LinkORB\Bundle\WikiBundle\Repository\WikiPageRepository;
 use LinkORB\Bundle\WikiBundle\Services\WikiEventService;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
@@ -25,12 +26,12 @@ class WikiPageController extends Controller
      * @Route("/pages", name="wiki_page_index", methods="GET")
      * @Security("has_role('ROLE_SUPERUSER') || has_role('ROLE_WIKI') ")
      */
-    public function index(Wiki $wiki): Response
+    public function index(Wiki $wiki, WikiPageRepository $wikiPageRepository): Response
     {
         if (!$wikiRoles = $this->getWikiPermission($wiki)) {
             throw new AccessDeniedException('Access denied!');
         }
-        $wikiPageRepository = $this->get('LinkORB\Bundle\WikiBundle\Repository\WikiPageRepository');
+        // $wikiPageRepository = $this->get('LinkORB\Bundle\WikiBundle\Repository\WikiPageRepository');
 
         $data = $wikiRoles;
         $data['wikiPages'] = $wikiPageRepository->findByWikiId($wiki->getId());
@@ -43,12 +44,12 @@ class WikiPageController extends Controller
      * @Route("/pages/add", name="wiki_page_add", methods="GET|POST")
      * @Security("has_role('ROLE_SUPERUSER') || has_role('ROLE_WIKI') ")
      */
-    public function addAction(Request $request, Wiki $wiki): Response
+    public function addAction(Request $request, Wiki $wiki, WikiEventService $wikiEventService): Response
     {
         $wikiPage = new WikiPage();
         $wikiPage->setWiki($wiki);
 
-        return $this->getEditForm($request, $wikiPage, $this->get('LinkORB\Bundle\WikiBundle\Services\WikiEventService'));
+        return $this->getEditForm($request, $wikiPage, $wikiEventService);
     }
 
     /**
@@ -76,16 +77,16 @@ class WikiPageController extends Controller
      * @Route("/pages/{id}/edit", name="wiki_page_edit", methods="GET|POST")
      * @Security("has_role('ROLE_SUPERUSER') || has_role('ROLE_WIKI') ")
      */
-    public function editAction(Request $request, Wiki $wiki, WikiPage $wikiPage): Response
+    public function editAction(Request $request, Wiki $wiki, WikiPage $wikiPage, WikiEventService $wikiEventService): Response
     {
-        return $this->getEditForm($request, $wikiPage, $this->get('LinkORB\Bundle\WikiBundle\Services\WikiEventService'));
+        return $this->getEditForm($request, $wikiPage, $wikiEventService);
     }
 
     /**
      * @Route("/pages/{id}/delete", name="wiki_page_delete", methods="GET")
      * @Security("has_role('ROLE_SUPERUSER') || has_role('ROLE_WIKI') ")
      */
-    public function deleteAction(Request $request, Wiki $wiki, WikiPage $wikiPage): Response
+    public function deleteAction(Request $request, Wiki $wiki, WikiPage $wikiPage, WikiEventService $wikiEventService): Response
     {
         if (!$wikiRoles = $this->getWikiPermission($wiki)) {
             throw new AccessDeniedException('Access denied!');
@@ -94,7 +95,7 @@ class WikiPageController extends Controller
             throw new AccessDeniedException('Access denied!');
         }
 
-        $this->get('LinkORB\Bundle\WikiBundle\Services\WikiEventService')->createEvent(
+        $wikiEventService->createEvent(
             'page.deleted',
             $wikiPage->getWiki()->getId(),
             json_encode([
