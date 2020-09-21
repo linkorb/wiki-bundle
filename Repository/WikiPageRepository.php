@@ -2,8 +2,9 @@
 
 namespace LinkORB\Bundle\WikiBundle\Repository;
 
-use LinkORB\Bundle\WikiBundle\Entity\WikiPage;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\Persistence\ManagerRegistry;
+use LinkORB\Bundle\WikiBundle\Entity\WikiPage;
 use Symfony\Bridge\Doctrine\RegistryInterface;
 
 /**
@@ -14,7 +15,7 @@ use Symfony\Bridge\Doctrine\RegistryInterface;
  */
 class WikiPageRepository extends ServiceEntityRepository
 {
-    public function __construct(RegistryInterface $registry)
+    public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, WikiPage::class);
     }
