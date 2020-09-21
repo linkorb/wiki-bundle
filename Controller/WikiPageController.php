@@ -8,6 +8,7 @@ use LinkORB\Bundle\WikiBundle\Form\WikiPageType;
 use LinkORB\Bundle\WikiBundle\Repository\WikiPageRepository;
 use LinkORB\Bundle\WikiBundle\Services\WikiEventService;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
