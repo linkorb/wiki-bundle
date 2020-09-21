@@ -1,4 +1,4 @@
-## Symfony 4 WikiBundle
+## Symfony 4,5 WikiBundle
 
 Installation
 ============
@@ -36,9 +36,9 @@ Create routing file to enable routes from wiki bundle like this:
 `config/routes/linkorb-wiki-bundle.yaml`
 And add loading of routes at next way:
 ```yaml
-wiki:
-  resource: '@WikiBundle/Resources/config/routing.yaml'
-  type: yaml
+wiki_bundle:
+  resource: '@WikiBundle/Controller'
+  type: annotation
 ```
 
-### Step 3: Enjoy
+### Step 3: Enjoy :)
