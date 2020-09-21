@@ -8,7 +8,6 @@ use LinkORB\Bundle\WikiBundle\Form\WikiPageType;
 use LinkORB\Bundle\WikiBundle\Repository\WikiPageRepository;
 use LinkORB\Bundle\WikiBundle\Services\WikiEventService;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
-use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
@@ -18,7 +17,7 @@ use Symfony\Component\Security\Core\Exception\AccessDeniedException;
  * @Route("/wiki/{wikiName}")
  * @ParamConverter("wiki", options={"mapping"={"wikiName"="name"}})
  */
-class WikiPageController extends Controller
+class WikiPageController extends AbstractController
 {
     /**
      * @Route("/pages", name="wiki_page_index", methods="GET")
