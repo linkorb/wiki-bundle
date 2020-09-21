@@ -2,23 +2,20 @@
 
 namespace LinkORB\Bundle\WikiBundle\Controller;
 
+use LinkORB\Bundle\WikiBundle\Entity\Wiki;
 use LinkORB\Bundle\WikiBundle\Repository\WikiEventRepository;
 use LinkORB\Bundle\WikiBundle\Repository\WikiRepository;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Routing\Annotation\Route;
-use LinkORB\Bundle\WikiBundle\Entity\Wiki;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 
 /**
- * @Security("is_granted('IS_AUTHENTICATED_FULLY')")
  * @Route("/wiki/{wikiName}/events")
  */
 class WikiEventController extends AbstractController
 {
     /**
-     * @Route("/", name="wiki_event_index")
-     * @Security("has_role('ROLE_SUPERUSER') || has_role('ROLE_WIKI') ")
+     * @Route("", name="wiki_event_index")
      */
     public function indexAction($wikiName, WikiRepository $wikiRepository, WikiEventRepository $wikiEventRepository)
     {
@@ -35,7 +32,7 @@ class WikiEventController extends AbstractController
             throw new AccessDeniedException('Access denied!');
         }
 
-        $wikiEvents = $this->get('LinkORB\Bundle\WikiBundle\Repository\WikiEventRepository')->findByWikiId($wiki->getId());
+        $wikiEvents = $wikiEventRepository->findByWikiId($wiki->getId());
 
         return $this->render('@Wiki/wiki_event/index.html.twig', [
             'wikiEvents' => $wikiEvents,

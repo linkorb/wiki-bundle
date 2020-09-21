@@ -2,6 +2,15 @@
   "name": "linkorb/wiki-bundle",
   "description": "Symfony 4 project Wiki Bundle",
   "homepage": "https://github.com/linkorb/wiki-bundle",
+  "repositories": [
+    {
+      "type": "composer",
+      "url": "https://repo.packagist.com/linkorb"
+    },
+    {
+      "packagist.org": false
+    }
+  ],
   "keywords": [
     "form",
     "linkorb"
@@ -13,6 +22,11 @@
       "name": "LinkORB Engineering",
       "email": "engineering@linkorb.com",
       "role": "Development"
+    },
+    {
+      "name": "Kaushik Prajapati",
+      "email": "prajapatikaushik@gmail.com",
+      "role": "Developer"
     }
   ],
   "autoload": {
@@ -21,9 +35,9 @@
     }
   },
   "require": {
-    "doctrine/doctrine-bundle":  "^1.5",
-    "symfony/framework-bundle": "^4.0",
+    "doctrine/doctrine-bundle": "^1.5",
+    "symfony/framework-bundle": "^4.0|5.1.*",
     "sensio/framework-extra-bundle": "^5.1",
-    "symfony/security-bundle": "^4.0"
+    "symfony/security-bundle": "^4.0|5.1.*"
   }
 }
