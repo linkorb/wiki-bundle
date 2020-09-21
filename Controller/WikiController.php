@@ -7,25 +7,22 @@ use LinkORB\Bundle\WikiBundle\Form\WikiType;
 use LinkORB\Bundle\WikiBundle\Repository\WikiRepository;
 use LinkORB\Bundle\WikiBundle\Services\WikiEventService;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
 /**
- * @Security("is_granted('IS_AUTHENTICATED_FULLY')")
  * @Route("/wiki")
  */
 class WikiController extends AbstractController
 {
     /**
-     * @Route("/", name="wiki_index", methods="GET")
-     * @Security("has_role('ROLE_SUPERUSER') || has_role('ROLE_WIKI') ")
+     * @Route("", name="wiki_index", methods="GET")
      */
     public function indexAction(WikiRepository $wikiRepository): Response
     {
-        $wikis = $this->get('LinkORB\Bundle\WikiBundle\Repository\WikiRepository')->findAll();
+        $wikis = $wikiRepository->findAll();
 
         $wikiArray = [];
         foreach ($wikis as $wiki) {
@@ -43,7 +40,6 @@ class WikiController extends AbstractController
     }
 
     /**
-     * @Security("has_role('ROLE_SUPERUSER')")
      * @Route("/add", name="wiki_add", methods="GET|POST")
      */
     public function AddAction(Request $request, WikiEventService $wikiEventService): Response
@@ -54,7 +50,6 @@ class WikiController extends AbstractController
     }
 
     /**
-     * @Security("has_role('ROLE_SUPERUSER')")
      * @Route("/{wikiName}/edit", name="wiki_edit", methods="GET|POST")
      * @ParamConverter("wiki", options={"mapping"={"wikiName"="name"}})
      */
@@ -64,7 +59,6 @@ class WikiController extends AbstractController
     }
 
     /**
-     * @Security("has_role('ROLE_SUPERUSER')")
      * @Route("/{wikiName}/delete", name="wiki_delete", methods="GET")
      * @ParamConverter("wiki", options={"mapping"={"wikiName"="name"}})
      */
