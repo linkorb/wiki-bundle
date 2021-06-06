@@ -1,0 +1,74 @@
+{% extends 'base.html.twig' %}
+
+{% block sidebar %}
+    <i class="fa fa-arrow-left"></i> <a href="{{ path('wiki_index') }}">Wikis</a>
+    <hr />
+    {% if tocPage is defined %}
+    <h4>Table of contents
+        <small><a class="text text-muted" href="{{ path('wiki_page_edit', {'wikiName': wiki.name, 'id': tocPage.id } )}}"><i class="fa fa-edit"></i></a></small>
+    </h4>
+    {{ tocPage.content|markdown }}
+    {% else %}
+    <h4>Pages</h4>
+    <ul>
+        {% for page in wiki.wikiPages %}
+            <li>
+                <a href="{{ path('wiki_page_view', {'wikiName': wiki.name, 'pageName': page.name} ) }}">{{ page.name }}</a>
+            </li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+    <br /><br /><br />
+{% endblock %}
+{% block submenu %}
+    <div style="background: #f8f8f8; border-bottom: 1px solid #fff; min-height: 50px; padding-top: 20px; min-height: 70px">
+        <div class="container-fluid">
+        
+            {% if wiki.name %}
+            <div style="float: right;">
+                {% if is_granted('ROLE_SUPERUSER') %}
+
+                <div class="dropdown" style="display: inline; margin-right: 8px">
+                    <button style="margin: 0px" class="btn btn-info dropdown-toggle btn-sm" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    Admin
+                    </button>
+                    <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                    <a href="{{ path('wiki_edit', {'wikiName': wiki.name}) }}" class="dropdown-item">
+                        <i class="fa fa-edit"></i> Wiki settings
+                    </a>
+                    <a href="{{ path('wiki_event_index', {'wikiName': wiki.name}) }}" class="dropdown-item">
+                        <i class="fa fa-calendar" aria-hidden="true"></i> Events
+                    </a>
+                    </div>
+                </div>
+                {% endif %}
+
+                <a href="{{ path('wiki_page_index',{'wikiName': wiki.name}) }}" class="btn btn-sm btn-secondary">
+                    <i class="fa fa-list" aria-hidden="true"></i>
+                    List pages
+                </a>
+                {% if is_granted('ROLE_SUPERUSER') or writeRole %}
+                <a href="{{ path('wiki_page_add',{'wikiName': wiki.name}) }}" class="btn btn-sm btn-success">
+                    <i class="fa fa-plus" aria-hidden="true"></i>
+                    New page
+                </a>
+                {% endif %}
+            </div>
+
+            <h4>
+                <i class="fa fa-book"></i>
+                <a href="{{ path('wiki_view', {'wikiName': wiki.name } ) }}">
+                    {{ wiki.name }}
+                </a>
+                {% if wikiPage is defined and wikiPage and wikiPage.name %}
+                    /
+                    {{ wikiPage.name }}
+                {% endif %}
+            </h4>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}
+
+{% block body %}
+{% endblock %}

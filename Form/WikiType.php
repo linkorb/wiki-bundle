@@ -55,12 +55,12 @@ class WikiType extends AbstractType
             ->add('read_role', TextType::class, [
                 'required' => false,
                 'trim' => true,
-                'help' => 'ex. ROLE_EXAMPLE, ROLE_SUPERSUER',
+                'help' => 'ex. ROLE_EXAMPLE, ROLE_SUPERUSER',
             ])
             ->add('write_role', TextType::class, [
                 'required' => false,
                 'trim' => true,
-                'help' => 'ex. ROLE_EXAMPLE, ROLE_SUPERSUER',
+                'help' => 'ex. ROLE_EXAMPLE, ROLE_SUPERUSER',
             ])
         ;
     }

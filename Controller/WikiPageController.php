@@ -20,18 +20,21 @@ use Symfony\Component\Security\Core\Exception\AccessDeniedException;
  */
 class WikiPageController extends AbstractController
 {
+    public function __construct(WikiPageRepository $wikiPageRepository)
+    {
+        $this->wikiPageRepository = $wikiPageRepository;
+    }
     /**
      * @Route("/pages", name="wiki_page_index", methods="GET")
      */
-    public function index(Wiki $wiki, WikiPageRepository $wikiPageRepository): Response
+    public function index(Wiki $wiki): Response
     {
         if (!$wikiRoles = $this->getWikiPermission($wiki)) {
             throw new AccessDeniedException('Access denied!');
         }
-        // $wikiPageRepository = $this->get('LinkORB\Bundle\WikiBundle\Repository\WikiPageRepository');
 
         $data = $wikiRoles;
-        $data['wikiPages'] = $wikiPageRepository->findByWikiId($wiki->getId());
+        $data['wikiPages'] = $this->wikiPageRepository->findByWikiId($wiki->getId());
         $data['wiki'] = $wiki;
 
         return $this->render('@Wiki/wiki_page/index.html.twig', $data);
@@ -44,15 +47,18 @@ class WikiPageController extends AbstractController
     {
         $wikiPage = new WikiPage();
         $wikiPage->setWiki($wiki);
+        $pageName = $request->query->get('pageName');
+        if ($pageName) {
+            $wikiPage->setName($pageName);
+        }
 
         return $this->getEditForm($request, $wikiPage, $wikiEventService);
     }
 
     /**
      * @Route("/{pageName}", name="wiki_page_view", methods="GET")
-     * @ParamConverter("wikiPage", options={"mapping"={"pageName"="name"}})
      */
-    public function viewAction(Wiki $wiki, WikiPage $wikiPage): Response
+    public function viewAction(Wiki $wiki, string $pageName): Response
     {
         if (!$wikiRoles = $this->getWikiPermission($wiki)) {
             throw new AccessDeniedException('Access denied!');
@@ -60,8 +66,42 @@ class WikiPageController extends AbstractController
         if (!$wikiRoles['readRole']) {
             throw new AccessDeniedException('Access denied!');
         }
+        $wikiPage = $this->wikiPageRepository->findOneByWikiIdAndName($wiki->getId(), $pageName);
 
         $data = $wikiRoles;
+
+        $tocPage = $this->wikiPageRepository->findOneByWikiIdAndName($wiki->getId(), 'toc');
+        if ($tocPage) {
+            $data['tocPage'] = $tocPage;
+        }
+
+
+        $content = null;
+
+        if ($wikiPage) {
+            $content = $wikiPage->getContent();
+        }
+        // preprocess mediawiki style links (convert mediawiki style links into markdown links)
+        preg_match_all('/\[\[(.+?)\]\]/u', $content, $matches);
+        foreach ($matches[1] as $match) {
+            $inner = (string)$match;
+            $part = explode('|', $inner);
+            $label = $part[0];
+            $link = null;
+            if (count($part)>1) {
+                $label = $part[1];
+                $link = $part[0];
+            }
+            if (!$link) {
+                $link = $label;
+            }
+            $link = trim(strtolower($link));
+            $link = str_replace(' ', '-', $link);
+            $content = str_replace('[[' . $inner . ']]', '[' . $label . '](' . $link . ')', $content);
+        }
+        
+        $data['content'] = $content;
+        $data['pageName'] = $pageName; // in case the page does not yet exist
         $data['wikiPage'] = $wikiPage;
         $data['wiki'] = $wiki;
 
@@ -151,15 +191,25 @@ class WikiPageController extends AbstractController
                 );
             }
 
-            return $this->redirectToRoute('wiki_page_index', [
+            return $this->redirectToRoute('wiki_page_view', [
                 'wikiName' => $wikiPage->getWiki()->getName(),
+                'pageName' => $wikiPage->getName(),
             ]);
         }
 
-        return $this->render('@Wiki/wiki_page/edit.html.twig', [
+        $wiki = $wikiPage->getWiki();
+        $data = [
             'wikiPage' => $wikiPage,
+            'wiki' => $wiki,
             'form' => $form->createView(),
-        ]);
+        ];
+
+        $tocPage = $this->wikiPageRepository->findOneByWikiIdAndName($wiki->getId(), 'toc');
+        if ($tocPage) {
+           // $data['tocPage'] = $tocPage;
+        }
+
+        return $this->render('@Wiki/wiki_page/edit.html.twig', $data);
     }
 
     protected function getWikiPermission(Wiki $wiki)

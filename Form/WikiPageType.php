@@ -31,6 +31,8 @@ class WikiPageType extends AbstractType
             ->add('name', TextType::class, [
                 'required' => true,
                 'trim' => true,
+                'label' => 'Page name',
+                'help' => 'Part of the URL. Accepts lower case, a-z, 0-9, use dashes for spaces',
                 'constraints' => [
                     new Assert\NotBlank(),
                     // TODO: Resolve this

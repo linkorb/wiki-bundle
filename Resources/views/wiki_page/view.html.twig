@@ -1,42 +1,27 @@
-{% extends '@Wiki/base.html.twig' %}
+{% extends '@Wiki/base.wiki.html.twig' %}
 
 {% block body %}
-    <h3>
-        Wiki:
-        <a href="#">
-            {{ wikiPage.wiki.name }}
-        </a>
-        /
-        {{ wikiPage.name }}
-    </h3>
 
-    <div class="buttonbox" >
-        {% if is_granted('ROLE_SUPERUSER') or readRole %}
-            <a href="{{ path('wiki_page_index',{'wikiName':  wikiPage.wiki.name }) }}"  class="btn btn-primary" >
-                <i class="fa fa-arrow-left" aria-hidden="true"></i>
-                Back
-            </a>
-        {% endif %}
-        {% if is_granted('ROLE_SUPERUSER') or writeRole %}
-            <a href="{{ path('wiki_page_edit', {'wikiName':  wikiPage.wiki.name,'id': wikiPage.id }) }}" class="btn btn-success">
-                <i class="fa fa-edit" aria-hidden="true"></i>
-                Edit
-            </a>
-            <a href="{{ path('wiki_page_delete', {'wikiName':  wikiPage.wiki.name, 'id': wikiPage.id}) }}" class="btn btn-danger" onclick="return confirm('Are you sure?')">
-                <i class="fa fa-edit" aria-hidden="true"></i>
-                Delete
-            </a>
-        {% endif %}
-    </div>
-
-    <div class="row">
-        <div class="col-md-12">
+    {% if not wikiPage %}
+    <center>
+        <p>This page does not (yet) exist: <b>{{ pageName }}</b></p>
+        <a href="{{ path('wiki_page_add', {'wikiName': wiki.name, 'pageName': pageName } ) }}" class="btn btn-success">Add now</a>
+    </center>
+    {% else %}
             <fieldset>
+                <legend><i class="fa fa-file-o"></i> {{ wikiPage.name }}</legend>
+                {% if is_granted('ROLE_SUPERUSER') or writeRole %}
+                    <a style="float: right;" href="{{ path('wiki_page_edit', {'wikiName':  wikiPage.wiki.name,'id': wikiPage.id }) }}" class="text text-muted">
+                        <i class="fa fa-edit" aria-hidden="true"></i>
+                        Edit page
+                    </a>
+                {% endif %}
                 <div>
-                    {{ wikiPage.content|markdown }}
+                    {{ content|markdown }}
                 </div>
             </fieldset>
         </div>
     </div>
+    {% endif %}
 
 {% endblock %}

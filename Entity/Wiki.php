@@ -30,6 +30,7 @@ class Wiki
 
     /**
      * @ORM\OneToMany(targetEntity="LinkORB\Bundle\WikiBundle\Entity\WikiPage", mappedBy="wiki")
+     * @ORM\OrderBy({"name" = "ASC"})
      */
     private $wikiPages;
 

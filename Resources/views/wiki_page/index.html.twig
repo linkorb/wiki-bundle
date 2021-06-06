@@ -1,23 +1,9 @@
-{% extends '@Wiki/base.html.twig' %}
+{% extends '@Wiki/base.wiki.html.twig' %}
 
 {% block title %}Wiki: {{ wiki.name }} :Pages {% endblock %}
 
 {% block body %}
-    <h1>Wiki: {{ wiki.name }} :Pages</h1>
-
-    <div class="buttonbox" >
-        {% if is_granted('ROLE_SUPERUSER') or writeRole %}
-            <a href="{{ path('wiki_page_add',{'wikiName': wiki.name}) }}" class="btn btn-success">
-                <i class="fa fa-plus" aria-hidden="true"></i>
-                Add
-            </a>
-        {% endif %}
-
-        <a href="{{ path('wiki_index') }}"   class="btn btn-primary" >
-            <i class="fa fa-arrow-left" aria-hidden="true"></i>
-            Back
-        </a>
-    </div>
+    <h1>All pages in this wiki</h1>
 
     <div class="row">
         <div class="col-md-12">
@@ -25,7 +11,6 @@
                 <table class="table">
                     <thead>
                         <tr>
-                            <th>Id</th>
                             <th>Name</th>
                         </tr>
                     </thead>
@@ -33,20 +18,15 @@
                     {% for wikiPage in wikiPages %}
                         <tr>
                             <td>
-                               {% if is_granted('ROLE_SUPERUSER') or writeRole or readRole %}
-                                    <a href="{{ path('wiki_page_view',{'wikiName': wiki.name, 'pageName': wikiPage.name}) }}">
-                                        {{ wikiPage.id }}
-                                    </a>
-                                {% else %}
-                                    {{ wikiPage.id }}
-                                {% endif %}
-
+                                <i class="fa fa-file-o"></i>
+                                <a href="{{ path('wiki_page_view',{'wikiName': wiki.name, 'pageName': wikiPage.name}) }}">
+                                    {{ wikiPage.name }}
+                                </a>
                             </td>
-                            <td>{{ wikiPage.name }}</td>
                         </tr>
                     {% else %}
                         <tr>
-                            <td colspan="5">no records found</td>
+                            <td colspan="5">no pages found</td>
                         </tr>
                     {% endfor %}
                     </tbody>

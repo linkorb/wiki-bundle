@@ -5,6 +5,7 @@ namespace LinkORB\Bundle\WikiBundle\Controller;
 use LinkORB\Bundle\WikiBundle\Entity\Wiki;
 use LinkORB\Bundle\WikiBundle\Form\WikiType;
 use LinkORB\Bundle\WikiBundle\Repository\WikiRepository;
+use LinkORB\Bundle\WikiBundle\Repository\WikiPageRepository;
 use LinkORB\Bundle\WikiBundle\Services\WikiEventService;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -33,6 +34,10 @@ class WikiController extends AbstractController
             }
         }
 
+        usort($wikiArray, function($a, $b) {
+            return strcmp($a->getName(), $b->getName());
+        });
+
         return $this->render(
             '@Wiki/wiki/index.html.twig',
             ['wikis' => $wikiArray]
@@ -42,7 +47,7 @@ class WikiController extends AbstractController
     /**
      * @Route("/add", name="wiki_add", methods="GET|POST")
      */
-    public function AddAction(Request $request, WikiEventService $wikiEventService): Response
+    public function addAction(Request $request, WikiEventService $wikiEventService): Response
     {
         $wiki = new Wiki();
 
@@ -121,7 +126,7 @@ class WikiController extends AbstractController
                 );
             }
 
-            return $this->redirectToRoute('wiki_index');
+            return $this->redirectToRoute('wiki_view', ['wikiName' => $wiki->getName() ] );
         }
 
         return $this->render('@Wiki/wiki/edit.html.twig', [
@@ -167,4 +172,29 @@ class WikiController extends AbstractController
 
         return  $flag ? $wikiRoles : false;
     }
+
+    /**
+     * @Route("/{wikiName}", name="wiki_view", methods="GET")
+     * @ParamConverter("wiki", options={"mapping"={"wikiName"="name"}})
+     */
+    public function view(Wiki $wiki, WikiPageRepository $wikiPageRepository): Response
+    {
+        if (!$wikiRoles = $this->getWikiPermission($wiki)) {
+            throw new AccessDeniedException('Access denied!');
+        }
+        $data = $wikiRoles;
+        // $wikiPageRepository = $this->get('LinkORB\Bundle\WikiBundle\Repository\WikiPageRepository');
+
+
+        $indexPage = $wikiPageRepository->findOneByWikiIdAndName($wiki->getId(), 'index');
+        if ($indexPage) {
+            return $this->redirectToRoute('wiki_page_view', ['wikiName' => $wiki->getName(), 'pageName' => $indexPage->getName()]);
+        }
+
+        $data['wikiPages'] = $wikiPageRepository->findByWikiId($wiki->getId());
+        $data['wiki'] = $wiki;
+
+        return $this->render('@Wiki/wiki_page/index.html.twig', $data);
+    }
+
 }
