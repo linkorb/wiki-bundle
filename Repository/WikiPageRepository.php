@@ -5,7 +5,6 @@ namespace LinkORB\Bundle\WikiBundle\Repository;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 use LinkORB\Bundle\WikiBundle\Entity\WikiPage;
-use Symfony\Bridge\Doctrine\RegistryInterface;
 
 /**
  * @method WikiPage|null find($id, $lockMode = null, $lockVersion = null)
@@ -57,5 +56,15 @@ class WikiPageRepository extends ServiceEntityRepository
     public function findOneByWikiIdAndName($wikiId, $name)
     {
         return $this->findOneBy(['wiki' => $wikiId, 'name' => $name]);
+    }
+
+    public function findByWikiIdAndParentId(int $wikiId, int $parentId)
+    {
+        return $this->findBy(['wiki' => $wikiId, 'parent_id' => $parentId]);
+    }
+
+    public function findByParentId(int $parentId)
+    {
+        return $this->findBy(['parent_id' => $parentId]);
     }
 }

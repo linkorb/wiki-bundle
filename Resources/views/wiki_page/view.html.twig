@@ -11,10 +11,16 @@
             <fieldset>
                 <legend><i class="fa fa-file-o"></i> {{ wikiPage.name }}</legend>
                 {% if is_granted('ROLE_SUPERUSER') or writeRole %}
-                    <a style="float: right;" href="{{ path('wiki_page_edit', {'wikiName':  wikiPage.wiki.name,'id': wikiPage.id }) }}" class="text text-muted">
+                  <div class="text-right">
+                    <a href="{{ path('wiki_page_edit', {'wikiName':  wikiPage.wiki.name,'pageName': wikiPage.name }) }}" class="text text-muted">
                         <i class="fa fa-edit" aria-hidden="true"></i>
                         Edit page
+                    </a> &nbsp;
+                    <a href="{{ path('wiki_page_edit_advance', {'wikiName':  wikiPage.wiki.name,'pageName': wikiPage.name }) }}" class="text text-muted">
+                        <i class="fa fa-edit" aria-hidden="true"></i>
+                        Edit Advance
                     </a>
+                  </div>
                 {% endif %}
                 <div>
                     {{ content|markdown }}

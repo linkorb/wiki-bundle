@@ -37,6 +37,11 @@ class WikiPage
      */
     private $data;
 
+    /**
+     * @ORM\Column(type="integer", options={"default" : 0 }, nullable=true)
+     */
+    private $parent_id;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -86,6 +91,38 @@ class WikiPage
     public function setData(?string $data): self
     {
         $this->data = $data;
+
+        return $this;
+    }
+
+    public function getParentId(): ?int
+    {
+        return $this->parent_id;
+    }
+
+    public function setParentId(?int $parent_id): self
+    {
+        $this->parent_id = $parent_id;
+
+        return $this;
+    }
+
+    private $childPages = [];
+
+    /**
+     * Get the value of childPages.
+     */
+    public function getChildPages(): array
+    {
+        return $this->childPages;
+    }
+
+    /**
+     * Set the value of childPages.
+     */
+    public function setChildPages(array $childPages): self
+    {
+        $this->childPages = $childPages;
 
         return $this;
     }

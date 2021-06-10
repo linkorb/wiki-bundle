@@ -38,11 +38,14 @@
           }
     </style>
     <script type="text/javascript" >
+      if (document.getElementById('wiki_page_content')) {
+
         document.addEventListener('DOMContentLoaded', function() {
             var editor = new Editor({
-                element: document.getElementById('wiki_page_content_content'),
+                element: document.getElementById('wiki_page_content'),
               })
            editor.render();
         });
+      }
     </script>
 {% endblock %}
