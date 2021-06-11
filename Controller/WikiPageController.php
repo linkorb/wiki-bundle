@@ -10,6 +10,7 @@ use LinkORB\Bundle\WikiBundle\Repository\WikiPageRepository;
 use LinkORB\Bundle\WikiBundle\Services\WikiEventService;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
@@ -138,10 +139,19 @@ class WikiPageController extends AbstractController
         $form = $this->createForm(WikiPageContentType::class, $wikiPage);
         $form->handleRequest($request);
 
-        if ($form->isSubmitted() && $form->isValid()) {
+        if ($request->isXmlHttpRequest() && $request->isMethod('POST')) {
+            $data = json_decode($request->getContent(), true);
+            $wikiPage->setContent($data['content']);
+
             $em = $this->getDoctrine()->getManager();
             $em->persist($wikiPage);
             $em->flush();
+
+            return new JsonResponse(['status' => 'success']);
+        }
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $this->getDoctrine()->getManager()->flush();
 
             $wikiEventService->createEvent(
                 'page.updated',
