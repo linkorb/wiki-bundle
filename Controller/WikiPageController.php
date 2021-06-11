@@ -4,11 +4,13 @@ namespace LinkORB\Bundle\WikiBundle\Controller;
 
 use LinkORB\Bundle\WikiBundle\Entity\Wiki;
 use LinkORB\Bundle\WikiBundle\Entity\WikiPage;
+use LinkORB\Bundle\WikiBundle\Form\WikiPageContentType;
 use LinkORB\Bundle\WikiBundle\Form\WikiPageType;
 use LinkORB\Bundle\WikiBundle\Repository\WikiPageRepository;
 use LinkORB\Bundle\WikiBundle\Services\WikiEventService;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
@@ -24,6 +26,7 @@ class WikiPageController extends AbstractController
     {
         $this->wikiPageRepository = $wikiPageRepository;
     }
+
     /**
      * @Route("/pages", name="wiki_page_index", methods="GET")
      */
@@ -32,6 +35,8 @@ class WikiPageController extends AbstractController
         if (!$wikiRoles = $this->getWikiPermission($wiki)) {
             throw new AccessDeniedException('Access denied!');
         }
+
+        $wikiPages = $this->wikiPageRepository->findByWikiIdAndParentId($wiki->getId(), 0);
 
         $data = $wikiRoles;
         $data['wikiPages'] = $this->wikiPageRepository->findByWikiId($wiki->getId());
@@ -75,7 +80,6 @@ class WikiPageController extends AbstractController
             $data['tocPage'] = $tocPage;
         }
 
-
         $content = null;
 
         if ($wikiPage) {
@@ -84,11 +88,11 @@ class WikiPageController extends AbstractController
         // preprocess mediawiki style links (convert mediawiki style links into markdown links)
         preg_match_all('/\[\[(.+?)\]\]/u', $content, $matches);
         foreach ($matches[1] as $match) {
-            $inner = (string)$match;
+            $inner = (string) $match;
             $part = explode('|', $inner);
             $label = $part[0];
             $link = null;
-            if (count($part)>1) {
+            if (count($part) > 1) {
                 $label = $part[1];
                 $link = $part[0];
             }
@@ -97,9 +101,9 @@ class WikiPageController extends AbstractController
             }
             $link = trim(strtolower($link));
             $link = str_replace(' ', '-', $link);
-            $content = str_replace('[[' . $inner . ']]', '[' . $label . '](' . $link . ')', $content);
+            $content = str_replace('[['.$inner.']]', '['.$label.']('.$link.')', $content);
         }
-        
+
         $data['content'] = $content;
         $data['pageName'] = $pageName; // in case the page does not yet exist
         $data['wikiPage'] = $wikiPage;
@@ -109,18 +113,77 @@ class WikiPageController extends AbstractController
     }
 
     /**
-     * @Route("/pages/{id}/edit", name="wiki_page_edit", methods="GET|POST")
+     * @Route("/pages/{pageName}/advanced", name="wiki_page_edit_advance", methods="GET|POST")
      */
-    public function editAction(Request $request, Wiki $wiki, WikiPage $wikiPage, WikiEventService $wikiEventService): Response
+    public function editAdvanceAction(Request $request, Wiki $wiki, WikiEventService $wikiEventService, $pageName): Response
     {
+        $wikiPage = $this->wikiPageRepository->findOneByWikiIdAndName($wiki->getId(), $pageName);
+
         return $this->getEditForm($request, $wikiPage, $wikiEventService);
     }
 
     /**
-     * @Route("/pages/{id}/delete", name="wiki_page_delete", methods="GET")
+     * @Route("/pages/{pageName}/edit", name="wiki_page_edit", methods="GET|POST")
      */
-    public function deleteAction(Request $request, Wiki $wiki, WikiPage $wikiPage, WikiEventService $wikiEventService): Response
+    public function editAction(Request $request, Wiki $wiki, WikiEventService $wikiEventService, $pageName): Response
     {
+        $wikiPage = $this->wikiPageRepository->findOneByWikiIdAndName($wiki->getId(), $pageName);
+
+        if (!$wikiRoles = $this->getWikiPermission($wikiPage->getWiki())) {
+            throw new AccessDeniedException('Access denied!');
+        }
+        if (!$wikiRoles['writeRole']) {
+            throw new AccessDeniedException('Access denied!');
+        }
+
+        $form = $this->createForm(WikiPageContentType::class, $wikiPage);
+        $form->handleRequest($request);
+
+        if ($request->isXmlHttpRequest() && $request->isMethod('POST')) {
+            $data = json_decode($request->getContent(), true);
+            $wikiPage->setContent($data['content']);
+
+            $em = $this->getDoctrine()->getManager();
+            $em->persist($wikiPage);
+            $em->flush();
+
+            return new JsonResponse(['status' => 'success']);
+        }
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $this->getDoctrine()->getManager()->flush();
+
+            $wikiEventService->createEvent(
+                'page.updated',
+                $wikiPage->getWiki()->getId(),
+                json_encode([
+                    'updatedAt' => time(),
+                    'updatedBy' => $this->getUser()->getUsername(),
+                    'name' => $wikiPage->getName(),
+                ]),
+                $wikiPage->getId()
+            );
+
+            return $this->redirectToRoute('wiki_page_view', [
+                'wikiName' => $wikiPage->getWiki()->getName(),
+                'pageName' => $wikiPage->getName(),
+            ]);
+        }
+
+        return $this->render('@Wiki/wiki_page/edit.html.twig', [
+            'wikiPage' => $wikiPage,
+            'wiki' => $wiki,
+            'form' => $form->createView(),
+        ]);
+    }
+
+    /**
+     * @Route("/pages/{pageName}/delete", name="wiki_page_delete", methods="GET")
+     */
+    public function deleteAction(Request $request, Wiki $wiki, WikiEventService $wikiEventService, $pageName): Response
+    {
+        $wikiPage = $this->wikiPageRepository->findOneByWikiIdAndName($wiki->getId(), $pageName);
+
         if (!$wikiRoles = $this->getWikiPermission($wiki)) {
             throw new AccessDeniedException('Access denied!');
         }
@@ -163,6 +226,8 @@ class WikiPageController extends AbstractController
         $add = !$wikiPage->getId();
 
         if ($form->isSubmitted() && $form->isValid()) {
+            $wikiPage->setParentId((int) $wikiPage->getParentId());
+
             $em = $this->getDoctrine()->getManager();
             $em->persist($wikiPage);
             $em->flush();
@@ -206,10 +271,10 @@ class WikiPageController extends AbstractController
 
         $tocPage = $this->wikiPageRepository->findOneByWikiIdAndName($wiki->getId(), 'toc');
         if ($tocPage) {
-           // $data['tocPage'] = $tocPage;
+            // $data['tocPage'] = $tocPage;
         }
 
-        return $this->render('@Wiki/wiki_page/edit.html.twig', $data);
+        return $this->render('@Wiki/wiki_page/advanced.html.twig', $data);
     }
 
     protected function getWikiPermission(Wiki $wiki)
@@ -247,6 +312,6 @@ class WikiPageController extends AbstractController
             }
         }
 
-        return  $flag ? $wikiRoles : false;
+        return $flag ? $wikiRoles : false;
     }
 }

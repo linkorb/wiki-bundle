@@ -5,8 +5,8 @@ namespace LinkORB\Bundle\WikiBundle\Controller;
 use LinkORB\Bundle\WikiBundle\Entity\Wiki;
 use LinkORB\Bundle\WikiBundle\Form\WikiType;
 use LinkORB\Bundle\WikiBundle\Repository\WikiRepository;
-use LinkORB\Bundle\WikiBundle\Repository\WikiPageRepository;
 use LinkORB\Bundle\WikiBundle\Services\WikiEventService;
+use LinkORB\Bundle\WikiBundle\Services\WikiPageService;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -34,7 +34,7 @@ class WikiController extends AbstractController
             }
         }
 
-        usort($wikiArray, function($a, $b) {
+        usort($wikiArray, function ($a, $b) {
             return strcmp($a->getName(), $b->getName());
         });
 
@@ -126,7 +126,7 @@ class WikiController extends AbstractController
                 );
             }
 
-            return $this->redirectToRoute('wiki_view', ['wikiName' => $wiki->getName() ] );
+            return $this->redirectToRoute('wiki_view', ['wikiName' => $wiki->getName()]);
         }
 
         return $this->render('@Wiki/wiki/edit.html.twig', [
@@ -170,14 +170,14 @@ class WikiController extends AbstractController
             }
         }
 
-        return  $flag ? $wikiRoles : false;
+        return $flag ? $wikiRoles : false;
     }
 
     /**
      * @Route("/{wikiName}", name="wiki_view", methods="GET")
      * @ParamConverter("wiki", options={"mapping"={"wikiName"="name"}})
      */
-    public function view(Wiki $wiki, WikiPageRepository $wikiPageRepository): Response
+    public function view(Wiki $wiki, WikiPageService $wikiPageService): Response
     {
         if (!$wikiRoles = $this->getWikiPermission($wiki)) {
             throw new AccessDeniedException('Access denied!');
@@ -185,16 +185,20 @@ class WikiController extends AbstractController
         $data = $wikiRoles;
         // $wikiPageRepository = $this->get('LinkORB\Bundle\WikiBundle\Repository\WikiPageRepository');
 
-
-        $indexPage = $wikiPageRepository->findOneByWikiIdAndName($wiki->getId(), 'index');
+        $indexPage = $wikiPageService->getOneByWikiIdAndPageName($wiki->getId(), 'index');
         if ($indexPage) {
             return $this->redirectToRoute('wiki_page_view', ['wikiName' => $wiki->getName(), 'pageName' => $indexPage->getName()]);
         }
 
-        $data['wikiPages'] = $wikiPageRepository->findByWikiId($wiki->getId());
+        $wikiPages = $wikiPageService->getByWikiIdAndParentId($wiki->getId());
+
+        foreach ($wikiPages as $wikiPage) {
+            $wikiPage->setChildPages($wikiPageService->recursiveChild($wikiPage));
+        }
+
+        $data['wikiPages'] = $wikiPages;
         $data['wiki'] = $wiki;
 
         return $this->render('@Wiki/wiki_page/index.html.twig', $data);
     }
-
 }

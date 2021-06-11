@@ -2,10 +2,11 @@
 
 namespace LinkORB\Bundle\WikiBundle\Form;
 
-use LinkORB\Bundle\WikiBundle\Entity\WikiPage;
-use LinkORB\Bundle\WikiBundle\Repository\WikiPageRepository;
 use App\Validator\Constraint\CodeConstraint;
+use LinkORB\Bundle\WikiBundle\Entity\WikiPage;
+use LinkORB\Bundle\WikiBundle\Services\WikiPageService;
 use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
@@ -15,17 +16,18 @@ use Symfony\Component\Validator\Context\ExecutionContext;
 
 class WikiPageType extends AbstractType
 {
-    private $wikiPageRepository;
+    private $wikiPageService;
 
-    public function __construct(WikiPageRepository $wikiPageRepository)
+    public function __construct(WikiPageService $wikiPageService)
     {
-        $this->wikiPageRepository = $wikiPageRepository;
+        $this->wikiPageService = $wikiPageService;
     }
 
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
-        $wikiPageRepository = $this->wikiPageRepository;
         $entity = $options['data'];
+
+        $parentArray = $this->wikiPageService->pageRecursiveArray($entity->getWiki()->getId(), 0, (int) $entity->getId());
 
         $builder
             ->add('name', TextType::class, [
@@ -38,8 +40,8 @@ class WikiPageType extends AbstractType
                     // TODO: Resolve this
                     // new CodeConstraint(),
                     new Assert\Callback(
-                        function ($name, ExecutionContext $context) use ($wikiPageRepository, $entity) {
-                            if ($findEntity = $wikiPageRepository->findOneByWikiIdAndName($entity->getWiki()->getId(), $name)) {
+                        function ($name, ExecutionContext $context) use ($entity) {
+                            if ($findEntity = $this->wikiPageService->getOneByWikiIdAndPageName($entity->getWiki()->getId(), $name)) {
                                 if ($findEntity->getId() != $entity->getId()) {
                                     $context->addViolation('Name already exist');
                                 }
@@ -48,20 +50,31 @@ class WikiPageType extends AbstractType
                     ),
                 ],
             ])
-            ->add('content', TextareaType::class, [
+            ->add('parent_id', ChoiceType::class, [
                 'required' => false,
                 'trim' => true,
-            ])
-            ->add('data', TextareaType::class, [
+                'label' => 'Parent',
+                'placeholder' => ' -- select --',
+                'choices' => array_flip($parentArray),
+            ]);
+
+        if (!$entity->getId()) {
+            $builder
+                ->add('content', TextareaType::class, [
+                    'required' => false,
+                    'trim' => true,
+                ]);
+        }
+
+        $builder->add('data', TextareaType::class, [
                 'required' => false,
                 'trim' => true,
                 'attr' => [
                     'class' => 'ace-editor',
-                     'data-mode' => 'yaml',
-                     'data-lines' => '10',
+                    'data-mode' => 'yaml',
+                    'data-lines' => '10',
                 ],
-            ])
-        ;
+            ]);
     }
 
     public function configureOptions(OptionsResolver $resolver)

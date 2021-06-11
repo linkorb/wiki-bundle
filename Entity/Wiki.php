@@ -44,6 +44,11 @@ class Wiki
      */
     private $write_role;
 
+    /**
+     * @ORM\Column(type="text", nullable=true)
+     */
+    private $config;
+
     public function __construct()
     {
         $this->wikiPages = new ArrayCollection();
@@ -131,5 +136,17 @@ class Wiki
     public function getWriteRole(): ?string
     {
         return $this->write_role;
+    }
+
+    public function getConfig(): ?string
+    {
+        return $this->config;
+    }
+
+    public function setConfig(?string $config): self
+    {
+        $this->config = $config;
+
+        return $this;
     }
 }

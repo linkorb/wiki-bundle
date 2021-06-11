@@ -38,38 +38,14 @@
           }
     </style>
     <script type="text/javascript" >
+      if (document.getElementById('wiki_page_content')) {
+
         document.addEventListener('DOMContentLoaded', function() {
             var editor = new Editor({
-                element: document.getElementById('wiki_page_content_content'),
+                element: document.getElementById('wiki_page_content'),
               })
            editor.render();
-
-          var content = editor.codemirror.getValue();
-          contentObj = $('#wiki_page_content_content');
-          $('<span id="msg" class="ml-2"></span>').insertBefore(contentObj);
-
-          editor.codemirror.on('update', function(cm) {
-             (0 == content.localeCompare(editor.codemirror.getValue()))
-             ? $('#msg').html('').fadeIn(1600)
-             : $('#msg').html('<label class="text-danger">(modified)</label>').fadeIn(1600);
-          });
-
-          $(document).keydown(function(event) {
-            if((event.ctrlKey || event.metaKey) && event.which == 83) {
-              event.preventDefault();
-
-              var form = $(contentObj).closest('form');
-              $.ajax({
-                url: form.attr('action'),
-                type: form.attr('method'),
-                data: JSON.stringify({content: editor.codemirror.getValue()}),
-                success: function (html) {
-                  $('#msg').html('<label class="text-success">(Saved)</label>').fadeOut(1600);
-                  content = editor.codemirror.getValue();
-                }
-              });
-            };
-          });
         });
+      }
     </script>
 {% endblock %}

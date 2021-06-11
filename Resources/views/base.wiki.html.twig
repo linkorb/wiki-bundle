@@ -9,21 +9,41 @@
     </h4>
     {{ tocPage.content|markdown }}
     {% else %}
-    <h4>Pages</h4>
-    <ul>
-        {% for page in wiki.wikiPages %}
-            <li>
+      <h4>Pages</h4>
+
+      <ul class="list-unstyled">
+        {% macro macroPageTree(wikiPages , wiki) %}
+          {% import _self as macros %}
+
+          {% for  page in  wikiPages %}
+            <li style="white-space: nowrap;">
+                <i class="fa fa-angle-right fa-fw" aria-hidden="true"></i>
                 <a href="{{ path('wiki_page_view', {'wikiName': wiki.name, 'pageName': page.name} ) }}">{{ page.name }}</a>
+
+                 {% if page.getChildPages() %}
+                    <ul style="list-style: none; padding-left: 20px;" class="list-group">
+                        {{ macros.macroPageTree( page.getChildPages(), wiki) }}
+                    </ul>
+                 {% endif %}
+
             </li>
-        {% endfor %}
-    </ul>
+          {% endfor %}
+
+        {% endmacro %}
+        {% import _self as macros %}
+        {{ macros.macroPageTree(  wikiRecursivePages(wiki.id), wiki ) }}
+      </ul>
+
     {% endif %}
     <br /><br /><br />
+
 {% endblock %}
+
+
 {% block submenu %}
     <div style="background: #f8f8f8; border-bottom: 1px solid #fff; min-height: 50px; padding-top: 20px; min-height: 70px">
         <div class="container-fluid">
-        
+
             {% if wiki.name %}
             <div style="float: right;">
                 {% if is_granted('ROLE_SUPERUSER') %}

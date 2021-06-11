@@ -2,10 +2,11 @@
 
 namespace LinkORB\Bundle\WikiBundle\Form;
 
+use App\Validator\Constraint\CodeConstraint;
 use LinkORB\Bundle\WikiBundle\Entity\Wiki;
 use LinkORB\Bundle\WikiBundle\Repository\WikiRepository;
-use App\Validator\Constraint\CodeConstraint;
 use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
@@ -62,7 +63,15 @@ class WikiType extends AbstractType
                 'trim' => true,
                 'help' => 'ex. ROLE_EXAMPLE, ROLE_SUPERUSER',
             ])
-        ;
+            ->add('config', TextareaType::class, [
+                'required' => false,
+                'trim' => true,
+                'attr' => [
+                    'class' => 'ace-editor',
+                    'data-mode' => 'yaml',
+                    'data-lines' => '10',
+                ],
+            ]);
     }
 
     public function configureOptions(OptionsResolver $resolver)
