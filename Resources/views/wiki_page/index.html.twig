@@ -6,37 +6,6 @@
     <h1>All pages in this wiki</h1>
 
     <div class="row">
-        <div class="col-md-12">
-            <fieldset>
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>Name</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    {% for wikiPage in wikiPages %}
-                        <tr>
-                            <td>
-                                <i class="fa fa-file-o"></i>
-                                <a href="{{ path('wiki_page_view',{'wikiName': wiki.name, 'pageName': wikiPage.name}) }}">
-                                    {{ wikiPage.name }}
-                                </a>
-                            </td>
-                        </tr>
-                    {% else %}
-                        <tr>
-                            <td colspan="5">no pages found</td>
-                        </tr>
-                    {% endfor %}
-                    </tbody>
-                </table>
-            </fieldset>
-        </div>
-    </div>
-
-
-    <div class="row">
       <div class="col-md-12">
         <fieldset>
           <table class="table tree">
