@@ -20,6 +20,8 @@
                 <i class="fa fa-angle-right fa-fw" aria-hidden="true"></i>
                 <a href="{{ path('wiki_page_view', {'wikiName': wiki.name, 'pageName': page.name} ) }}">{{ page.name }}</a>
 
+                <a href="{{ path('wiki_page_add', {'wikiName': wiki.name, 'parentId': page.id } ) }}" class="float-right text-primary"><i class="fa fa-plus"></i></a>
+
                  {% if page.getChildPages() %}
                     <ul style="list-style: none; padding-left: 20px;" class="list-group">
                         {{ macros.macroPageTree( page.getChildPages(), wiki) }}

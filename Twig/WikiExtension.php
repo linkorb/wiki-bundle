@@ -27,7 +27,7 @@ class WikiExtension extends AbstractExtension
 
     public function wikiRecursivePages($wikiId)
     {
-        $wikiPages = $this->wikiPageService->getByWikiIdAndParentId($wikiId);
+        $wikiPages = $this->wikiPageService->getByWikiIdAndParentId((int) $wikiId);
 
         foreach ($wikiPages as $wikiPage) {
             $wikiPage->setChildPages($this->wikiPageService->recursiveChild($wikiPage));
