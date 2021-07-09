@@ -20,6 +20,8 @@
                 <i class="fa fa-angle-right fa-fw" aria-hidden="true"></i>
                 <a href="{{ path('wiki_page_view', {'wikiName': wiki.name, 'pageName': page.name} ) }}">{{ page.name }}</a>
 
+                <a href="{{ path('wiki_page_add', {'wikiName': wiki.name, 'parentId': page.id } ) }}" class="float-right text-primary"><i class="fa fa-plus"></i></a>
+
                  {% if page.getChildPages() %}
                     <ul style="list-style: none; padding-left: 20px;" class="list-group">
                         {{ macros.macroPageTree( page.getChildPages(), wiki) }}
@@ -67,6 +69,11 @@
                     <i class="fa fa-list" aria-hidden="true"></i>
                     List pages
                 </a>
+
+                <a href="{{ path('wiki_export',{'wikiName': wiki.name}) }}" class="btn btn-sm btn-secondary">
+                    <i class="fa fa-download" aria-hidden="true"></i> Export
+                </a>
+
                 {% if is_granted('ROLE_SUPERUSER') or writeRole %}
                 <a href="{{ path('wiki_page_add',{'wikiName': wiki.name}) }}" class="btn btn-sm btn-success">
                     <i class="fa fa-plus" aria-hidden="true"></i>
@@ -81,8 +88,18 @@
                     {{ wiki.name }}
                 </a>
                 {% if wikiPage is defined and wikiPage and wikiPage.name %}
+
+                  {% for wikiPageBreadcrumb in wikiPageBreadcrumbs(wiki.id, wikiPage.id) %}
                     /
-                    {{ wikiPage.name }}
+                    {% if loop.last %}
+                        {{ wikiPageBreadcrumb.name }}
+                    {% else %}
+                      <a href="{{ path('wiki_page_view',{'wikiName': wiki.name, 'pageName': wikiPageBreadcrumb.name }) }}">
+                        {{ wikiPageBreadcrumb.name }}
+                      </a>
+                    {% endif %}
+                  {% endfor %}
+
                 {% endif %}
             </h4>
             {% endif %}

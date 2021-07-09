@@ -22,17 +22,25 @@ class WikiExtension extends AbstractExtension
     {
         return [
             new TwigFunction('wikiRecursivePages', [$this, 'wikiRecursivePages']),
+            new TwigFunction('wikiPageBreadcrumbs', [$this, 'wikiPageBreadcrumbs']),
         ];
     }
 
     public function wikiRecursivePages($wikiId)
     {
-        $wikiPages = $this->wikiPageService->getByWikiIdAndParentId($wikiId);
+        $wikiPages = $this->wikiPageService->getByWikiIdAndParentId((int) $wikiId);
 
         foreach ($wikiPages as $wikiPage) {
             $wikiPage->setChildPages($this->wikiPageService->recursiveChild($wikiPage));
         }
 
         return $wikiPages;
+    }
+
+    public function wikiPageBreadcrumbs($wikiId, $wikiPageId)
+    {
+        $data = $this->wikiPageService->breadcrumbs((int) $wikiId, (int) $wikiPageId);
+
+        return $data;
     }
 }

@@ -67,4 +67,9 @@ class WikiPageRepository extends ServiceEntityRepository
     {
         return $this->findBy(['parent_id' => $parentId]);
     }
+
+    public function findOneByWikiIdAndId(int $wikiId, int $id)
+    {
+        return $this->findOneBy(['wiki' => $wikiId, 'id' => $id]);
+    }
 }

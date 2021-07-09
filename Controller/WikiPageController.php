@@ -56,6 +56,9 @@ class WikiPageController extends AbstractController
         if ($pageName) {
             $wikiPage->setName($pageName);
         }
+        if ($parentId = $request->query->get('parentId')) {
+            $wikiPage->setParentId($parentId);
+        }
 
         return $this->getEditForm($request, $wikiPage, $wikiEventService);
     }

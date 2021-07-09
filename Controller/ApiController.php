@@ -3,41 +3,35 @@
 namespace LinkORB\Bundle\WikiBundle\Controller;
 
 use LinkORB\Bundle\WikiBundle\Entity\Wiki;
-use LinkORB\Bundle\WikiBundle\Repository\WikiEventRepository;
-use LinkORB\Bundle\WikiBundle\Repository\WikiRepository;
+use LinkORB\Bundle\WikiBundle\Services\WikiService;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 
 /**
- * @Route("/wiki/{wikiName}/events")
+ * @Route("/api/v1")
  */
-class WikiEventController extends AbstractController
+class ApiController extends AbstractController
 {
-    /**
-     * @Route("", name="wiki_event_index")
-     */
-    public function indexAction($wikiName, WikiRepository $wikiRepository, WikiEventRepository $wikiEventRepository)
+    private function getJsonResponse(array $data, $code = Response::HTTP_OK): Response
     {
-        if (!$wiki = $wikiRepository->findOneByName($wikiName)) {
-            return $this->redirectToRoute('wiki_index');
-        }
+        return JsonResponse::fromJsonString(
+            json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES),
+            $code
+        );
+    }
 
-        $wikiEvents = $wikiEventRepository->findByWikiId($wiki->getId());
+    private function getErrorResponse($code, string $message): Response
+    {
+        $data = [];
+        $data['error'] = [
+            'code' => $code,
+            'message' => $message,
+        ];
 
-        if (!$wikiRoles = $this->getWikiPermission($wiki)) {
-            throw new AccessDeniedException('Access denied!');
-        }
-        if (!$wikiRoles['readRole']) {
-            throw new AccessDeniedException('Access denied!');
-        }
-
-        $wikiEvents = $wikiEventRepository->findByWikiId($wiki->getId());
-
-        return $this->render('@Wiki/wiki_event/index.html.twig', [
-            'wikiEvents' => $wikiEvents,
-            'wiki' => $wiki,
-        ]);
+        return $this->getJsonResponse($data, $code);
     }
 
     protected function getWikiPermission(Wiki $wiki)
@@ -76,5 +70,19 @@ class WikiEventController extends AbstractController
         }
 
         return $flag ? $wikiRoles : false;
+    }
+
+    /**
+     * @Route("/wiki/{wikiName}/export", name="wiki_bundle__api_wiki_export", methods="GET")
+     * @ParamConverter("wiki", options={"mapping"={"wikiName"="name"}})
+     */
+    public function wikiExportAction(Wiki $wiki, WikiService $wikiService): Response
+    {
+        if (!$wikiRoles = $this->getWikiPermission($wiki)) {
+            $this->getErrorResponse('Access denied!', Response::HTTP_UNAUTHORIZED);
+        }
+        $data = $wikiService->export($wiki);
+
+        return $this->getJsonResponse($data);
     }
 }
