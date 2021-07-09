@@ -8,6 +8,7 @@ use LinkORB\Bundle\WikiBundle\Repository\WikiPageRepository;
 class WikiPageService
 {
     private $wikiPageRepository;
+    private $chain = [];
 
     public function __construct(WikiPageRepository $wikiPageRepository)
     {
@@ -61,5 +62,29 @@ class WikiPageService
         }
 
         return $childPages;
+    }
+
+    public function getChain(int $wikiId, WikiPage $wikiPage)
+    {
+        array_unshift($this->chain, $wikiPage);
+
+        if ($wikiPage->getParentId()) {
+            $parentWikiPage = $this->wikiPageRepository->findOneByWikiIdAndId($wikiId, $wikiPage->getParentId());
+            $this->getChain($wikiId, $parentWikiPage);
+        }
+
+        return $this->chain;
+    }
+
+    public function breadcrumbs(int $wikiId, int $wikiPageId): array
+    {
+        $this->chain = array();
+
+        $wikiPage = $this->wikiPageRepository->findOneByWikiIdAndId($wikiId, $wikiPageId);
+
+        $this->getChain($wikiId, $wikiPage);
+
+        return $this->chain;
+
     }
 }

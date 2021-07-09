@@ -7,10 +7,12 @@ use LinkORB\Bundle\WikiBundle\Form\WikiType;
 use LinkORB\Bundle\WikiBundle\Repository\WikiRepository;
 use LinkORB\Bundle\WikiBundle\Services\WikiEventService;
 use LinkORB\Bundle\WikiBundle\Services\WikiPageService;
+use LinkORB\Bundle\WikiBundle\Services\WikiService;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\Component\Routing\Annotation\Route;
 
 /**
@@ -177,7 +179,7 @@ class WikiController extends AbstractController
      * @Route("/{wikiName}", name="wiki_view", methods="GET")
      * @ParamConverter("wiki", options={"mapping"={"wikiName"="name"}})
      */
-    public function view(Wiki $wiki, WikiPageService $wikiPageService): Response
+    public function viewAction(Wiki $wiki, WikiPageService $wikiPageService): Response
     {
         if (!$wikiRoles = $this->getWikiPermission($wiki)) {
             throw new AccessDeniedException('Access denied!');
@@ -200,5 +202,29 @@ class WikiController extends AbstractController
         $data['wiki'] = $wiki;
 
         return $this->render('@Wiki/wiki_page/index.html.twig', $data);
+    }
+
+    /**
+     * @Route("/{wikiName}/export", name="wiki_export", methods="GET")
+     * @ParamConverter("wiki", options={"mapping"={"wikiName"="name"}})
+     */
+    public function exportAction(Wiki $wiki, WikiService $wikiService): Response
+    {
+        if (!$wikiRoles = $this->getWikiPermission($wiki)) {
+            throw new AccessDeniedException('Access denied!');
+        }
+
+        $json = json_encode($wikiService->export($wiki), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+
+        $filename = $wiki->getName().'.json';
+        $response = new Response($json);
+        $disposition = $response->headers->makeDisposition(
+            ResponseHeaderBag::DISPOSITION_ATTACHMENT,
+            $filename
+        );
+
+        $response->headers->set('Content-Disposition', $disposition);
+
+        return $response;
     }
 }

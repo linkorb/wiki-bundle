@@ -23,17 +23,19 @@ class WikiEventService
 
     public function createEvent($type, $wikiId, $data, $wikiPageId = null)
     {
-        $user = $this->tokenStorage->getToken()->getUser();
+
+        $username = ($this->tokenStorage->getToken())
+            ? $this->tokenStorage->getToken()->getUser()->getUsername()
+            : '';
 
         $wikiEvent = new WikiEvent();
         $wikiEvent
             ->setCreatedAt(time())
-            ->setCreatedBy($user->getUsername())
+            ->setCreatedBy($username)
             ->setType($type)
             ->setWikiId($wikiId)
             ->setWikiPageId($wikiPageId)
-            ->setData($data)
-        ;
+            ->setData($data);
 
         $this->em->persist($wikiEvent);
         $this->em->flush();

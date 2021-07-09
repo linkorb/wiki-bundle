@@ -22,6 +22,7 @@ class WikiExtension extends AbstractExtension
     {
         return [
             new TwigFunction('wikiRecursivePages', [$this, 'wikiRecursivePages']),
+            new TwigFunction('wikiPageBreadcrumbs', [$this, 'wikiPageBreadcrumbs']),
         ];
     }
 
@@ -34,5 +35,12 @@ class WikiExtension extends AbstractExtension
         }
 
         return $wikiPages;
+    }
+
+    public function wikiPageBreadcrumbs($wikiId, $wikiPageId)
+    {
+        $data = $this->wikiPageService->breadcrumbs((int) $wikiId, (int) $wikiPageId);
+
+        return $data;
     }
 }
