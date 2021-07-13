@@ -50,11 +50,14 @@ class WikiService
     {
         $array = [];
         foreach ($wiki->getWikiPages() as $wikiPage) {
-            $array[] = [
+
+            $parentWikiPage = $this->wikiPageRepository->find($wikiPage->getParentId());
+
+            $array[$wikiPage->getName()] = [
                 'name' => $wikiPage->getName(),
                 'content' => $wikiPage->getContent(),
                 'data' => $wikiPage->getData(),
-                'parentId' => $wikiPage->getParentId()
+                'parent' => $parentWikiPage? $parentWikiPage->getName(): null
             ];
         }
 
