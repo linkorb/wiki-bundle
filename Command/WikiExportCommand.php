@@ -46,5 +46,7 @@ class WikiExportCommand extends Command
 
         $json = json_encode($this->wikiService->export($wiki), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
         $output->writeln($json);
+
+        return 0;
     }
 }
