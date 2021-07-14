@@ -94,7 +94,9 @@ class WikiService
 
             if (!$wikiPage = $this->wikiPageRepository->findOneByWikiIdAndName($wiki->getId(), $wikiPageArray['name'])) {
                 $wikiPage = new WikiPage();
-                $wikiPage->setName($wikiArray['name']);
+                $wikiPage
+                    ->setName($wikiArray['name'])
+                    ->setWiki($wiki);
 
                 $type = 'page.created';
             }
