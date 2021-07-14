@@ -40,7 +40,7 @@ class WikiService
             'readRole' => $wiki->getReadRole(),
             'writeRole' => $wiki->getWriteRole(),
             'config' => $wiki->getConfig(),
-            'pages' => $this->wikiPages($wiki)
+            'pages' => $this->wikiPages($wiki),
         ];
 
         return $array;
@@ -50,20 +50,18 @@ class WikiService
     {
         $array = [];
         foreach ($wiki->getWikiPages() as $wikiPage) {
-
             $parentWikiPage = $this->wikiPageRepository->find($wikiPage->getParentId());
 
             $array[$wikiPage->getName()] = [
                 'name' => $wikiPage->getName(),
                 'content' => $wikiPage->getContent(),
                 'data' => $wikiPage->getData(),
-                'parent' => $parentWikiPage? $parentWikiPage->getName(): null
+                'parent' => $parentWikiPage ? $parentWikiPage->getName() : null,
             ];
         }
 
         return $array;
     }
-
 
     public function import(Wiki $wiki, array $wikiArray)
     {
@@ -88,7 +86,6 @@ class WikiService
         );
 
         foreach ($wikiArray['pages'] as $wikiPageArray) {
-
             $type = 'page.updated';
 
             if (!$wikiPage = $this->wikiPageRepository->findOneByWikiIdAndName($wiki->getId(), $wikiPageArray['name'])) {
@@ -98,10 +95,17 @@ class WikiService
                 $type = 'page.created';
             }
 
+            $parentId = 0;
+            if (!empty($wikiPageArray['parent'])) {
+                if ($parentWikiPage = $this->wikiPageRepository->findOneByWikiIdAndName($wiki->getId(), $wikiPageArray['parent'])) {
+                    $parentId = $parentWikiPage->getId();
+                }
+            }
+
             $wikiPage
                 ->setContent($wikiPageArray['content'])
                 ->setData($wikiPageArray['data'])
-                ->setParentId($wikiPageArray['parentId']);
+                ->setParentId($parentId);
 
             $this->em->persist($wikiPage);
             $this->em->flush();
