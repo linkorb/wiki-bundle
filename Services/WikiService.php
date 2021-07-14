@@ -60,6 +60,10 @@ class WikiService
             ];
         }
 
+        usort($array, function ($a, $b) {
+            return $a['parent'] ? 1 : 0;
+        });
+
         return $array;
     }
 
