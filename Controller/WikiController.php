@@ -20,12 +20,19 @@ use Symfony\Component\Routing\Annotation\Route;
  */
 class WikiController extends AbstractController
 {
+    private $wikiRepository;
+
+    public function __construct(WikiRepository $wikiRepository)
+    {
+        $this->wikiRepository = $wikiRepository;
+    }
+
     /**
      * @Route("", name="wiki_index", methods="GET")
      */
-    public function indexAction(WikiRepository $wikiRepository): Response
+    public function indexAction(): Response
     {
-        $wikis = $wikiRepository->findAll();
+        $wikis = $this->wikiRepository->findAll();
 
         $wikiArray = [];
         foreach ($wikis as $wiki) {
@@ -52,6 +59,7 @@ class WikiController extends AbstractController
     public function addAction(Request $request, WikiEventService $wikiEventService): Response
     {
         $wiki = new Wiki();
+        $wiki->setName($request->get('wikiname'));
 
         return $this->getEditForm($request, $wiki, $wikiEventService);
     }
@@ -177,10 +185,16 @@ class WikiController extends AbstractController
 
     /**
      * @Route("/{wikiName}", name="wiki_view", methods="GET")
-     * @ParamConverter("wiki", options={"mapping"={"wikiName"="name"}})
+     * ParamConverter("wiki", options={"mapping"={"wikiName"="name"}})
      */
-    public function viewAction(Wiki $wiki, WikiPageService $wikiPageService): Response
+    public function viewAction(WikiPageService $wikiPageService, $wikiName): Response
     {
+        if (!$wiki = $this->wikiRepository->findOneByName($wikiName)) {
+            return $this->render(
+                '@Wiki/wiki/new.html.twig',
+                ['wikiName' => $wikiName]
+            );
+        }
         if (!$wikiRoles = $this->getWikiPermission($wiki)) {
             throw new AccessDeniedException('Access denied!');
         }
