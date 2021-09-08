@@ -72,4 +72,25 @@ class WikiPageRepository extends ServiceEntityRepository
     {
         return $this->findOneBy(['wiki' => $wikiId, 'id' => $id]);
     }
+
+    public function searWikiPages(string $text, array $wikiIds)
+    {
+        return $this->_em->createQueryBuilder()
+            ->from(WikiPage::class, 'wp')
+            ->select('wp,
+                CASE
+                    WHEN wp.name LIKE :val THEN 3
+                    WHEN wp.content LIKE :val THEN 2
+                    WHEN wp.data LIKE :val THEN 1
+                ELSE 0
+                END as points
+            ')
+            ->setParameter('val', '%'.$text.'%')
+            ->andHaving('points > 0')
+            ->orderBy('points', 'DESC')
+            ->where('wp.wiki IN(:wikIds)')
+            ->setParameter('wikIds', array_values($wikiIds))
+            ->getQuery()
+            ->getResult();
+    }
 }

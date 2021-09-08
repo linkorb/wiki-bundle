@@ -78,13 +78,12 @@ class WikiPageService
 
     public function breadcrumbs(int $wikiId, int $wikiPageId): array
     {
-        $this->chain = array();
+        $this->chain = [];
 
         $wikiPage = $this->wikiPageRepository->findOneByWikiIdAndId($wikiId, $wikiPageId);
 
         $this->getChain($wikiId, $wikiPage);
 
         return $this->chain;
-
     }
 }

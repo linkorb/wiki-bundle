@@ -27,6 +27,11 @@ class WikiService
         $this->wikiEventService = $wikiEventService;
     }
 
+    public function getAllWikis()
+    {
+        return $this->wikiRepository->findAll();
+    }
+
     public function getWikiByName(string $wikiName)
     {
         return $this->wikiRepository->findOneByName($wikiName);
@@ -127,5 +132,10 @@ class WikiService
                 $wikiPage->getId()
             );
         }
+    }
+
+    public function searchWiki(string $text, array $wikiIds)
+    {
+        return $this->wikiPageRepository->searWikiPages($text, $wikiIds);
     }
 }

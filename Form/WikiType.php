@@ -35,6 +35,11 @@ class WikiType extends AbstractType
                     new Assert\NotBlank(),
                     // TODO: resolve this
                     // new CodeConstraint(),
+                    new Assert\Regex([
+                        'pattern' => '/^[a-z0-9\-_]+$/',
+                        'htmlPattern' => '^[a-z0-9\-_]+$',
+                        'message' => 'The string {{ value }} contains an illegal character: it can only contain small letters, numbers, - and _ sign',
+                    ]),
                     new Assert\Callback(
                         function ($name, ExecutionContext $context) use ($wikiRepository, $entity) {
                             if ($findEntity = $wikiRepository->findOneByName($name)) {

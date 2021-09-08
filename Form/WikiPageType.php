@@ -3,6 +3,7 @@
 namespace LinkORB\Bundle\WikiBundle\Form;
 
 use App\Validator\Constraint\CodeConstraint;
+use LinkORB\Bundle\WikiBundle\Entity\Wiki;
 use LinkORB\Bundle\WikiBundle\Entity\WikiPage;
 use LinkORB\Bundle\WikiBundle\Services\WikiPageService;
 use Symfony\Component\Form\AbstractType;
@@ -23,9 +24,24 @@ class WikiPageType extends AbstractType
         $this->wikiPageService = $wikiPageService;
     }
 
+    protected function pageTemplates(Wiki $wiki): array
+    {
+        $array = [];
+
+        foreach ($wiki->getWikiPages() as $wikiPage) {
+            $array[$wikiPage->getId()] = $wikiPage->getName();
+        }
+
+        asort($array);
+
+        return $array;
+    }
+
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
         $entity = $options['data'];
+
+        $arrayPageTemplates = $this->pageTemplates($entity->getWiki());
 
         $parentArray = $this->wikiPageService->pageRecursiveArray($entity->getWiki()->getId(), 0, (int) $entity->getId());
 
@@ -39,6 +55,11 @@ class WikiPageType extends AbstractType
                     new Assert\NotBlank(),
                     // TODO: Resolve this
                     // new CodeConstraint(),
+                    new Assert\Regex([
+                        'pattern' => '/^[a-z0-9\-]+$/',
+                        'htmlPattern' => '^[a-z0-9\-_]+$',
+                        'message' => 'The string {{ value }} contains an illegal character: it can only contain small letters, numbers and - sign',
+                    ]),
                     new Assert\Callback(
                         function ($name, ExecutionContext $context) use ($entity) {
                             if ($findEntity = $this->wikiPageService->getOneByWikiIdAndPageName($entity->getWiki()->getId(), $name)) {
@@ -58,11 +79,23 @@ class WikiPageType extends AbstractType
                 'choices' => array_flip($parentArray),
             ]);
 
+        /*
         if (!$entity->getId()) {
             $builder
                 ->add('content', TextareaType::class, [
                     'required' => false,
                     'trim' => true,
+                ]);
+        }
+        */
+        if (!$entity->getId()) {
+            $builder
+                ->add('page_template', ChoiceType::class, [
+                    'required' => false,
+                    'trim' => true,
+                    'mapped' => false,
+                    'placeholder' => '- no template selected-',
+                    'choices' => array_flip($arrayPageTemplates),
                 ]);
         }
 

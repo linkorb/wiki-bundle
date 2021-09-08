@@ -52,8 +52,8 @@ class WikiPageController extends AbstractController
     {
         $wikiPage = new WikiPage();
         $wikiPage->setWiki($wiki);
-        $pageName = $request->query->get('pageName');
-        if ($pageName) {
+
+        if ($pageName = $request->query->get('pageName')) {
             $wikiPage->setName($pageName);
         }
         if ($parentId = $request->query->get('parentId')) {
@@ -230,6 +230,14 @@ class WikiPageController extends AbstractController
 
         if ($form->isSubmitted() && $form->isValid()) {
             $wikiPage->setParentId((int) $wikiPage->getParentId());
+
+            if ($add) {
+                if ($pageTemplateId = (int) $form->get('page_template')->getData()) {
+                    if ($wikiPageTemplate = $this->wikiPageRepository->find($pageTemplateId)) {
+                        $wikiPage->setContent($wikiPageTemplate->getContent());
+                    }
+                }
+            }
 
             $em = $this->getDoctrine()->getManager();
             $em->persist($wikiPage);

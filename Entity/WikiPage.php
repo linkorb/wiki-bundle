@@ -42,6 +42,9 @@ class WikiPage
      */
     private $parent_id;
 
+    /* private variable */
+    private $points;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -123,6 +126,26 @@ class WikiPage
     public function setChildPages(array $childPages): self
     {
         $this->childPages = $childPages;
+
+        return $this;
+    }
+
+    /**
+     * Get the value of points.
+     */
+    public function getPoints()
+    {
+        return $this->points;
+    }
+
+    /**
+     * Set the value of points.
+     *
+     * @return self
+     */
+    public function setPoints($points)
+    {
+        $this->points = $points;
 
         return $this;
     }

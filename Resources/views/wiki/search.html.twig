@@ -1,0 +1,56 @@
+{% extends '@Wiki/base.html.twig' %}
+{% form_theme form 'bootstrap_4_layout.html.twig' %}
+
+{% block title %}Wiki Search{% endblock %}
+
+{% block body %}
+
+<h1>Wiki Search</h1>
+<div style="clear: both"></div>
+
+{{ form_start(form) }}
+    <div class="row">
+
+        <div class="col-md-6">
+          {{ form_widget(form.search) }}
+        </div>
+        <div class="col-md-3">
+          {{ form_widget(form.wikiname) }}
+        </div>
+        <div class="col-md-3">
+          <button class="btn btn-sm btn-primary"><i class="fa fa-search fa-fws"></i> {{ button_label|default('Search') }}</button>
+          <a href="{{ path('wiki_search') }}" class="btn btn-sm btn-secondary"><i class="fa fa-eraser" ></i> Clear</a>
+        </div>
+
+    </div>
+    {{ form_end(form) }}
+
+  {% if wikiPages %}
+    <fieldset>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Page Name</th>
+                    <th>Wiki Name</th>
+                    <th>Points</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for wikiPage in wikiPages %}
+                <tr>
+                  <td>
+                    <i class="fa fa-file-o"></i>
+                    <a href="{{ path('wiki_page_view',{'wikiName': wikiPage.wiki.name, 'pageName': wikiPage.name}) }}">
+                        {{ wikiPage.name }}
+                    </a>
+                  </td>
+                  <td>{{ wikiPage.wiki.name }}</td>
+                  <td>{{ wikiPage.points }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+        </table>
+    </fieldset>
+  {% endif %}
+
+{% endblock %}

@@ -16,9 +16,9 @@
           {% import _self as macros %}
 
           {% for  page in  wikiPages %}
-            <li style="white-space: nowrap;">
+            <li style="white-space: nowrap;" class="text-truncate">
                 <i class="fa fa-angle-right fa-fw" aria-hidden="true"></i>
-                <a href="{{ path('wiki_page_view', {'wikiName': wiki.name, 'pageName': page.name} ) }}">{{ page.name }}</a>
+                <a href="{{ path('wiki_page_view', {'wikiName': wiki.name, 'pageName': page.name} ) }}" title="{{ page.name }}">{{ page.name }}</a>
 
                 <a href="{{ path('wiki_page_add', {'wikiName': wiki.name, 'parentId': page.id } ) }}" class="float-right text-primary"><i class="fa fa-plus"></i></a>
 
@@ -87,7 +87,7 @@
                 <a href="{{ path('wiki_view', {'wikiName': wiki.name } ) }}">
                     {{ wiki.name }}
                 </a>
-                {% if wikiPage is defined and wikiPage and wikiPage.name %}
+                {% if wikiPage is defined and wikiPage and wikiPage.id %}
 
                   {% for wikiPageBreadcrumb in wikiPageBreadcrumbs(wiki.id, wikiPage.id) %}
                     /

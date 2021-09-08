@@ -3,29 +3,38 @@
 namespace LinkORB\Bundle\WikiBundle\Controller;
 
 use LinkORB\Bundle\WikiBundle\Entity\Wiki;
+use LinkORB\Bundle\WikiBundle\Form\WikiSearchType;
 use LinkORB\Bundle\WikiBundle\Form\WikiType;
-use LinkORB\Bundle\WikiBundle\Repository\WikiRepository;
 use LinkORB\Bundle\WikiBundle\Services\WikiEventService;
 use LinkORB\Bundle\WikiBundle\Services\WikiPageService;
 use LinkORB\Bundle\WikiBundle\Services\WikiService;
+use RuntimeException;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 
 /**
  * @Route("/wiki")
  */
 class WikiController extends AbstractController
 {
+    private $wikiService;
+
+    public function __construct(WikiService $wikiService)
+    {
+        $this->wikiService = $wikiService;
+    }
+
     /**
      * @Route("", name="wiki_index", methods="GET")
      */
-    public function indexAction(WikiRepository $wikiRepository): Response
+    public function indexAction(): Response
     {
-        $wikis = $wikiRepository->findAll();
+        $wikis = $this->wikiService->getAllWikis();
 
         $wikiArray = [];
         foreach ($wikis as $wiki) {
@@ -52,8 +61,62 @@ class WikiController extends AbstractController
     public function addAction(Request $request, WikiEventService $wikiEventService): Response
     {
         $wiki = new Wiki();
+        if ($request->get('wikiname')) {
+            $wiki->setName($request->get('wikiname'));
+        }
 
         return $this->getEditForm($request, $wiki, $wikiEventService);
+    }
+
+    /**
+     * @Route("/search", name="wiki_search", methods="GET|POST")
+     */
+    public function serchAction(Request $request): Response
+    {
+        $wikiArray = [];
+        $wikiIds = [];
+        $wikiPages = [];
+
+        foreach ($this->wikiService->getAllWikis() as $wiki) {
+            if ($wikiRoles = $this->getWikiPermission($wiki)) {
+                if ($wikiRoles['readRole']) {
+                    $wikiArray[$wiki->getName()] = $wiki->getName();
+                    $wikiIds[] = $wiki->getId();
+                }
+            }
+        }
+
+        asort($wikiArray);
+        $form = $this->createForm(WikiSearchType::class, null, ['method' => 'GET', 'csrf_protection' => false, 'wikiArray' => $wikiArray]);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $formData = $form->getData();
+
+            if (!empty($formData['wikiname'])) {
+                if (!$wiki = $this->wikiService->getWikiByName($formData['wikiname'])) {
+                    throw new RuntimeException('Wiki '.$formData['wikiname'].'not found', Response::HTTP_NOT_FOUND);
+                }
+                if (!$wikiRoles = $this->getWikiPermission($wiki)) {
+                    throw new AccessDeniedException('Access denied!');
+                }
+                $wikiIds = [$wiki->getId()];
+            }
+
+            $wikiPageResults = $this->wikiService->searchWiki($formData['search'], $wikiIds);
+
+            $wikiPages = [];
+            foreach ($wikiPageResults as $wikiPageResult) {
+                $tmpVar = $wikiPageResult[0];
+                $tmpVar->setPoints($wikiPageResult['points']);
+                $wikiPages[] = $tmpVar;
+            }
+        }
+
+        return $this->render('@Wiki/wiki/search.html.twig', [
+            'form' => $form->createView(),
+            'wikiPages' => $wikiPages,
+        ]);
     }
 
     /**
@@ -177,10 +240,16 @@ class WikiController extends AbstractController
 
     /**
      * @Route("/{wikiName}", name="wiki_view", methods="GET")
-     * @ParamConverter("wiki", options={"mapping"={"wikiName"="name"}})
+     * ParamConverter("wiki", options={"mapping"={"wikiName"="name"}})
      */
-    public function viewAction(Wiki $wiki, WikiPageService $wikiPageService): Response
+    public function viewAction(WikiPageService $wikiPageService, $wikiName): Response
     {
+        if (!$wiki = $this->wikiService->getWikiByName($wikiName)) {
+            return $this->render(
+                '@Wiki/wiki/new.html.twig',
+                ['wikiName' => $wikiName]
+            );
+        }
         if (!$wikiRoles = $this->getWikiPermission($wiki)) {
             throw new AccessDeniedException('Access denied!');
         }
