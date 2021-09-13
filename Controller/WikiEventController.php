@@ -5,6 +5,7 @@ namespace LinkORB\Bundle\WikiBundle\Controller;
 use LinkORB\Bundle\WikiBundle\Entity\Wiki;
 use LinkORB\Bundle\WikiBundle\Repository\WikiEventRepository;
 use LinkORB\Bundle\WikiBundle\Repository\WikiRepository;
+use LinkORB\Bundle\WikiBundle\Services\WikiService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
@@ -14,6 +15,13 @@ use Symfony\Component\Security\Core\Exception\AccessDeniedException;
  */
 class WikiEventController extends AbstractController
 {
+    private $wikiService;
+
+    public function __construct(WikiService $wikiService)
+    {
+        $this->wikiService = $wikiService;
+    }
+
     /**
      * @Route("", name="wiki_event_index")
      */
@@ -25,7 +33,7 @@ class WikiEventController extends AbstractController
 
         $wikiEvents = $wikiEventRepository->findByWikiId($wiki->getId());
 
-        if (!$wikiRoles = $this->getWikiPermission($wiki)) {
+        if (!$wikiRoles = $this->wikiService->getWikiPermission($wiki)) {
             throw new AccessDeniedException('Access denied!');
         }
         if (!$wikiRoles['readRole']) {
@@ -34,47 +42,10 @@ class WikiEventController extends AbstractController
 
         $wikiEvents = $wikiEventRepository->findByWikiId($wiki->getId());
 
-        return $this->render('@Wiki/wiki_event/index.html.twig', [
-            'wikiEvents' => $wikiEvents,
-            'wiki' => $wiki,
-        ]);
-    }
+        $data = $wikiRoles;
+        $data['wikiEvents'] = $wikiEvents;
+        $data['wiki'] = $wiki;
 
-    protected function getWikiPermission(Wiki $wiki)
-    {
-        $wikiRoles = ['readRole' => false, 'writeRole' => false];
-        $flag = false;
-
-        if ($this->isGranted('ROLE_SUPERUSER')) {
-            $wikiRoles['readRole'] = true;
-            $wikiRoles['writeRole'] = true;
-            $flag = true;
-        } else {
-            if (!empty($wiki->getReadRole())) {
-                $readArray = explode(',', $wiki->getReadRole());
-                array_walk($readArray, 'trim');
-
-                foreach ($readArray as $read) {
-                    if ($this->isGranted($read)) {
-                        $wikiRoles['readRole'] = true;
-                        $flag = true;
-                    }
-                }
-            }
-
-            if (!empty($wiki->getWriteRole())) {
-                $writeArray = explode(',', $wiki->getWriteRole());
-                array_walk($writeArray, 'trim');
-
-                foreach ($writeArray as $write) {
-                    if ($this->isGranted($write)) {
-                        $flag = true;
-                        $wikiRoles['writeRole'] = true;
-                    }
-                }
-            }
-        }
-
-        return $flag ? $wikiRoles : false;
+        return $this->render('@Wiki/wiki_event/index.html.twig', $data);
     }
 }

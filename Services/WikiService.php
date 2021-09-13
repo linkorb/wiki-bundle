@@ -7,6 +7,7 @@ use LinkORB\Bundle\WikiBundle\Entity\Wiki;
 use LinkORB\Bundle\WikiBundle\Repository\WikiPageRepository;
 use LinkORB\Bundle\WikiBundle\Repository\WikiRepository;
 use Proxies\__CG__\LinkORB\Bundle\WikiBundle\Entity\WikiPage;
+use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 
 class WikiService
 {
@@ -14,17 +15,20 @@ class WikiService
     private $wikiPageRepository;
     private $em;
     private $wikiEventService;
+    private $authorizationChecker;
 
     public function __construct(
         WikiRepository $wikiRepository,
         WikiPageRepository $wikiPageRepository,
         EntityManagerInterface $em,
-        WikiEventService $wikiEventService
+        WikiEventService $wikiEventService,
+        AuthorizationCheckerInterface $authorizationChecker
     ) {
         $this->wikiRepository = $wikiRepository;
         $this->wikiPageRepository = $wikiPageRepository;
         $this->em = $em;
         $this->wikiEventService = $wikiEventService;
+        $this->authorizationChecker = $authorizationChecker;
     }
 
     public function getAllWikis()
@@ -137,5 +141,43 @@ class WikiService
     public function searchWiki(string $text, array $wikiIds)
     {
         return $this->wikiPageRepository->searWikiPages($text, $wikiIds);
+    }
+
+    public function getWikiPermission(Wiki $wiki)
+    {
+        $wikiRoles = ['readRole' => false, 'writeRole' => false];
+        $flag = false;
+
+        if ($this->authorizationChecker->isGranted('ROLE_SUPERUSER')) {
+            $wikiRoles['readRole'] = true;
+            $wikiRoles['writeRole'] = true;
+            $flag = true;
+        } else {
+            if (!empty($wiki->getReadRole())) {
+                $readArray = explode(',', $wiki->getReadRole());
+                $readArray = array_map('trim', $readArray);
+
+                foreach ($readArray as $read) {
+                    if ($this->authorizationChecker->isGranted($read)) {
+                        $wikiRoles['readRole'] = true;
+                        $flag = true;
+                    }
+                }
+            }
+
+            if (!empty($wiki->getWriteRole())) {
+                $writeArray = explode(',', $wiki->getWriteRole());
+                $writeArray = array_map('trim', $writeArray);
+
+                foreach ($writeArray as $write) {
+                    if ($this->authorizationChecker->isGranted($write)) {
+                        $flag = true;
+                        $wikiRoles['writeRole'] = true;
+                    }
+                }
+            }
+        }
+
+        return $flag ? $wikiRoles : false;
     }
 }
