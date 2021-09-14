@@ -42,6 +42,6 @@ class WikiSearchType extends AbstractType
     // This function was to be ovveridden
     public function getBlockPrefix()
     {
-        return null;
+        return '';
     }
 }
