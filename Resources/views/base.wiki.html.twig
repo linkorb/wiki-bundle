@@ -16,11 +16,14 @@
           {% import _self as macros %}
 
           {% for  page in  wikiPages %}
-            <li style="white-space: nowrap;" class="text-truncate">
+            <li class="text-truncate">
                 <i class="fa fa-angle-right fa-fw" aria-hidden="true"></i>
-                <a href="{{ path('wiki_page_view', {'wikiName': wiki.name, 'pageName': page.name} ) }}" title="{{ page.name }}">{{ page.name }}</a>
 
                 <a href="{{ path('wiki_page_add', {'wikiName': wiki.name, 'parentId': page.id } ) }}" class="float-right text-primary"><i class="fa fa-plus"></i></a>
+
+                <a href="{{ path('wiki_page_view', {'wikiName': wiki.name, 'pageName': page.name} ) }}" title="{{ page.name }}">{{ page.name }}</a>
+
+
 
                  {% if page.getChildPages() %}
                     <ul style="list-style: none; padding-left: 20px;" class="list-group">
@@ -48,6 +51,11 @@
 
             {% if wiki.name %}
             <div style="float: right;">
+
+                <a href="{{ path('wiki_search',{ 'wikiName': wiki.name }) }}" class="btn btn-sm btn-secondary">
+                  <i class="fa fa-search" aria-hidden="true"></i> Search
+                </a>
+
                 {% if is_granted('ROLE_SUPERUSER') %}
 
                 <div class="dropdown" style="display: inline; margin-right: 8px">
@@ -55,12 +63,15 @@
                     Admin
                     </button>
                     <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                    <a href="{{ path('wiki_edit', {'wikiName': wiki.name}) }}" class="dropdown-item">
-                        <i class="fa fa-edit"></i> Wiki settings
-                    </a>
-                    <a href="{{ path('wiki_event_index', {'wikiName': wiki.name}) }}" class="dropdown-item">
-                        <i class="fa fa-calendar" aria-hidden="true"></i> Events
-                    </a>
+                      <a href="{{ path('wiki_edit', {'wikiName': wiki.name}) }}" class="dropdown-item">
+                          <i class="fa fa-edit"></i> Wiki settings
+                      </a>
+                      <a href="{{ path('wiki_event_index', {'wikiName': wiki.name}) }}" class="dropdown-item">
+                          <i class="fa fa-calendar" aria-hidden="true"></i> Events
+                      </a>
+                      <a href="{{ path('wiki_export',{'wikiName': wiki.name}) }}" class="dropdown-item">
+                        <i class="fa fa-download" aria-hidden="true"></i> Export
+                      </a>
                     </div>
                 </div>
                 {% endif %}
@@ -68,10 +79,6 @@
                 <a href="{{ path('wiki_page_index',{'wikiName': wiki.name}) }}" class="btn btn-sm btn-secondary">
                     <i class="fa fa-list" aria-hidden="true"></i>
                     List pages
-                </a>
-
-                <a href="{{ path('wiki_export',{'wikiName': wiki.name}) }}" class="btn btn-sm btn-secondary">
-                    <i class="fa fa-download" aria-hidden="true"></i> Export
                 </a>
 
                 {% if is_granted('ROLE_SUPERUSER') or writeRole %}

@@ -14,7 +14,12 @@
           </a>
         {% endif %}
 
+        {% if wikiPage.id %}
         <button class="btn btn-success">{{ button_label|default('Save') }}</button>
+        {% else %}
+          <button class="btn btn-success">{{ button_label|default('Create page') }}</button>
+        {% endif %}
+
     </div>
 
     <h1>Advanced </h1>
