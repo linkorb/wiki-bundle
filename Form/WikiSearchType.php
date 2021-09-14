@@ -23,7 +23,7 @@ class WikiSearchType extends AbstractType
                     'placeholder' => 'Search',
                 ],
             ])
-            ->add('wikiname', ChoiceType::class, [
+            ->add('wikiName', ChoiceType::class, [
                 'required' => false,
                 'trim' => true,
                 'label' => false,
@@ -37,5 +37,11 @@ class WikiSearchType extends AbstractType
         $resolver->setDefaults([
             'wikiArray' => 'wikiArray',
         ]);
+    }
+
+    // This function was to be ovveridden
+    public function getBlockPrefix()
+    {
+        return null;
     }
 }

@@ -6,6 +6,7 @@ use App\Validator\Constraint\CodeConstraint;
 use LinkORB\Bundle\WikiBundle\Entity\Wiki;
 use LinkORB\Bundle\WikiBundle\Entity\WikiPage;
 use LinkORB\Bundle\WikiBundle\Services\WikiPageService;
+use LinkORB\Bundle\WikiBundle\Services\WikiService;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
@@ -18,12 +19,22 @@ use Symfony\Component\Validator\Context\ExecutionContext;
 class WikiPageType extends AbstractType
 {
     private $wikiPageService;
+    private $arrayPageTemplates = [];
 
-    public function __construct(WikiPageService $wikiPageService)
+    public function __construct(WikiService $wikiService, WikiPageService $wikiPageService)
     {
         $this->wikiPageService = $wikiPageService;
+
+        if ($wikiTemplate = $wikiService->getWikiByName('templates')) {
+            foreach ($wikiTemplate->getWikiPages() as $wikiPage) {
+                $this->arrayPageTemplates[$wikiPage->getId()] = $wikiPage->getName();
+            }
+
+            asort($this->arrayPageTemplates);
+        }
     }
 
+    /*
     protected function pageTemplates(Wiki $wiki): array
     {
         $array = [];
@@ -36,13 +47,11 @@ class WikiPageType extends AbstractType
 
         return $array;
     }
+    */
 
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
         $entity = $options['data'];
-
-        $arrayPageTemplates = $this->pageTemplates($entity->getWiki());
-
         $parentArray = $this->wikiPageService->pageRecursiveArray($entity->getWiki()->getId(), 0, (int) $entity->getId());
 
         $builder
@@ -56,9 +65,9 @@ class WikiPageType extends AbstractType
                     // TODO: Resolve this
                     // new CodeConstraint(),
                     new Assert\Regex([
-                        'pattern' => '/^[a-z0-9\-]+$/',
+                        'pattern' => '/^[a-z0-9\-_]+$/',
                         'htmlPattern' => '^[a-z0-9\-_]+$',
-                        'message' => 'The string {{ value }} contains an illegal character: it can only contain small letters, numbers and - sign',
+                        'message' => 'The string {{ value }} contains an illegal character: it can only contain small letters, numbers, - and _ sign',
                     ]),
                     new Assert\Callback(
                         function ($name, ExecutionContext $context) use ($entity) {
@@ -95,7 +104,7 @@ class WikiPageType extends AbstractType
                     'trim' => true,
                     'mapped' => false,
                     'placeholder' => '- no template selected-',
-                    'choices' => array_flip($arrayPageTemplates),
+                    'choices' => array_flip($this->arrayPageTemplates),
                 ]);
         }
 

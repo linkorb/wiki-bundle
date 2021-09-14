@@ -274,6 +274,13 @@ class WikiPageController extends AbstractController
                 );
             }
 
+            if ($add) {
+                return $this->redirectToRoute('wiki_page_edit', [
+                    'wikiName' => $wikiPage->getWiki()->getName(),
+                    'pageName' => $wikiPage->getName(),
+                ]);
+            }
+
             return $this->redirectToRoute('wiki_page_view', [
                 'wikiName' => $wikiPage->getWiki()->getName(),
                 'pageName' => $wikiPage->getName(),

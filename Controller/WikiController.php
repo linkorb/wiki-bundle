@@ -87,15 +87,15 @@ class WikiController extends AbstractController
         }
 
         asort($wikiArray);
-        $form = $this->createForm(WikiSearchType::class, null, ['method' => 'GET', 'csrf_protection' => false, 'wikiArray' => $wikiArray]);
+        $form = $this->createForm(WikiSearchType::class, ['wikiName' => $request->get('wikiName')], ['method' => 'GET', 'csrf_protection' => false, 'wikiArray' => $wikiArray]);
         $form->handleRequest($request);
 
-        if ($form->isSubmitted() && $form->isValid()) {
+        if ($form->isSubmitted()) {
             $formData = $form->getData();
 
-            if (!empty($formData['wikiname'])) {
-                if (!$wiki = $this->wikiService->getWikiByName($formData['wikiname'])) {
-                    throw new RuntimeException('Wiki '.$formData['wikiname'].'not found', Response::HTTP_NOT_FOUND);
+            if (!empty($formData['wikiName'])) {
+                if (!$wiki = $this->wikiService->getWikiByName($formData['wikiName'])) {
+                    throw new RuntimeException('Wiki '.$formData['wikiName'].'not found', Response::HTTP_NOT_FOUND);
                 }
                 if (!$wikiRoles = $this->wikiService->getWikiPermission($wiki)) {
                     throw new AccessDeniedException('Access denied!');
@@ -103,9 +103,11 @@ class WikiController extends AbstractController
                 $wikiIds = [$wiki->getId()];
             }
 
-            $wikiPageResults = $this->wikiService->searchWiki($formData['search'], $wikiIds);
+            $wikiPageResults = [];
+            if (!empty($formData['search'])) {
+                $wikiPageResults = $this->wikiService->searchWiki($formData['search'], $wikiIds);
+            }
 
-            $wikiPages = [];
             foreach ($wikiPageResults as $wikiPageResult) {
                 $tmpVar = $wikiPageResult[0];
                 $tmpVar->setPoints($wikiPageResult['points']);
