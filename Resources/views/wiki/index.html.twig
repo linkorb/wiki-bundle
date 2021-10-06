@@ -5,6 +5,9 @@
 {% block body %}
 
     <div class="buttonbox" style="float: right; padding: 0px; margin: 0px;" >
+        <a href="{{ path('wiki_search') }}" class="btn btn-secondary">
+            <i class="fa fa-search" aria-hidden="true"></i> Search
+        </a>
         {% if is_granted('ROLE_SUPERUSER') %}
             <a href="{{ path('wiki_add') }}" class="btn btn-success">
                 <i class="fa fa-plus" aria-hidden="true"></i>

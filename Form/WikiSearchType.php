@@ -20,7 +20,8 @@ class WikiSearchType extends AbstractType
                 'trim' => true,
                 'label' => false,
                 'attr' => [
-                    'placeholder' => 'Search',
+                    'placeholder' => 'Search keywords...',
+                    'autofocus' => 'autofocus',
                 ],
             ])
             ->add('wikiName', ChoiceType::class, [

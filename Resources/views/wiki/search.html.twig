@@ -25,32 +25,35 @@
     </div>
     {{ form_end(form) }}
 
+  {% if app.request.query.has('search') %}
   {% if wikiPages %}
     <fieldset>
         <table class="table">
             <thead>
                 <tr>
-                    <th>Page Name</th>
-                    <th>Wiki Name</th>
-                    <th>Points</th>
+                    <th>Wiki / Page</th>
+                    <th>Relevance</th>
                 </tr>
             </thead>
             <tbody>
             {% for wikiPage in wikiPages %}
                 <tr>
                   <td>
-                    <i class="fa fa-file-o"></i>
-                    <a href="{{ path('wiki_page_view',{'wikiName': wikiPage.wiki.name, 'pageName': wikiPage.name}) }}">
-                        {{ wikiPage.name }}
+                    <i class="fa fa-book"></i>
+                    {{ wikiPage.wiki.name }} / 
+                    <a style="font-weight: bold;" href="{{ path('wiki_page_view',{'wikiName': wikiPage.wiki.name, 'pageName': wikiPage.name}) }}">
+                      {{ wikiPage.name }}
                     </a>
                   </td>
-                  <td>{{ wikiPage.wiki.name }}</td>
                   <td>{{ wikiPage.points }}</td>
                 </tr>
               {% endfor %}
             </tbody>
         </table>
     </fieldset>
+  {% else %}
+  No results...
+  {% endif %}
   {% endif %}
 
 {% endblock %}
