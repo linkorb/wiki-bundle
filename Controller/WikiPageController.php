@@ -70,7 +70,7 @@ class WikiPageController extends AbstractController
     /**
      * @Route("/{pageName}", name="wiki_page_view", methods="GET")
      */
-    public function viewAction(Wiki $wiki, string $pageName): Response
+    public function viewAction(Request $request, Wiki $wiki, string $pageName): Response
     {
         if (!$wikiRoles = $this->wikiService->getWikiPermission($wiki)) {
             throw new AccessDeniedException('Access denied!');
@@ -111,10 +111,16 @@ class WikiPageController extends AbstractController
             $content = str_replace('[['.$inner.']]', '['.$label.']('.$link.')', $content);
         }
 
+        foreach ($request->query->all() as $k=>$v) {
+            $content = str_replace('{{' . $k . '}}', $v, $content);
+        }
+
         $data['content'] = $content;
         $data['pageName'] = $pageName; // in case the page does not yet exist
         $data['wikiPage'] = $wikiPage;
         $data['wiki'] = $wiki;
+
+        
 
         return $this->render('@Wiki/wiki_page/view.html.twig', $data);
     }
