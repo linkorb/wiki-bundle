@@ -29,16 +29,20 @@
       "role": "Developer"
     }
   ],
+  "config": {
+    "sort-packages": true
+  },
   "autoload": {
     "psr-4": {
       "LinkORB\\Bundle\\WikiBundle\\": ""
     }
   },
   "require": {
-    "doctrine/doctrine-bundle": "*",
-    "symfony/framework-bundle": "^4.0|5.1.*",
-    "sensio/framework-extra-bundle": "^5.1",
-    "symfony/security-bundle": "^4.0|5.1.*",
-    "andrewfenn/pid-helper": "^0.1.0"
+    "andrewfenn/pid-helper": "^0.1.0",
+    "doctrine/doctrine-bundle": "^2.5",
+    "sensio/framework-extra-bundle": "^5.1 || ^6.0",
+    "symfony/framework-bundle": "^4.0 || ^5.1",
+    "symfony/security-bundle": "^4.0 || ^5.1",
+    "twig/markdown-extra": "^3.3"
   }
 }
