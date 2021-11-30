@@ -7,7 +7,7 @@
     <h4>Table of contents
         <small><a class="text text-muted" href="{{ path('wiki_page_edit', {'wikiName': wiki.name, 'id': tocPage.id } )}}"><i class="fa fa-edit"></i></a></small>
     </h4>
-    {{ tocPage.content|markdown_to_html }}
+    {{ tocPage.content|default('')|markdown_to_html }}
     {% else %}
       <h4>Pages</h4>
 
