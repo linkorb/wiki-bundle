@@ -2,6 +2,12 @@
 
 {% block body %}
 
+    <style>
+        .wiki-content img {
+            width: 100%;
+        }
+    </style>
+    
     {% if not wikiPage %}
     <center>
         <p>This page does not (yet) exist: <b>{{ pageName }}</b></p>
@@ -17,7 +23,7 @@
                     </a> &nbsp;
                   </div>
                 {% endif %}
-                <div class="mt-2">
+                <div class="mt-2 wiki-content">
                     {{ content|markdown }}
                 </div>
             </fieldset>
