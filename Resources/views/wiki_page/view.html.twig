@@ -24,7 +24,7 @@
                   </div>
                 {% endif %}
                 <div class="mt-2 wiki-content">
-                    {{ content|markdown }}
+                    {{ content|default('')|markdown_to_html }}
                 </div>
             </fieldset>
         </div>
