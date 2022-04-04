@@ -41,4 +41,10 @@ wiki_bundle:
   type: annotation
 ```
 
-### Step 3: Enjoy :)
+### Step 3: Append twig block in base twig file
+```twig
+  {% block sidebar %}{% endblock %}
+  {% block submenu %}{% endblock %}
+```
+
+### Step 4: Enjoy :)
