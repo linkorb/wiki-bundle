@@ -7,6 +7,7 @@ use LinkORB\Bundle\WikiBundle\Services\WikiService;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
@@ -84,5 +85,24 @@ class ApiController extends AbstractController
         $data = $wikiService->export($wiki);
 
         return $this->getJsonResponse($data);
+    }
+
+    /**
+     * @Route("/wiki/{wikiName}/import", name="wiki_bundle__api_wiki_import", methods="GET|POST")
+     * @ParamConverter("wiki", options={"mapping"={"wikiName"="name"}})
+     */
+    public function wikiImportAction(Request $request, WikiService $wikiService, string $wikiName): Response
+    {
+        if (!$wiki = $wikiService->getWikiByName($wikiName)) {
+            return $this->getErrorResponse('Wiki not found!', Response::HTTP_NOT_FOUND);
+        }
+
+        if ($request->isMethod('POST')) {
+            if ($jsonContent = json_decode($request->getContent(), true)) {
+                $wikiService->import($wiki, $jsonContent);
+            }
+        }
+
+        return $this->getJsonResponse(['status' => 'ok']);
     }
 }
