@@ -87,35 +87,18 @@ class WikiPageController extends AbstractController
             $data['tocPage'] = $tocPage;
         }
 
-        $content = null;
+        $markdown = null;
 
         if ($wikiPage) {
-            $content = $wikiPage->getContent();
+            $markdown = $wikiPage->getContent();
         }
-        // preprocess mediawiki style links (convert mediawiki style links into markdown links)
-        preg_match_all('/\[\[(.+?)\]\]/u', $content, $matches);
-        foreach ($matches[1] as $match) {
-            $inner = (string) $match;
-            $part = explode('|', $inner);
-            $label = $part[0];
-            $link = null;
-            if (count($part) > 1) {
-                $label = $part[1];
-                $link = $part[0];
-            }
-            if (!$link) {
-                $link = $label;
-            }
-            $link = trim(strtolower($link));
-            $link = str_replace(' ', '-', $link);
-            $content = str_replace('[['.$inner.']]', '['.$label.']('.$link.')', $content);
-        }
+        $html = $this->wikiService->markdownToHtml($wiki, $markdown);
 
         foreach ($request->query->all() as $k=>$v) {
-            $content = str_replace('{{' . $k . '}}', $v, $content);
+            $html = str_replace('{{' . $k . '}}', $v, $html);
         }
 
-        $data['content'] = $content;
+        $data['contentHtml'] = $html;
         $data['pageName'] = $pageName; // in case the page does not yet exist
         $data['wikiPage'] = $wikiPage;
         $data['wiki'] = $wiki;

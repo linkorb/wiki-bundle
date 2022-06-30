@@ -8,6 +8,8 @@ use LinkORB\Bundle\WikiBundle\Repository\WikiPageRepository;
 use LinkORB\Bundle\WikiBundle\Repository\WikiRepository;
 use Proxies\__CG__\LinkORB\Bundle\WikiBundle\Entity\WikiPage;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
+use Symfony\Component\Yaml\Yaml;
+use League\CommonMark\CommonMarkConverter;
 
 class WikiService
 {
@@ -143,6 +145,60 @@ class WikiService
         return $this->wikiPageRepository->searWikiPages($text, $wikiIds);
     }
 
+    public function getToc(Wiki $wiki, array &$toc, $parentId = 0, $level = 0)
+    {
+        $pages = $this->wikiPageRepository->findByWikiIdAndParentId($wiki->getId(), $parentId);
+        foreach ($pages as $page) {
+            $toc[] = [
+                'page' => $page,
+                'level' => $level,
+            ];
+            $this->getToc($wiki, $toc, $page->getId(), $level+1);
+            // echo $page->getName();
+        }
+    }
+
+    public function renderSingleMarkdown(Wiki $wiki): ?string
+    {
+        $toc = [];
+        $this->getToc($wiki, $toc);
+
+        $markdown = '';
+        foreach ($toc as $tocEntry) {
+            $page = $tocEntry['page'];
+            $pageContent = $page->getContent() ;
+
+            $markdown .= '<!-- page:' . $page->getName() . ' -->' . PHP_EOL;
+            $markdown .= trim($pageContent) . PHP_EOL . PHP_EOL;
+        }
+
+        $markdown = $this->processTwig($wiki, $markdown);
+        return $markdown;
+    }
+
+    public function processTwig(Wiki $wiki, string $content, array $extra = []): ?string
+    {
+
+        $templates = [];
+        $loader = new \Twig\Loader\ArrayLoader($templates);
+
+        $twig = new \Twig\Environment($loader);
+        $template = $twig->createTemplate($content);
+
+        $config = Yaml::parse($wiki->getConfig() ?? '');
+
+        $variables = [
+            'data' => $config['data'] ?? [],
+        ];
+        foreach ($extra as $k=>$v) {
+            $variables[$k] = $v;
+        }
+        // print_r($variables);
+        $content = $template->render($variables);
+        return $content;
+    }
+
+
     public function getWikiPermission(Wiki $wiki)
     {
         $wikiRoles = ['readRole' => false, 'writeRole' => false];
@@ -179,5 +235,36 @@ class WikiService
         }
 
         return $flag ? $wikiRoles : false;
+    }
+
+    public function markdownToHtml(Wiki $wiki, ?string $markdown): ?string
+    {
+        // preprocess mediawiki style links (convert mediawiki style links into markdown links)
+        preg_match_all('/\[\[(.+?)\]\]/u', $markdown, $matches);
+        foreach ($matches[1] as $match) {
+            $inner = (string) $match;
+            $part = explode('|', $inner);
+            $label = $part[0];
+            $link = null;
+            if (count($part) > 1) {
+                $label = $part[1];
+                $link = $part[0];
+            }
+            if (!$link) {
+                $link = $label;
+            }
+            $link = trim(strtolower($link));
+            $link = str_replace(' ', '-', $link);
+            $markdown = str_replace('[['.$inner.']]', '['.$label.']('.$link.')', $content);
+        }
+
+        $converter = new CommonMarkConverter([
+            'html_input' => 'strip',
+            'allow_unsafe_links' => false,
+        ]);
+        
+        
+        $html = $converter->convert($markdown);
+        return $html;
     }
 }

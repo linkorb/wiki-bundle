@@ -72,7 +72,13 @@
                       <a href="{{ path('wiki_export',{'wikiName': wiki.name}) }}" class="dropdown-item">
                         <i class="fa fa-download" aria-hidden="true"></i> Export
                       </a>
-                    </div>
+                      <a href="{{ path('wiki_export_single_markdown', {'wikiName': wiki.name}) }}" class="dropdown-item">
+                        <i class="fa fa-download"></i> Export single markdown
+                      </a>
+                      <a href="{{ path('wiki_export_single_html', {'wikiName': wiki.name}) }}" class="dropdown-item">
+                        <i class="fa fa-download"></i> Export single HTML
+                      </a>
+                  </div>
                 </div>
                 {% endif %}
 

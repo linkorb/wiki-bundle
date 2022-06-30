@@ -16,6 +16,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
+use Symfony\Component\Yaml\Yaml;
 
 /**
  * @Route("/wiki")
@@ -271,6 +272,69 @@ class WikiController extends AbstractController
         );
 
         $response->headers->set('Content-Disposition', $disposition);
+
+        return $response;
+    }
+
+    /**
+     * @Route("/{wikiName}/export-single-markdown", name="wiki_export_single_markdown", methods="GET")
+     * @ParamConverter("wiki", options={"mapping"={"wikiName"="name"}})
+     */
+    public function exportSingleMarkdownAction(Wiki $wiki, WikiService $wikiService): Response
+    {
+        if (!$wikiRoles = $this->wikiService->getWikiPermission($wiki)) {
+            throw new AccessDeniedException('Access denied!');
+        }
+
+        $markdown = $this->wikiService->renderSingleMarkdown($wiki);
+
+        
+
+        $filename = $wiki->getName().'.md';
+        $response = new Response($markdown);
+        // To force download:
+        // $disposition = $response->headers->makeDisposition(
+        //     ResponseHeaderBag::DISPOSITION_ATTACHMENT,
+        //     $filename
+        // );
+        // $response->headers->set('Content-Disposition', $disposition);
+
+        $response->headers->set('Content-type', 'text/markdown');
+
+        return $response;
+    }
+
+    /**
+     * @Route("/{wikiName}/export-single-html", name="wiki_export_single_html", methods="GET")
+     * @ParamConverter("wiki", options={"mapping"={"wikiName"="name"}})
+     */
+    public function exportSingleHtmlAction(Wiki $wiki, WikiService $wikiService): Response
+    {
+        if (!$wikiRoles = $this->wikiService->getWikiPermission($wiki)) {
+            throw new AccessDeniedException('Access denied!');
+        }
+
+        $markdown = $this->wikiService->renderSingleMarkdown($wiki);
+        $html = $this->wikiService->markdownToHtml($wiki, $markdown);
+        $yaml = $wiki->getConfig() ?? '';
+        $config = Yaml::parse($yaml);
+        if (isset($config['layout'])) {
+            $layout = file_get_contents($config['layout']);
+            $html = $this->wikiService->processTwig($wiki, $layout, ['content' => $html]);
+        }
+
+        
+
+        $filename = $wiki->getName().'.html';
+        $response = new Response($html);
+        // To force download:
+        // $disposition = $response->headers->makeDisposition(
+        //     ResponseHeaderBag::DISPOSITION_ATTACHMENT,
+        //     $filename
+        // );
+        // $response->headers->set('Content-Disposition', $disposition);
+
+        $response->headers->set('Content-type', 'text/html');
 
         return $response;
     }
