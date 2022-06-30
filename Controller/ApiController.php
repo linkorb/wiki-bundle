@@ -74,6 +74,27 @@ class ApiController extends AbstractController
     }
 
     /**
+     * @Route("/wiki", name="wiki_bundle__api_wiki_index", methods="GET")
+     */
+    public function indexAction(WikiRepository $wikiRepository): Response
+    {
+        $wikis = $wikiRepository->findAll();
+
+        usort($wikis, function($a, $b) {
+            return strcmp($a->getName(), $b->getName());
+        });
+        $res = [];
+        foreach ($wikis as $wiki) {
+            if ($wikiRoles = $this->getWikiPermission($wiki)) {
+                $res[] = [
+                'name' => $wiki->getName(),
+               ];
+            }
+        }
+        return $res;
+    }
+
+    /**
      * @Route("/wiki/{wikiName}/export", name="wiki_bundle__api_wiki_export", methods="GET")
      * @ParamConverter("wiki", options={"mapping"={"wikiName"="name"}})
      */
