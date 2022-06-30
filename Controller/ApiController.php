@@ -73,10 +73,10 @@ class ApiController extends AbstractController
         return $flag ? $wikiRoles : false;
     }
 
-    /**
+    /*
      * @Route("/wiki", name="wiki_bundle__api_wiki_index", methods="GET")
-     */
-    public function indexAction(WikiRepository $wikiRepository): Response
+     * /
+    public function indexAction(): Response
     {
         $wikis = $wikiRepository->findAll();
 
@@ -93,6 +93,7 @@ class ApiController extends AbstractController
         }
         return $res;
     }
+    */
 
     /**
      * @Route("/wiki/{wikiName}/export", name="wiki_bundle__api_wiki_export", methods="GET")
