@@ -2,6 +2,7 @@
 
 namespace LinkORB\Bundle\WikiBundle\Controller;
 
+use Doctrine\ORM\EntityManagerInterface;
 use LinkORB\Bundle\WikiBundle\Entity\Wiki;
 use LinkORB\Bundle\WikiBundle\Form\WikiSearchType;
 use LinkORB\Bundle\WikiBundle\Form\WikiType;
@@ -25,9 +26,10 @@ class WikiController extends AbstractController
 {
     private $wikiService;
 
-    public function __construct(WikiService $wikiService)
+    public function __construct(WikiService $wikiService, EntityManagerInterface $em)
     {
         $this->wikiService = $wikiService;
+        $this->em = $em;
     }
 
     /**
@@ -160,13 +162,13 @@ class WikiController extends AbstractController
                     $wiki->getId(),
                     json_encode([
                         'deletedAt' => time(),
-                        'deletedBy' => $this->getUser()->getUsername(),
+                        'deletedBy' => $this->getUser() ? $this->getUser()->getUsername() : '',
                         'name' => $wiki->getName(),
                     ])
                 );
-            $em = $this->getDoctrine()->getManager();
-            $em->remove($wiki);
-            $em->flush();
+
+            $this->em->remove($wiki);
+            $this->em->flush();
         }
 
         return $this->redirectToRoute('wiki_index');
@@ -180,9 +182,8 @@ class WikiController extends AbstractController
         $add = !$wiki->getid();
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $em = $this->getDoctrine()->getManager();
-            $em->persist($wiki);
-            $em->flush();
+            $this->em->persist($wiki);
+            $this->em->flush();
 
             if ($add) {
                 $wikiEventService->createEvent(
@@ -190,7 +191,7 @@ class WikiController extends AbstractController
                     $wiki->getId(),
                     json_encode([
                         'createdAt' => time(),
-                        'createdBy' => $this->getUser()->getUsername(),
+                        'createdBy' => $this->getUser() ? $this->getUser()->getUsername() : '',
                         'name' => $wiki->getName(),
                         'description' => $wiki->getDescription(),
                     ])
@@ -201,7 +202,7 @@ class WikiController extends AbstractController
                     $wiki->getId(),
                     json_encode([
                         'updatedAt' => time(),
-                        'updatedBy' => $this->getUser()->getUsername(),
+                        'updatedBy' => $this->getUser() ? $this->getUser()->getUsername() : '',
                         'name' => $wiki->getName(),
                         'description' => $wiki->getDescription(),
                     ])
@@ -288,8 +289,6 @@ class WikiController extends AbstractController
 
         $markdown = $this->wikiService->renderSingleMarkdown($wiki);
 
-        
-
         $filename = $wiki->getName().'.md';
         $response = new Response($markdown);
         // To force download:
@@ -322,8 +321,6 @@ class WikiController extends AbstractController
             $layout = file_get_contents($config['layout']);
             $html = $this->wikiService->processTwig($wiki, $layout, ['content' => $html]);
         }
-
-        
 
         $filename = $wiki->getName().'.html';
         $response = new Response($html);

@@ -2,6 +2,7 @@
 
 namespace LinkORB\Bundle\WikiBundle\Controller;
 
+use Doctrine\ORM\EntityManagerInterface;
 use LinkORB\Bundle\WikiBundle\Entity\Wiki;
 use LinkORB\Bundle\WikiBundle\Entity\WikiPage;
 use LinkORB\Bundle\WikiBundle\Form\WikiPageContentType;
@@ -24,11 +25,13 @@ use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 class WikiPageController extends AbstractController
 {
     private $wikiService;
+    private $em;
 
-    public function __construct(WikiService $wikiService, WikiPageRepository $wikiPageRepository)
+    public function __construct(WikiService $wikiService, WikiPageRepository $wikiPageRepository, EntityManagerInterface $em)
     {
         $this->wikiPageRepository = $wikiPageRepository;
         $this->wikiService = $wikiService;
+        $this->em = $em;
     }
 
     /**
@@ -94,16 +97,14 @@ class WikiPageController extends AbstractController
         }
         $html = $this->wikiService->markdownToHtml($wiki, $markdown);
 
-        foreach ($request->query->all() as $k=>$v) {
-            $html = str_replace('{{' . $k . '}}', $v, $html);
+        foreach ($request->query->all() as $k => $v) {
+            $html = str_replace('{{'.$k.'}}', $v, $html);
         }
 
         $data['contentHtml'] = $html;
         $data['pageName'] = $pageName; // in case the page does not yet exist
         $data['wikiPage'] = $wikiPage;
         $data['wiki'] = $wiki;
-
-        
 
         return $this->render('@Wiki/wiki_page/view.html.twig', $data);
     }
@@ -139,22 +140,21 @@ class WikiPageController extends AbstractController
             $data = json_decode($request->getContent(), true);
             $wikiPage->setContent($data['content']);
 
-            $em = $this->getDoctrine()->getManager();
-            $em->persist($wikiPage);
-            $em->flush();
+            $this->em->persist($wikiPage);
+            $this->em->flush();
 
             return new JsonResponse(['status' => 'success']);
         }
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $this->getDoctrine()->getManager()->flush();
+            $this->em->flush();
 
             $wikiEventService->createEvent(
                 'page.updated',
                 $wikiPage->getWiki()->getId(),
                 json_encode([
                     'updatedAt' => time(),
-                    'updatedBy' => $this->getUser()->getUsername(),
+                    'updatedBy' => $this->getUser() ? $this->getUser()->getUsername() : '',
                     'name' => $wikiPage->getName(),
                 ]),
                 $wikiPage->getId()
@@ -195,15 +195,14 @@ class WikiPageController extends AbstractController
             $wikiPage->getWiki()->getId(),
             json_encode([
                 'deletedAt' => time(),
-                'deletedBy' => $this->getUser()->getUsername(),
+                'deletedBy' => $this->getUser() ? $this->getUser()->getUsername() : '',
                 'name' => $wikiPage->getName(),
             ]),
             $wikiPage->getId()
         );
 
-        $em = $this->getDoctrine()->getManager();
-        $em->remove($wikiPage);
-        $em->flush();
+        $this->em->remove($wikiPage);
+        $this->em->flush();
 
         return $this->redirectToRoute('wiki_page_index', [
             'wikiName' => $wiki->getName(),
@@ -235,9 +234,8 @@ class WikiPageController extends AbstractController
                 }
             }
 
-            $em = $this->getDoctrine()->getManager();
-            $em->persist($wikiPage);
-            $em->flush();
+            $this->em->persist($wikiPage);
+            $this->em->flush();
 
             if ($add) {
                 $wikiEventService->createEvent(
@@ -245,7 +243,7 @@ class WikiPageController extends AbstractController
                     $wikiPage->getWiki()->getId(),
                     json_encode([
                         'createdAt' => time(),
-                        'createdBy' => $this->getUser()->getUsername(),
+                        'createdBy' => $this->getUser() ? $this->getUser()->getUsername() : '',
                         'name' => $wikiPage->getName(),
                     ]),
                     $wikiPage->getId()
@@ -256,7 +254,7 @@ class WikiPageController extends AbstractController
                     $wikiPage->getWiki()->getId(),
                     json_encode([
                         'updatedAt' => time(),
-                        'updatedBy' => $this->getUser()->getUsername(),
+                        'updatedBy' => $this->getUser() ? $this->getUser()->getUsername() : '',
                         'name' => $wikiPage->getName(),
                     ]),
                     $wikiPage->getId()

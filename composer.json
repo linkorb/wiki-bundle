@@ -43,6 +43,7 @@
     "sensio/framework-extra-bundle": "^5.1 || ^6.0",
     "symfony/framework-bundle": "^4.0 || ^5.1 || ^6.0",
     "symfony/security-bundle": "^4.0 || ^5.1 || ^6.0",
-    "twig/markdown-extra": "^3.3"
+    "twig/markdown-extra": "^3.3",
+    "league/commonmark": "^2.0"
   }
 }
