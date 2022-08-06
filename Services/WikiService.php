@@ -3,13 +3,13 @@
 namespace LinkORB\Bundle\WikiBundle\Services;
 
 use Doctrine\ORM\EntityManagerInterface;
+use League\CommonMark\CommonMarkConverter;
 use LinkORB\Bundle\WikiBundle\Entity\Wiki;
 use LinkORB\Bundle\WikiBundle\Repository\WikiPageRepository;
 use LinkORB\Bundle\WikiBundle\Repository\WikiRepository;
 use Proxies\__CG__\LinkORB\Bundle\WikiBundle\Entity\WikiPage;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 use Symfony\Component\Yaml\Yaml;
-use League\CommonMark\CommonMarkConverter;
 
 class WikiService
 {
@@ -153,7 +153,7 @@ class WikiService
                 'page' => $page,
                 'level' => $level,
             ];
-            $this->getToc($wiki, $toc, $page->getId(), $level+1);
+            $this->getToc($wiki, $toc, $page->getId(), $level + 1);
             // echo $page->getName();
         }
     }
@@ -166,19 +166,19 @@ class WikiService
         $markdown = '';
         foreach ($toc as $tocEntry) {
             $page = $tocEntry['page'];
-            $pageContent = $page->getContent() ;
+            $pageContent = $page->getContent();
 
-            $markdown .= '<!-- page:' . $page->getName() . ' -->' . PHP_EOL;
-            $markdown .= trim($pageContent) . PHP_EOL . PHP_EOL;
+            $markdown .= '<!-- page:'.$page->getName().' -->'.PHP_EOL;
+            $markdown .= trim($pageContent).PHP_EOL.PHP_EOL;
         }
 
         $markdown = $this->processTwig($wiki, $markdown);
+
         return $markdown;
     }
 
     public function processTwig(Wiki $wiki, string $content, array $extra = []): ?string
     {
-
         $templates = [];
         $loader = new \Twig\Loader\ArrayLoader($templates);
 
@@ -190,19 +190,28 @@ class WikiService
         $variables = [
             'data' => $config['data'] ?? [],
         ];
-        foreach ($extra as $k=>$v) {
+        foreach ($extra as $k => $v) {
             $variables[$k] = $v;
         }
         // print_r($variables);
         $content = $template->render($variables);
+
         return $content;
     }
-
 
     public function getWikiPermission(Wiki $wiki)
     {
         $wikiRoles = ['readRole' => false, 'writeRole' => false];
         $flag = false;
+
+        // https://symfony.com/doc/current/security.html#allowing-unsecured-access-i-e-anonymous-users
+        // unauthenticated/visitor user assign role.
+        if ($this->authorizationChecker->isGranted('PUBLIC_ACCESS')) {
+            $wikiRoles['readRole'] = true;
+            $wikiRoles['writeRole'] = true;
+
+            return $wikiRoles;
+        }
 
         if ($this->authorizationChecker->isGranted('ROLE_SUPERUSER')) {
             $wikiRoles['readRole'] = true;
@@ -262,9 +271,9 @@ class WikiService
             'html_input' => 'strip',
             'allow_unsafe_links' => false,
         ]);
-        
-        
-        $html = $converter->convert($markdown);
+
+        $html = $converter->convert($markdown ?? '');
+
         return $html;
     }
 }

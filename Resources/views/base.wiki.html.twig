@@ -87,7 +87,7 @@
                     List pages
                 </a>
 
-                {% if is_granted('ROLE_SUPERUSER') or writeRole %}
+                {% if is_granted('ROLE_SUPERUSER') or writeRole is defined %}
                 <a href="{{ path('wiki_page_add',{'wikiName': wiki.name}) }}" class="btn btn-sm btn-success">
                     <i class="fa fa-plus" aria-hidden="true"></i>
                     New page
