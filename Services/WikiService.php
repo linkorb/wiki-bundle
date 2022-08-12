@@ -204,15 +204,6 @@ class WikiService
         $wikiRoles = ['readRole' => false, 'writeRole' => false];
         $flag = false;
 
-        // https://symfony.com/doc/current/security.html#allowing-unsecured-access-i-e-anonymous-users
-        // unauthenticated/visitor user assign role.
-        if ($this->authorizationChecker->isGranted('PUBLIC_ACCESS')) {
-            $wikiRoles['readRole'] = true;
-            $wikiRoles['writeRole'] = true;
-
-            return $wikiRoles;
-        }
-
         if ($this->authorizationChecker->isGranted('ROLE_SUPERUSER')) {
             $wikiRoles['readRole'] = true;
             $wikiRoles['writeRole'] = true;
