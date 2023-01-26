@@ -4,6 +4,7 @@ namespace LinkORB\Bundle\WikiBundle\Services;
 
 use Doctrine\ORM\EntityManagerInterface;
 use League\CommonMark\CommonMarkConverter;
+use League\CommonMark\Extension\Table\TableExtension;
 use LinkORB\Bundle\WikiBundle\Entity\Wiki;
 use LinkORB\Bundle\WikiBundle\Repository\WikiPageRepository;
 use LinkORB\Bundle\WikiBundle\Repository\WikiRepository;
@@ -261,7 +262,17 @@ class WikiService
         $converter = new CommonMarkConverter([
             'html_input' => 'strip',
             'allow_unsafe_links' => false,
+            'table' => [
+                'wrap' => [
+                    'enabled' => true,
+                    'tag' => 'div',
+                    'attributes' => ['class' => 'table-responsive table table-bordered', 'style' => 'border: none;'],
+                ],
+            ],
         ]);
+
+        $environment = $converter->getEnvironment();
+        $environment->addExtension(new TableExtension());
 
         $html = $converter->convert($markdown ?? '');
 
