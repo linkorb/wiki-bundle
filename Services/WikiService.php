@@ -256,7 +256,7 @@ class WikiService
             }
             $link = trim(strtolower($link));
             $link = str_replace(' ', '-', $link);
-            $markdown = str_replace('[['.$inner.']]', '['.$label.']('.$link.')', $content);
+            $markdown = str_replace('[['.$inner.']]', '['.$label.']('.$link.')', $markdown);
         }
 
         $converter = new CommonMarkConverter([
