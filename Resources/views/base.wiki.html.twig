@@ -1,5 +1,15 @@
 {% extends 'base.html.twig' %}
 
+
+{% block style_custom %}
+
+<style>
+  .wiki-content img {
+    max-width: 100%;
+  }
+</style>
+{% endblock %}
+
 {% block sidebar %}
     <i class="fa fa-arrow-left"></i> <a href="{{ path('wiki_index') }}">Wikis</a>
     <hr />
