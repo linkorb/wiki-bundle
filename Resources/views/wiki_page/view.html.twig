@@ -8,7 +8,7 @@
         <a href="{{ path('wiki_page_add', {'wikiName': wiki.name, 'pageName': pageName } ) }}" class="btn btn-success">Add now</a>
     </center>
     {% else %}
-            <fieldset>
+            <fieldset class="wiki-page-content">
                 <legend><i class="fa fa-file-o"></i> {{ wikiPage.name }}</legend>
                 {% if is_granted('ROLE_SUPERUSER') or writeRole %}
                   <div class="text-right">
