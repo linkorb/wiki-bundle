@@ -81,6 +81,9 @@
                       <a href="{{ path('wiki_edit', {'wikiName': wiki.name}) }}" class="dropdown-item">
                           <i class="fa fa-edit"></i> Wiki settings
                       </a>
+                      <a href="{{ path('wiki_publish', {'wikiName': wiki.name}) }}" class="dropdown-item">
+                        <i class="fa fa-github"></i> Publish
+                      </a>
                       <a href="{{ path('wiki_event_index', {'wikiName': wiki.name}) }}" class="dropdown-item">
                           <i class="fa fa-calendar" aria-hidden="true"></i> Events
                       </a>

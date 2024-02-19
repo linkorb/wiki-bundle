@@ -125,6 +125,24 @@ class WikiController extends AbstractController
     }
 
     /**
+     * @Route("/{wikiName}/publish", name="wiki_publish", methods="GET")
+     * @ParamConverter("wiki", options={"mapping"={"wikiName"="name"}})
+     */
+    public function publishAction(Request $request, Wiki $wiki): Response
+    {
+        if (!$wikiRoles = $this->wikiService->getWikiPermission($wiki)) {
+            throw new AccessDeniedException('Access denied!');
+        }
+        if (!$wikiRoles['writeRole']) {
+            throw new AccessDeniedException('Access denied!');
+        }
+
+        $this->wikiService->publishWiki($wiki, $this->getUser()->getUsername(), $this->getUser()->getEmail());
+
+        return $this->redirectToRoute('wiki_view', ['wikiName' => $wiki->getName()]);
+    }
+
+    /**
      * @Route("/{wikiName}/edit", name="wiki_edit", methods="GET|POST")
      * @ParamConverter("wiki", options={"mapping"={"wikiName"="name"}})
      */

@@ -2,9 +2,10 @@
 
 namespace LinkORB\Bundle\WikiBundle\Entity;
 
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Yaml\Yaml;
+use Doctrine\Common\Collections\Collection;
+use Doctrine\Common\Collections\ArrayCollection;
 
 /**
  * @ORM\Entity(repositoryClass="LinkORB\Bundle\WikiBundle\Repository\WikiRepository")
@@ -148,5 +149,10 @@ class Wiki
         $this->config = $config;
 
         return $this;
+    }
+
+    public function getConfigArray()
+    {
+        return Yaml::parse($this->config ?? '')?? [] ;
     }
 }

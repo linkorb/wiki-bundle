@@ -2,6 +2,7 @@
 
 namespace LinkORB\Bundle\WikiBundle\Services;
 
+use CzProject\GitPhp\Git;
 use Doctrine\ORM\EntityManagerInterface;
 use League\CommonMark\CommonMarkConverter;
 use League\CommonMark\Extension\Table\TableExtension;
@@ -19,19 +20,24 @@ class WikiService
     private $em;
     private $wikiEventService;
     private $authorizationChecker;
+    private $gitDirPath;
+    private $git;
 
     public function __construct(
         WikiRepository $wikiRepository,
         WikiPageRepository $wikiPageRepository,
         EntityManagerInterface $em,
         WikiEventService $wikiEventService,
-        AuthorizationCheckerInterface $authorizationChecker
+        AuthorizationCheckerInterface $authorizationChecker,
+        private ParameterBagInterface $params
     ) {
         $this->wikiRepository = $wikiRepository;
         $this->wikiPageRepository = $wikiPageRepository;
         $this->em = $em;
         $this->wikiEventService = $wikiEventService;
         $this->authorizationChecker = $authorizationChecker;
+        $this->gitDirPath = $this->params->get('kernel.project_dir').'/var/wiki';
+        $this->git = new Git();
     }
 
     public function getAllWikis()
@@ -278,4 +284,164 @@ class WikiService
 
         return $html;
     }
+
+    public function publishWiki(Wiki $wiki, string $username, string $userEmail)
+    {
+        foreach ($wiki->getWikiPages() as $wikiPage) {
+            $this->publishWikiPage($wiki, $wikiPage, $username, $userEmail);
+        }
+    }
+
+    public function publishWikiPage(Wiki $wiki, WikiPage $wikiPage, string $username, string $userEmail)
+    {
+        $path = $this->gitDirPath;
+
+        if (!is_dir($path.'/.git')) {
+            $repo = $this->git->init($path, [
+                        '--initial-branch=main',
+                    ]);
+            $repo->execute('config', 'user.name', $username);
+            $repo->execute('config', 'user.email', $userEmail);
+        } else {
+            $repo = $this->git->open($path);
+        }
+
+        $path .= '/'.$wiki->getName();
+        if (!is_dir($path)) {
+            mkdir($path, 0777, true);
+        }
+
+        $contentFile = $path.'/'.$wikiPage->getName().'.md';
+        $dataFile = $path.'/'.$wikiPage->getName().'.yaml';
+
+        if (!file_exists($contentFile)) {
+            file_put_contents($contentFile, '');
+        }
+        if (!file_exists($dataFile)) {
+            file_put_contents($dataFile, '');
+        }
+
+        if (0 !== strcmp($wikiPage->getContent(), file_get_contents($contentFile))) {
+            file_put_contents($contentFile, $wikiPage->getContent());
+            $repo->addFile($contentFile);
+        }
+        if (0 !== strcmp($wikiPage->getData(), file_get_contents($dataFile))) {
+            file_put_contents($dataFile, $wikiPage->getData());
+            $repo->addFile($dataFile);
+        }
+
+        if ($repo->hasChanges()) {
+            $repo->commit($wikiPage->getName().' page committed.', ["--author={$username} <{$userEmail}>"]);
+            $repo->addAllChanges();
+
+            $pushConfig = [];
+            foreach ($wiki->getConfigArray()['push'] ?? [] as $wikiPushConfig) {
+                if ('git' == $wikiPushConfig['type']) {
+                    $pushConfig = $wikiPushConfig;
+                    break;
+                }
+            }
+
+            if ($pushConfig) {
+                $remote = $repo->execute('remote', 'show');
+                if (!in_array('origin', $remote)) {
+                    $repo->addRemote('origin', $pushConfig['url']);
+                }
+
+                if (!empty($pushConfig['secret'])) {
+                    $vaiable = explode(':', $pushConfig['secret']);
+                    $vaiable = $vaiable[1] ?? $vaiable;
+                    $secret = $this->params->get($vaiable);
+                    if ($secret) {
+                        $parseUrl = parse_url($pushConfig['url']);
+                        $parseUrl['pass'] = $secret;
+                        $pushConfig['url'] = $this->unParseUrl($parseUrl);
+                    }
+                }
+
+                $repo->push(null, [$pushConfig['url']]);
+            }
+        }
+    }
+
+    public function pull(Wiki $wiki)
+    {
+        $path = $this->gitDirPath;
+
+        if (!is_dir($path.'/.git')) {
+            return NULL;
+        }
+
+        $repo = $this->git->open($path);
+
+        $pullConfig = [];
+        foreach ($wiki->getConfigArray()['pull'] ?? [] as $wikiPullConfig) {
+            if ('git' == $wikiPullConfig['type']) {
+                $pullConfig = $wikiPullConfig;
+                break;
+            }
+        }
+
+        if ($pullConfig) {
+            if (!empty($pullConfig['secret'])) {
+                $vaiable = explode(':', $pullConfig['secret']);
+                $vaiable = $vaiable[1] ?? $vaiable;
+                $secret = $this->params->get($vaiable);
+                if ($secret) {
+                    $parseUrl = parse_url($pullConfig['url']);
+                    $parseUrl['pass'] = $secret;
+                    $pullConfig['url'] = $this->unParseUrl($parseUrl);
+                }
+            }
+
+          // #  $repo->pull(null, [$pullConfig['url']]);
+
+          $directory = $path .= '/'.$wiki->getName();
+
+          $changes = $repo->execute('status', [" --porcelain {$directory}"]);
+
+          if (!empty($changes)) {
+            // Stash changes in the directory
+            $repo->execute('stash', [" push -m Stashing changes in", "{$directory}", ' -- ', "{$directory}"]);
+
+            $repo->pull(null, [$pullConfig['url']]);
+
+          }
+          die('First status');
+
+
+            // Reset changes in the directory
+            //$repo->execute('reset', " --hard HEAD -- '{$directory}'");
+
+            // Pull changes from the remote
+            //$repo->exec("pull");
+            $repo->pull(null, [$pullConfig['url']]);
+
+            // Reapply stashed changes
+            $repo->execute("stash pop");
+            die();
+        }
+    }
+
+    public function importDirectory(Wiki $wiki, string $path)
+    {
+
+    }
+
+    private function unParseUrl(array $parseUrl): ?string
+    {
+        $scheme = isset($parseUrl['scheme']) ? $parseUrl['scheme'].'://' : '';
+        $host = isset($parseUrl['host']) ? $parseUrl['host'] : '';
+        $port = isset($parseUrl['port']) ? ':'.$parseUrl['port'] : '';
+        $user = isset($parseUrl['user']) ? $parseUrl['user'] : '';
+        $pass = isset($parseUrl['pass']) ? (isset($parseUrl['user']) ? ':' : '').$parseUrl['pass'] : '';
+        $pass = ($user || $pass) ? "$pass@" : '';
+        $path = isset($parseUrl['path']) ? $parseUrl['path'] : '';
+        $query = isset($parseUrl['query']) ? '?'.$parseUrl['query'] : '';
+        $fragment = isset($parseUrl['fragment']) ? '#'.$parseUrl['fragment'] : '';
+
+        return $scheme.$user.$pass.$host.$port.$path.$query.$fragment;
+    }
+
+
 }

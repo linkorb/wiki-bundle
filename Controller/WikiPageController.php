@@ -143,6 +143,8 @@ class WikiPageController extends AbstractController
             $this->em->persist($wikiPage);
             $this->em->flush();
 
+            $this->publishPage($wikiPage);
+
             return new JsonResponse(['status' => 'success']);
         }
 
@@ -159,6 +161,8 @@ class WikiPageController extends AbstractController
                 ]),
                 $wikiPage->getId()
             );
+
+            $this->publishPage($wikiPage);
 
             return $this->redirectToRoute('wiki_page_view', [
                 'wikiName' => $wikiPage->getWiki()->getName(),
@@ -261,6 +265,8 @@ class WikiPageController extends AbstractController
                 );
             }
 
+            $this->publishPage($wikiPage);
+
             if ($add) {
                 return $this->redirectToRoute('wiki_page_edit', [
                     'wikiName' => $wikiPage->getWiki()->getName(),
@@ -288,5 +294,15 @@ class WikiPageController extends AbstractController
         }
 
         return $this->render('@Wiki/wiki_page/advanced.html.twig', $data);
+    }
+
+    private function publishPage(WikiPage $wikiPage)
+    {
+       return  $this->wikiService->publishWikiPage(
+            $wikiPage->getWiki(),
+            $wikiPage,
+            $this->getUser()->getUsername(),
+            $this->getUser()->getEmail()
+        );
     }
 }
