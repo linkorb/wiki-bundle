@@ -2,10 +2,10 @@
 
 namespace LinkORB\Bundle\WikiBundle\Entity;
 
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Yaml\Yaml;
-use Doctrine\Common\Collections\Collection;
-use Doctrine\Common\Collections\ArrayCollection;
 
 /**
  * @ORM\Entity(repositoryClass="LinkORB\Bundle\WikiBundle\Repository\WikiRepository")
@@ -14,7 +14,9 @@ class Wiki
 {
     /**
      * @ORM\Id()
+     *
      * @ORM\GeneratedValue()
+     *
      * @ORM\Column(type="integer")
      */
     private $id;
@@ -31,6 +33,7 @@ class Wiki
 
     /**
      * @ORM\OneToMany(targetEntity="LinkORB\Bundle\WikiBundle\Entity\WikiPage", mappedBy="wiki")
+     *
      * @ORM\OrderBy({"name" = "ASC"})
      */
     private $wikiPages;
@@ -49,6 +52,11 @@ class Wiki
      * @ORM\Column(type="text", nullable=true)
      */
     private $config;
+
+    /**
+     * @ORM\Column(type="integer", nullable=true)
+     */
+    private $lastPullAt;
 
     public function __construct()
     {
@@ -153,6 +161,23 @@ class Wiki
 
     public function getConfigArray()
     {
-        return Yaml::parse($this->config ?? '')?? [] ;
+        return Yaml::parse($this->config ?? '') ?? [];
+    }
+
+    public function getLastPullAt(): ?int
+    {
+        return $this->lastPullAt;
+    }
+
+    public function setLastPullAt(?int $lastPullAt): self
+    {
+        $this->lastPullAt = $lastPullAt;
+
+        return $this;
+    }
+
+    public function isReadOnly(): bool
+    {
+        return (bool) !empty($this->getConfigArray()['read-only']) ? $this->getConfigArray()['read-only'] : false;
     }
 }

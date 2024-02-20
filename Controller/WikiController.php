@@ -9,7 +9,6 @@ use LinkORB\Bundle\WikiBundle\Form\WikiType;
 use LinkORB\Bundle\WikiBundle\Services\WikiEventService;
 use LinkORB\Bundle\WikiBundle\Services\WikiPageService;
 use LinkORB\Bundle\WikiBundle\Services\WikiService;
-use RuntimeException;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -98,7 +97,7 @@ class WikiController extends AbstractController
 
             if (!empty($formData['wikiName'])) {
                 if (!$wiki = $this->wikiService->getWikiByName($formData['wikiName'])) {
-                    throw new RuntimeException('Wiki '.$formData['wikiName'].'not found', Response::HTTP_NOT_FOUND);
+                    throw new \RuntimeException('Wiki '.$formData['wikiName'].'not found', Response::HTTP_NOT_FOUND);
                 }
                 if (!$wikiRoles = $this->wikiService->getWikiPermission($wiki)) {
                     throw new AccessDeniedException('Access denied!');
@@ -126,6 +125,7 @@ class WikiController extends AbstractController
 
     /**
      * @Route("/{wikiName}/publish", name="wiki_publish", methods="GET")
+     *
      * @ParamConverter("wiki", options={"mapping"={"wikiName"="name"}})
      */
     public function publishAction(Request $request, Wiki $wiki): Response
@@ -144,6 +144,7 @@ class WikiController extends AbstractController
 
     /**
      * @Route("/{wikiName}/edit", name="wiki_edit", methods="GET|POST")
+     *
      * @ParamConverter("wiki", options={"mapping"={"wikiName"="name"}})
      */
     public function editAction(Request $request, Wiki $wiki, WikiEventService $wikiEventService): Response
@@ -160,6 +161,7 @@ class WikiController extends AbstractController
 
     /**
      * @Route("/{wikiName}/delete", name="wiki_delete", methods="GET")
+     *
      * @ParamConverter("wiki", options={"mapping"={"wikiName"="name"}})
      */
     public function deleteAction(Request $request, Wiki $wiki, WikiEventService $wikiEventService): Response
@@ -248,9 +250,11 @@ class WikiController extends AbstractController
                 ['wikiName' => $wikiName]
             );
         }
+
         if (!$wikiRoles = $this->wikiService->getWikiPermission($wiki)) {
             throw new AccessDeniedException('Access denied!');
         }
+
         $data = $wikiRoles;
         // $wikiPageRepository = $this->get('LinkORB\Bundle\WikiBundle\Repository\WikiPageRepository');
 
@@ -268,11 +272,14 @@ class WikiController extends AbstractController
         $data['wikiPages'] = $wikiPages;
         $data['wiki'] = $wiki;
 
+        $this->wikiService->autoPull($wiki);
+
         return $this->render('@Wiki/wiki_page/index.html.twig', $data);
     }
 
     /**
      * @Route("/{wikiName}/export", name="wiki_export", methods="GET")
+     *
      * @ParamConverter("wiki", options={"mapping"={"wikiName"="name"}})
      */
     public function exportAction(Wiki $wiki, WikiService $wikiService): Response
@@ -297,6 +304,7 @@ class WikiController extends AbstractController
 
     /**
      * @Route("/{wikiName}/export-single-markdown", name="wiki_export_single_markdown", methods="GET")
+     *
      * @ParamConverter("wiki", options={"mapping"={"wikiName"="name"}})
      */
     public function exportSingleMarkdownAction(Wiki $wiki, WikiService $wikiService): Response
@@ -323,6 +331,7 @@ class WikiController extends AbstractController
 
     /**
      * @Route("/{wikiName}/export-single-html", name="wiki_export_single_html", methods="GET")
+     *
      * @ParamConverter("wiki", options={"mapping"={"wikiName"="name"}})
      */
     public function exportSingleHtmlAction(Wiki $wiki, WikiService $wikiService): Response
@@ -352,5 +361,17 @@ class WikiController extends AbstractController
         $response->headers->set('Content-type', 'text/html');
 
         return $response;
+    }
+
+    /**
+     * @Route("/{wikiName}/pull", name="wiki_pull", methods="GET")
+     *
+     * @ParamConverter("wiki", options={"mapping"={"wikiName"="name"}})
+     */
+    public function gitPullAction(Wiki $wiki): Response
+    {
+        $this->wikiService->pull($wiki);
+
+        return $this->redirectToRoute('wiki_view', ['wikiName' => $wiki->getName()]);
     }
 }

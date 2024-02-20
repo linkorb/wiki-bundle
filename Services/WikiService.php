@@ -7,9 +7,10 @@ use Doctrine\ORM\EntityManagerInterface;
 use League\CommonMark\CommonMarkConverter;
 use League\CommonMark\Extension\Table\TableExtension;
 use LinkORB\Bundle\WikiBundle\Entity\Wiki;
+use LinkORB\Bundle\WikiBundle\Entity\WikiPage;
 use LinkORB\Bundle\WikiBundle\Repository\WikiPageRepository;
 use LinkORB\Bundle\WikiBundle\Repository\WikiRepository;
-use Proxies\__CG__\LinkORB\Bundle\WikiBundle\Entity\WikiPage;
+use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 use Symfony\Component\Yaml\Yaml;
 
@@ -369,7 +370,7 @@ class WikiService
         $path = $this->gitDirPath;
 
         if (!is_dir($path.'/.git')) {
-            return NULL;
+            return null;
         }
 
         $repo = $this->git->open($path);
@@ -383,6 +384,11 @@ class WikiService
         }
 
         if ($pullConfig) {
+            $remote = $repo->execute('remote', 'show');
+            if (!in_array('origin', $remote)) {
+                $repo->addRemote('origin', $pullConfig['url']);
+            }
+
             if (!empty($pullConfig['secret'])) {
                 $vaiable = explode(':', $pullConfig['secret']);
                 $vaiable = $vaiable[1] ?? $vaiable;
@@ -393,39 +399,73 @@ class WikiService
                     $pullConfig['url'] = $this->unParseUrl($parseUrl);
                 }
             }
-
-          // #  $repo->pull(null, [$pullConfig['url']]);
-
-          $directory = $path .= '/'.$wiki->getName();
-
-          $changes = $repo->execute('status', [" --porcelain {$directory}"]);
-
-          if (!empty($changes)) {
-            // Stash changes in the directory
-            $repo->execute('stash', [" push -m Stashing changes in", "{$directory}", ' -- ', "{$directory}"]);
-
             $repo->pull(null, [$pullConfig['url']]);
 
-          }
-          die('First status');
+            $this->importDirectory($wiki, $this->gitDirPath.'/'.$wiki->getName());
 
-
-            // Reset changes in the directory
-            //$repo->execute('reset', " --hard HEAD -- '{$directory}'");
-
-            // Pull changes from the remote
-            //$repo->exec("pull");
-            $repo->pull(null, [$pullConfig['url']]);
-
-            // Reapply stashed changes
-            $repo->execute("stash pop");
-            die();
+            $wiki->setLastPullAt(time());
+            $this->em->persist($wiki);
+            $this->em->flush();
         }
     }
 
     public function importDirectory(Wiki $wiki, string $path)
     {
+        if (!is_dir($path)) {
+            throw new \RuntimeException('Directory not found:'.$path, 1);
+        }
 
+        foreach (new \DirectoryIterator($path) as $fileInfo) {
+            $type = 'page.updated';
+
+            if ($fileInfo->isDot() || !$fileInfo->isFile()) {
+                continue;
+            }
+
+            if ('md' == $fileInfo->getExtension()) {
+                $wikiPageName = rtrim($fileInfo->getFilename(), '.md');
+                if (!$wikiPage = $this->wikiPageRepository->findOneByWikiIdAndName($wiki->getId(), $wikiPageName)) {
+                    $wikiPage = new WikiPage();
+                    $wikiPage
+                        ->setName($wikiPageName)
+                        ->setWiki($wiki)
+                        ->setparentId(0)
+                    ;
+
+                    $type = 'page.created';
+                }
+
+                $wikiPage->setContent(file_get_contents($fileInfo->getPathname()));
+
+                $yamlFile = $fileInfo->getPath()."/{$wikiPageName}.yaml";
+                if (file_exists($yamlFile)) {
+                    $wikiPage->setData(file_get_contents($yamlFile));
+                }
+
+                $this->em->persist($wikiPage);
+                $this->em->flush();
+
+                $this->wikiEventService->createEvent(
+                    $type,
+                    $wikiPage->getWiki()->getId(),
+                    json_encode([
+                        'updatedAt' => time(),
+                        'updatedBy' => '',
+                        'name' => $wikiPage->getName(),
+                    ]),
+                    $wikiPage->getId()
+                );
+            }
+        }
+    }
+
+    public function autoPull(Wiki $wiki)
+    {
+        $dateTime = (new \DateTime(' -5 minutes'))->getTimestamp();
+
+        if ((int) $wiki->getLastPullAt() <= $dateTime) {
+            $this->pull($wiki);
+        }
     }
 
     private function unParseUrl(array $parseUrl): ?string
@@ -442,6 +482,4 @@ class WikiService
 
         return $scheme.$user.$pass.$host.$port.$path.$query.$fragment;
     }
-
-
 }

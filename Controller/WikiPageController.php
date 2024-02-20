@@ -20,6 +20,7 @@ use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 
 /**
  * @Route("/wiki/{wikiName}")
+ *
  * @ParamConverter("wiki", options={"mapping"={"wikiName"="name"}})
  */
 class WikiPageController extends AbstractController
@@ -53,12 +54,28 @@ class WikiPageController extends AbstractController
     }
 
     /**
+     * @Route("/pages/read-only", name="wiki_page_read_only", methods="GET")
+     */
+    public function readOnlyAction(Wiki $wiki): Response
+    {
+        return $this->render('@Wiki/wiki_page/read_only.html.twig', [
+            'wiki' => $wiki,
+        ]);
+    }
+
+    /**
      * @Route("/pages/add", name="wiki_page_add", methods="GET|POST")
      */
     public function addAction(Request $request, Wiki $wiki, WikiEventService $wikiEventService): Response
     {
         $wikiPage = new WikiPage();
         $wikiPage->setWiki($wiki);
+
+        if ($wiki->isReadOnly()) {
+            return $this->redirectToRoute('wiki_page_read_only', [
+                'wikiName' => $wiki->getName(),
+            ]);
+        }
 
         if ($pageName = $request->query->get('pageName')) {
             $wikiPage->setName($pageName);
@@ -106,6 +123,8 @@ class WikiPageController extends AbstractController
         $data['wikiPage'] = $wikiPage;
         $data['wiki'] = $wiki;
 
+        $this->wikiService->autoPull($wiki);
+
         return $this->render('@Wiki/wiki_page/view.html.twig', $data);
     }
 
@@ -114,6 +133,12 @@ class WikiPageController extends AbstractController
      */
     public function editAdvanceAction(Request $request, Wiki $wiki, WikiEventService $wikiEventService, $pageName): Response
     {
+        if ($wiki->isReadOnly()) {
+            return $this->redirectToRoute('wiki_page_read_only', [
+                'wikiName' => $wiki->getName(),
+            ]);
+        }
+
         $wikiPage = $this->wikiPageRepository->findOneByWikiIdAndName($wiki->getId(), $pageName);
 
         return $this->getEditForm($request, $wikiPage, $wikiEventService);
@@ -124,6 +149,12 @@ class WikiPageController extends AbstractController
      */
     public function editAction(Request $request, Wiki $wiki, WikiEventService $wikiEventService, $pageName): Response
     {
+        if ($wiki->isReadOnly()) {
+            return $this->redirectToRoute('wiki_page_read_only', [
+                'wikiName' => $wiki->getName(),
+            ]);
+        }
+
         $wikiPage = $this->wikiPageRepository->findOneByWikiIdAndName($wiki->getId(), $pageName);
 
         if (!$wikiRoles = $this->wikiService->getWikiPermission($wikiPage->getWiki())) {
@@ -298,7 +329,7 @@ class WikiPageController extends AbstractController
 
     private function publishPage(WikiPage $wikiPage)
     {
-       return  $this->wikiService->publishWikiPage(
+        return $this->wikiService->publishWikiPage(
             $wikiPage->getWiki(),
             $wikiPage,
             $this->getUser()->getUsername(),
