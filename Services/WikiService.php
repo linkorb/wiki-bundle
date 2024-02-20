@@ -305,6 +305,8 @@ class WikiService
             $repo->execute('config', 'user.email', $userEmail);
         } else {
             $repo = $this->git->open($path);
+            $repo->execute('config', 'committer.name', $username);
+            $repo->execute('config', 'committer.email', $userEmail);
         }
 
         $path .= '/'.$wiki->getName();
@@ -370,7 +372,11 @@ class WikiService
         $path = $this->gitDirPath;
 
         if (!is_dir($path.'/.git')) {
-            return null;
+            $repo = $this->git->init($path, [
+                        '--initial-branch=main',
+                    ]);
+        } else {
+            $repo = $this->git->open($path);
         }
 
         $repo = $this->git->open($path);
