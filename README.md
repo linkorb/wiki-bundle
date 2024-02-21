@@ -69,9 +69,9 @@ pull:
     secret: `ENV:WIKI_GIT_TOKEN` # defines which env to use as a secret
 ```
 
-- `type`: push target type.
+- `type`: push target type option(rest, clickup, git) Currently support only `git` option.
 - `url`: GitHub Clone URL(HTTPS) where pull/push content.
-- `secret:` Personal access tokens for authentication.
+- `secret:` Personal access tokens for authentication. [How to create a personal access token?](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-personal-access-token-classic) 
 
 
 Git publish and pull links are in the wiki page admin dropdown.
