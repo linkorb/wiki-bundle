@@ -48,3 +48,43 @@ wiki_bundle:
 ```
 
 ### Step 4: Enjoy :)
+
+---
+### Store/sync wiki's page content on git/GitHub.
+
+The repository this feature supports storing and retrieving wiki page content on git/Github.  For that, configure git/Github details into the wiki config field.  Currently, support git/GitHub web URL(HTTPS) for pull and push.
+
+
+Example config in the wiki.config
+
+``` 
+push:
+  - type: git
+    url: https://github.com/gitHub-username/wiki-git.git
+    secret: `ENV:WIKI_GIT_TOKEN` # defines which env to use as a secret
+
+pull:
+  - type: git
+    url: https://github.com/gitHub-username/wiki-git.git
+    secret: `ENV:WIKI_GIT_TOKEN` # defines which env to use as a secret
+```
+
+- `type`: push target type.
+- `url`: GitHub Clone URL(HTTPS) where pull/push content.
+- `secret:` Personal access tokens for authentication.
+
+
+Git publish and pull links are in the wiki page admin dropdown.
+
+`Note:` If the GitHub repository is not empty, Pull first to sync the repository.
+
+---
+
+### Read-only wikis
+
+This feature supports preventing users from editing wiki page content that is being managed in git/Github.
+For that, set config option into wiki config field.
+```
+read-only: true
+```
+`read-only`: boolen true/false value. If this is set to true, the edit and add features are prohibited for the user.
