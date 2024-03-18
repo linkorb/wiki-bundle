@@ -13,6 +13,7 @@ use LinkORB\Bundle\WikiBundle\Repository\WikiRepository;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 use Symfony\Component\Yaml\Yaml;
+use RuntimeException;
 
 class WikiService
 {
@@ -195,14 +196,14 @@ class WikiService
 
         $config = Yaml::parse($wiki->getConfig() ?? '');
 
-        $variables = [
+        $parts = [
             'data' => $config['data'] ?? [],
         ];
         foreach ($extra as $k => $v) {
-            $variables[$k] = $v;
+            $parts[$k] = $v;
         }
-        // print_r($variables);
-        $content = $template->render($variables);
+        // print_r($parts);
+        $content = $template->render($parts);
 
         return $content;
     }
@@ -295,27 +296,25 @@ class WikiService
 
     public function publishWikiPage(Wiki $wiki, WikiPage $wikiPage, string $username, string $userEmail)
     {
-        $path = $this->gitDirPath;
-
-        if (!is_dir($path.'/.git')) {
-            $repo = $this->git->init($path, [
-                        '--initial-branch=main',
-                    ]);
+        $wikiPath = $this->gitDirPath . '/' . $wiki->getName();
+        if (!is_dir($wikiPath)) {
+            mkdir($wikiPath, 0777, true);
+        }
+        if (!is_dir($wikiPath.'/.git')) {
+            $repo = $this->git->init($wikiPath, [
+                '--initial-branch=main',
+            ]);
             $repo->execute('config', 'user.name', $username);
             $repo->execute('config', 'user.email', $userEmail);
         } else {
-            $repo = $this->git->open($path);
+            $repo = $this->git->open($wikiPath);
             $repo->execute('config', 'committer.name', $username);
             $repo->execute('config', 'committer.email', $userEmail);
         }
 
-        $path .= '/'.$wiki->getName();
-        if (!is_dir($path)) {
-            mkdir($path, 0777, true);
-        }
-
-        $contentFile = $path.'/'.$wikiPage->getName().'.md';
-        $dataFile = $path.'/'.$wikiPage->getName().'.yaml';
+        
+        $contentFile = $wikiPath.'/'.$wikiPage->getName().'.md';
+        $dataFile = $wikiPath.'/'.$wikiPage->getName().'.yaml';
 
         if (!file_exists($contentFile)) {
             file_put_contents($contentFile, '');
@@ -326,16 +325,15 @@ class WikiService
 
         if (0 !== strcmp($wikiPage->getContent(), file_get_contents($contentFile))) {
             file_put_contents($contentFile, $wikiPage->getContent());
-            $repo->addFile($contentFile);
         }
         if (0 !== strcmp($wikiPage->getData(), file_get_contents($dataFile))) {
             file_put_contents($dataFile, $wikiPage->getData());
-            $repo->addFile($dataFile);
         }
 
         if ($repo->hasChanges()) {
-            $repo->commit($wikiPage->getName().' page committed.', ["--author={$username} <{$userEmail}>"]);
             $repo->addAllChanges();
+            // exit('yo');
+            $repo->commit('docs: ' . $wikiPage->getName().' updated', ["--author={$username} <{$userEmail}>"]);
 
             $pushConfig = [];
             foreach ($wiki->getConfigArray()['push'] ?? [] as $wikiPushConfig) {
@@ -352,14 +350,13 @@ class WikiService
                 }
 
                 if (!empty($pushConfig['secret'])) {
-                    $vaiable = explode(':', $pushConfig['secret']);
-                    $vaiable = $vaiable[1] ?? $vaiable;
-                    $secret = $this->params->get($vaiable);
-                    if ($secret) {
-                        $parseUrl = parse_url($pushConfig['url']);
-                        $parseUrl['pass'] = $secret;
-                        $pushConfig['url'] = $this->unParseUrl($parseUrl);
+                    $secret = $this->params->get($pushConfig['secret']);
+                    if (!$secret) {
+                        throw new RuntimeException('Unable to resolve secret: ' . $pushConfig['secret']);
                     }
+                    $parseUrl = parse_url($pushConfig['url']);
+                    $parseUrl['pass'] = $secret;
+                    $pushConfig['url'] = $this->unParseUrl($parseUrl);
                 }
 
                 $repo->push(null, [$pushConfig['url']]);
@@ -369,17 +366,17 @@ class WikiService
 
     public function pull(Wiki $wiki)
     {
-        $path = $this->gitDirPath;
+        $wikiPath = $this->gitDirPath . '/' . $wiki->getName();
 
-        if (!is_dir($path.'/.git')) {
-            $repo = $this->git->init($path, [
+        if (!is_dir($wikiPath.'/.git')) {
+            $repo = $this->git->init($wikiPath, [
                         '--initial-branch=main',
                     ]);
         } else {
-            $repo = $this->git->open($path);
+            $repo = $this->git->open($wikiPath);
         }
 
-        $repo = $this->git->open($path);
+        $repo = $this->git->open($wikiPath);
 
         $pullConfig = [];
         foreach ($wiki->getConfigArray()['pull'] ?? [] as $wikiPullConfig) {
@@ -396,9 +393,10 @@ class WikiService
             }
 
             if (!empty($pullConfig['secret'])) {
-                $vaiable = explode(':', $pullConfig['secret']);
-                $vaiable = $vaiable[1] ?? $vaiable;
-                $secret = $this->params->get($vaiable);
+                $secret = $this->params->get($pullConfig['secret']);
+                if (!$secret) {
+                    throw new RuntimeException('Unable to resolve secret: ' . $pullConfig['secret']);
+                }
                 if ($secret) {
                     $parseUrl = parse_url($pullConfig['url']);
                     $parseUrl['pass'] = $secret;
@@ -407,7 +405,7 @@ class WikiService
             }
             $repo->pull(null, [$pullConfig['url']]);
 
-            $this->importDirectory($wiki, $this->gitDirPath.'/'.$wiki->getName());
+            $this->importDirectory($wiki, $wikiPath);
 
             $wiki->setLastPullAt(time());
             $this->em->persist($wiki);
