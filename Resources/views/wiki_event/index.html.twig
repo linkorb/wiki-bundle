@@ -5,35 +5,8 @@
 {% block body %}
     <h1>Events</h1>
 
-   
     <fieldset>
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>Id</th>
-                    <th>Type</th>
-                    <th>Created At</th>
-                    <th>Created By</th>
-                </tr>
-            </thead>
-            <tbody>
-            {% for wikiEvent in wikiEvents %}
-                <tr>
-                    <td>{{ wikiEvent.id }}</td>
-                    <td>
-                        <b>{{ wikiEvent.type }}</b><br />
-                        {{ wikiEvent.data }}
-                    </td>
-                    <td>{{ wikiEvent.createdAt|date() }}</td>
-                    <td>{{ wikiEvent.createdBy }}</td>
-                </tr>
-            {% else %}
-                <tr>
-                    <td colspan="5">no records found</td>
-                </tr>
-            {% endfor %}
-            </tbody>
-        </table>
+        {% include '@Wiki/wiki_event/list.html.twig' %}
     </fieldset>
 
 {% endblock %}

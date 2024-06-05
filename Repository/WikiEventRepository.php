@@ -5,7 +5,6 @@ namespace LinkORB\Bundle\WikiBundle\Repository;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 use LinkORB\Bundle\WikiBundle\Entity\WikiEvent;
-use Symfony\Bridge\Doctrine\RegistryInterface;
 
 /**
  * @method WikiEvent|null find($id, $lockMode = null, $lockVersion = null)
@@ -23,5 +22,15 @@ class WikiEventRepository extends ServiceEntityRepository
     public function findByWikiId($wikiId)
     {
         return $this->findBy(['wiki_id' => $wikiId]);
+    }
+
+    public function findByWikiPageId(int $wikiPageId)
+    {
+        return $this->findBy(['wiki_page_id' => $wikiPageId]);
+    }
+
+    public function findOneByWikiIdAndId(int $wikiId, int $id)
+    {
+        return $this->findOneBy(['wiki_id' => $wikiId, 'id' => $id]);
     }
 }

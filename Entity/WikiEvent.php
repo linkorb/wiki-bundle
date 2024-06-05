@@ -11,7 +11,9 @@ class WikiEvent
 {
     /**
      * @ORM\Id()
+     *
      * @ORM\GeneratedValue()
+     *
      * @ORM\Column(type="integer")
      */
     private $id;
@@ -121,5 +123,10 @@ class WikiEvent
         $this->wiki_id = $wiki_id;
 
         return $this;
+    }
+
+    public function getDataArray(): ?array
+    {
+        return json_decode($this->data, true);
     }
 }
