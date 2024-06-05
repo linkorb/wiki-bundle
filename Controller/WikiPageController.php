@@ -164,6 +164,9 @@ class WikiPageController extends AbstractController
             throw new AccessDeniedException('Access denied!');
         }
 
+        $wikiPageBeforeTitle = $wikiPage->getName();
+        $wikiPageBeforeContent = $wikiPage->getContent();
+
         $form = $this->createForm(WikiPageContentType::class, $wikiPage);
         $form->handleRequest($request);
 
@@ -174,6 +177,24 @@ class WikiPageController extends AbstractController
             $this->em->persist($wikiPage);
             $this->em->flush();
 
+            $eventData = [
+                'updatedAt' => time(),
+                'updatedBy' => $this->getUser() ? $this->getUser()->getUsername() : '',
+                'name' => $wikiPage->getName(),
+            ];
+            if (0 !== strcmp($wikiPageBeforeContent, $wikiPage->getContent())) {
+                $eventData['changes'][] = $wikiEventService->fieldDataChangeArray(
+                    'content', $wikiPageBeforeContent, $wikiPage->getContent()
+                );
+            }
+
+            $wikiEventService->createEvent(
+                'page.updated',
+                $wikiPage->getWiki()->getId(),
+                json_encode($eventData),
+                $wikiPage->getId()
+            );
+
             $this->publishPage($wikiPage);
 
             return new JsonResponse(['status' => 'success']);
@@ -182,14 +203,26 @@ class WikiPageController extends AbstractController
         if ($form->isSubmitted() && $form->isValid()) {
             $this->em->flush();
 
+            $eventData = [
+                'updatedAt' => time(),
+                'updatedBy' => $this->getUser() ? $this->getUser()->getUsername() : '',
+                'name' => $wikiPage->getName(),
+            ];
+            if (0 !== strcmp($wikiPageBeforeTitle, $wikiPage->getName())) {
+                $eventData['changes'][] = $wikiEventService->fieldDataChangeArray(
+                    'title', $wikiPageBeforeTitle, $wikiPage->getName()
+                );
+            }
+            if (0 !== strcmp($wikiPageBeforeContent, $wikiPage->getContent())) {
+                $eventData['changes'][] = $wikiEventService->fieldDataChangeArray(
+                    'content', $wikiPageBeforeContent, $wikiPage->getContent()
+                );
+            }
+
             $wikiEventService->createEvent(
                 'page.updated',
                 $wikiPage->getWiki()->getId(),
-                json_encode([
-                    'updatedAt' => time(),
-                    'updatedBy' => $this->getUser() ? $this->getUser()->getUsername() : '',
-                    'name' => $wikiPage->getName(),
-                ]),
+                json_encode($eventData),
                 $wikiPage->getId()
             );
 
@@ -252,6 +285,8 @@ class WikiPageController extends AbstractController
         if (!$wikiRoles['writeRole']) {
             throw new AccessDeniedException('Access denied!');
         }
+        $wikiPageBeforeTitle = $wikiPage?->getName();
+        $wikiPageBeforeContent = $wikiPage?->getContent();
 
         $form = $this->createForm(WikiPageType::class, $wikiPage);
         $form->handleRequest($request);
@@ -268,33 +303,31 @@ class WikiPageController extends AbstractController
                     }
                 }
             }
-
             $this->em->persist($wikiPage);
             $this->em->flush();
 
-            if ($add) {
-                $wikiEventService->createEvent(
-                    'page.created',
-                    $wikiPage->getWiki()->getId(),
-                    json_encode([
-                        'createdAt' => time(),
-                        'createdBy' => $this->getUser() ? $this->getUser()->getUsername() : '',
-                        'name' => $wikiPage->getName(),
-                    ]),
-                    $wikiPage->getId()
-                );
-            } else {
-                $wikiEventService->createEvent(
-                    'page.updated',
-                    $wikiPage->getWiki()->getId(),
-                    json_encode([
-                        'updatedAt' => time(),
-                        'updatedBy' => $this->getUser() ? $this->getUser()->getUsername() : '',
-                        'name' => $wikiPage->getName(),
-                    ]),
-                    $wikiPage->getId()
+            $eventData = [
+                'createdAt' => time(),
+                'createdBy' => $this->getUser() ? $this->getUser()->getUsername() : '',
+                'name' => $wikiPage->getName(),
+            ];
+            if (0 !== strcmp($wikiPageBeforeTitle, $wikiPage->getName())) {
+                $eventData['changes'][] = $wikiEventService->fieldDataChangeArray(
+                    'title', $wikiPageBeforeTitle, $wikiPage->getName()
                 );
             }
+            if (0 !== strcmp($wikiPageBeforeContent, $wikiPage->getContent())) {
+                $eventData['changes'][] = $wikiEventService->fieldDataChangeArray(
+                    'content', $wikiPageBeforeContent, $wikiPage->getContent()
+                );
+            }
+
+            $wikiEventService->createEvent(
+                $add ? 'page.created' : 'page.updated',
+                $wikiPage->getWiki()->getId(),
+                json_encode($eventData),
+                $wikiPage->getId()
+            );
 
             $this->publishPage($wikiPage);
 

@@ -1,0 +1,29 @@
+<table class="table">
+      <thead>
+          <tr>
+              <th>Id</th>
+              <th>Type</th>
+              <th>Created At</th>
+              <th>Created By</th>
+          </tr>
+      </thead>
+      <tbody>
+      {% for wikiEvent in wikiEvents %}
+          <tr>
+              <th>
+                <a href="{{ path('wiki_event_view', {'eventId': wikiEvent.id, 'wikiName': wiki.name}) }}">{{ wikiEvent.id }}</a>
+              </th>
+              <td>
+                  <b>{{ wikiEvent.type }}</b><br />
+                  {{ wikiEvent.data }}
+              </td>
+              <td>{{ wikiEvent.createdAt|date() }}</td>
+              <td>{{ wikiEvent.createdBy }}</td>
+          </tr>
+      {% else %}
+          <tr>
+              <td colspan="5">no records found</td>
+          </tr>
+      {% endfor %}
+      </tbody>
+  </table>

@@ -13,7 +13,6 @@ use LinkORB\Bundle\WikiBundle\Repository\WikiRepository;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 use Symfony\Component\Yaml\Yaml;
-use RuntimeException;
 
 class WikiService
 {
@@ -128,6 +127,9 @@ class WikiService
                 }
             }
 
+            $wikiPageBeforeTitle = $wikiPage->getName();
+            $wikiPageBeforeContent = $wikiPage->getContent();
+
             $wikiPage
                 ->setContent($wikiPageArray['content'])
                 ->setData($wikiPageArray['data'])
@@ -136,14 +138,26 @@ class WikiService
             $this->em->persist($wikiPage);
             $this->em->flush();
 
+            $eventData = [
+                'updatedAt' => time(),
+                'updatedBy' => '',
+                'name' => $wikiPage->getName(),
+            ];
+            if (0 !== strcmp($wikiPageBeforeTitle, $wikiPage->getName())) {
+                $eventData['changes'][] = $this->wikiEventService->fieldDataChangeArray(
+                    'title', $wikiPageBeforeTitle, $wikiPage->getName()
+                );
+            }
+            if (0 !== strcmp($wikiPageBeforeContent, $wikiPage->getContent())) {
+                $eventData['changes'][] = $this->wikiEventService->fieldDataChangeArray(
+                    'content', $wikiPageBeforeContent, $wikiPage->getContent()
+                );
+            }
+
             $this->wikiEventService->createEvent(
                 $type,
                 $wikiPage->getWiki()->getId(),
-                json_encode([
-                    'updatedAt' => time(),
-                    'updatedBy' => '',
-                    'name' => $wikiPage->getName(),
-                ]),
+                json_encode($eventData),
                 $wikiPage->getId()
             );
         }
@@ -296,7 +310,7 @@ class WikiService
 
     public function publishWikiPage(Wiki $wiki, WikiPage $wikiPage, string $username, string $userEmail)
     {
-        $wikiPath = $this->gitDirPath . '/' . $wiki->getName();
+        $wikiPath = $this->gitDirPath.'/'.$wiki->getName();
         if (!is_dir($wikiPath)) {
             mkdir($wikiPath, 0777, true);
         }
@@ -312,7 +326,6 @@ class WikiService
             $repo->execute('config', 'committer.email', $userEmail);
         }
 
-        
         $contentFile = $wikiPath.'/'.$wikiPage->getName().'.md';
         $dataFile = $wikiPath.'/'.$wikiPage->getName().'.yaml';
 
@@ -333,7 +346,7 @@ class WikiService
         if ($repo->hasChanges()) {
             $repo->addAllChanges();
             // exit('yo');
-            $repo->commit('docs: ' . $wikiPage->getName().' updated', ["--author={$username} <{$userEmail}>"]);
+            $repo->commit('docs: '.$wikiPage->getName().' updated', ["--author={$username} <{$userEmail}>"]);
 
             $pushConfig = [];
             foreach ($wiki->getConfigArray()['push'] ?? [] as $wikiPushConfig) {
@@ -352,7 +365,7 @@ class WikiService
                 if (!empty($pushConfig['secret'])) {
                     $secret = $this->params->get($pushConfig['secret']);
                     if (!$secret) {
-                        throw new RuntimeException('Unable to resolve secret: ' . $pushConfig['secret']);
+                        throw new \RuntimeException('Unable to resolve secret: '.$pushConfig['secret']);
                     }
                     $parseUrl = parse_url($pushConfig['url']);
                     $parseUrl['pass'] = $secret;
@@ -366,12 +379,12 @@ class WikiService
 
     public function pull(Wiki $wiki)
     {
-        $wikiPath = $this->gitDirPath . '/' . $wiki->getName();
+        $wikiPath = $this->gitDirPath.'/'.$wiki->getName();
 
         if (!is_dir($wikiPath.'/.git')) {
             $repo = $this->git->init($wikiPath, [
-                        '--initial-branch=main',
-                    ]);
+                '--initial-branch=main',
+            ]);
         } else {
             $repo = $this->git->open($wikiPath);
         }
@@ -395,7 +408,7 @@ class WikiService
             if (!empty($pullConfig['secret'])) {
                 $secret = $this->params->get($pullConfig['secret']);
                 if (!$secret) {
-                    throw new RuntimeException('Unable to resolve secret: ' . $pullConfig['secret']);
+                    throw new \RuntimeException('Unable to resolve secret: '.$pullConfig['secret']);
                 }
                 if ($secret) {
                     $parseUrl = parse_url($pullConfig['url']);
@@ -439,6 +452,9 @@ class WikiService
                     $type = 'page.created';
                 }
 
+                $wikiPageBeforeTitle = $wikiPage->getName();
+                $wikiPageBeforeContent = $wikiPage->getContent();
+
                 $wikiPage->setContent(file_get_contents($fileInfo->getPathname()));
 
                 $yamlFile = $fileInfo->getPath()."/{$wikiPageName}.yaml";
@@ -449,14 +465,26 @@ class WikiService
                 $this->em->persist($wikiPage);
                 $this->em->flush();
 
+                $eventData = [
+                    'updatedAt' => time(),
+                    'updatedBy' => '',
+                    'name' => $wikiPage->getName(),
+                ];
+                if (0 !== strcmp($wikiPageBeforeTitle, $wikiPage->getName())) {
+                    $eventData['changes'][] = $this->wikiEventService->fieldDataChangeArray(
+                        'title', $wikiPageBeforeTitle, $wikiPage->getName()
+                    );
+                }
+                if (0 !== strcmp($wikiPageBeforeContent, $wikiPage->getContent())) {
+                    $eventData['changes'][] = $this->wikiEventService->fieldDataChangeArray(
+                        'content', $wikiPageBeforeContent, $wikiPage->getContent()
+                    );
+                }
+
                 $this->wikiEventService->createEvent(
                     $type,
                     $wikiPage->getWiki()->getId(),
-                    json_encode([
-                        'updatedAt' => time(),
-                        'updatedBy' => '',
-                        'name' => $wikiPage->getName(),
-                    ]),
+                    json_encode($eventData),
                     $wikiPage->getId()
                 );
             }

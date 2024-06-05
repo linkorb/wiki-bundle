@@ -2,9 +2,9 @@
 
 namespace LinkORB\Bundle\WikiBundle\Services;
 
+use Doctrine\ORM\EntityManagerInterface;
 use LinkORB\Bundle\WikiBundle\Entity\WikiEvent;
 use LinkORB\Bundle\WikiBundle\Repository\WikiEventRepository;
-use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 
 class WikiEventService
@@ -20,13 +20,11 @@ class WikiEventService
         $this->em = $em;
     }
 
-
     public function createEvent($type, $wikiId, $data, $wikiPageId = null)
     {
-
         $username = ($this->tokenStorage->getToken())
-            ? $this->tokenStorage->getToken()->getUser()->getUsername()
-            : '';
+           ? $this->tokenStorage->getToken()->getUser()->getUsername()
+           : '';
 
         $wikiEvent = new WikiEvent();
         $wikiEvent
@@ -41,5 +39,14 @@ class WikiEventService
         $this->em->flush();
 
         return $wikiEvent;
+    }
+
+    public function fieldDataChangeArray(string $field, ?string $before = null, ?string $after = null)
+    {
+        return [
+            'field' => $field,
+            'before' => $before,
+            'after' => $after,
+        ];
     }
 }

@@ -108,6 +108,13 @@
                     List pages
                 </a>
 
+                {% if wikiPage is defined %}
+                    <a href="{{ path('wiki_page_event_index',{'wikiName': wiki.name, 'pageName': wikiPage.name}) }}" class="btn btn-sm btn-secondary">
+                    <i class="fa fa-list" aria-hidden="true"></i>
+                    page Events
+                </a>
+                {% endif %}
+
                 {% if is_granted('ROLE_SUPERUSER') or writeRole is defined %}
                 <a href="{{ path('wiki_page_add',{'wikiName': wiki.name}) }}" class="btn btn-sm btn-success">
                     <i class="fa fa-plus" aria-hidden="true"></i>
