@@ -40,7 +40,7 @@
                          <li class="list-group-item">
                             <strong>{{ key }}</strong>:
                               {% if key in ['before', 'after']  %}
-                                    {{ value|default('')|markdown_to_html }}
+                                   <br/> {{ value|default('') }}
                               {% elseif key == 'createdAt' %}
                                     {{ value|date() }}
                               {% else %}
