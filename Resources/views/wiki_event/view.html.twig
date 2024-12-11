@@ -1,0 +1,66 @@
+{% extends '@Wiki/base.wiki.html.twig' %}
+
+{% block title %}Wiki: {{ wiki.name }} :Events {% endblock %}
+
+{% block body %}
+    <h1>Events</h1>
+
+    <fieldset>
+        <table class="table">
+          <tbody>
+            <tr>
+              <th width="20%">Id</th>
+              <td>{{ wikiEvent.id }}</td>
+            </tr>
+            <tr>
+              <th>Type</th>
+              <td>
+                 {{ wikiEvent.type }}
+              </td>
+            </tr>
+            <tr>
+              <th>Created At</th>
+              <td>{{ wikiEvent.createdAt|date() }}</td>
+            </tr>
+            <tr>
+              <th>Created By</th>
+              <td>{{ wikiEvent.createdBy }}</td>
+            </tr>
+            <tr>
+              <th>Data</th>
+              <td>
+                  <ul class="list-group">
+                  {% macro renderArray(array) %}
+                      {% for key, value in array %}
+                        {% if value is iterable %}
+                         <div class="p-1">
+                            {{ _self.renderArray(value) }}
+                          </div>
+                        {% else %}
+                         <li class="list-group-item">
+                            <strong>{{ key }}</strong>:
+                              {% if key in ['before', 'after']  %}
+                                   <br/> {{ value|default('') }}
+                              {% elseif key == 'createdAt' %}
+                                    {{ value|date() }}
+                              {% else %}
+                                    {{ value }}
+                            {% endif %}
+                          </li>
+                        {% endif %}
+                      {% endfor %}
+                  {% endmacro %}
+                </ul>
+                  {{ _self.renderArray(wikiEvent.getDataArray) }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+    </fieldset>
+
+
+
+
+
+
+{% endblock %}

@@ -1,0 +1,38 @@
+services:
+  _defaults:
+    autowire: true
+    autoconfigure: true
+    public: false
+
+  LinkORB\Bundle\WikiBundle\:
+    resource: '%kernel.project_dir%/vendor/linkorb/wiki-bundle/*'
+
+#  LinkORB\Bundle\WikiBundle\Repository\WikiEventRepository:
+#    arguments: ['@doctrine']
+#    tags: ['doctrine.repository_service']
+#
+#  LinkORB\Bundle\WikiBundle\Repository\WikiPageRepository:
+#    arguments: ['@doctrine']
+#    tags: ['doctrine.repository_service']
+#
+#  LinkORB\Bundle\WikiBundle\Repository\WikiRepository:
+#    arguments: ['@doctrine']
+#    tags: ['doctrine.repository_service']
+#
+#  LinkORB\Bundle\WikiBundle\Form\WikiPageType:
+#    arguments: ['@LinkORB\Bundle\WikiBundle\Repository\WikiPageRepository']
+#    public: false
+#    tags:
+#      - { name: form.type, alias: LinkORB\Bundle\WikiBundle\Form\WikiPageType }
+#
+#  LinkORB\Bundle\WikiBundle\Form\WikiType:
+#    arguments: ['@LinkORB\Bundle\WikiBundle\Repository\WikiRepository']
+#    public: false
+#    tags:
+#      - { name: form.type, alias: LinkORB\Bundle\WikiBundle\Form\WikiType }
+#
+#  LinkORB\Bundle\WikiBundle\Services\WikiEventService:
+#    arguments:
+#      - '@security.token_storage'
+#      - '@doctrine.orm.default_entity_manager'
+#      - '@LinkORB\Bundle\WikiBundle\Repository\WikiEventRepository'

@@ -1,0 +1,16 @@
+{% extends '@Wiki/base.html.twig' %}
+
+{% block title %}Wiki {% endblock %}
+
+{% block body %}
+  <h1>Wikis</h1>
+
+  <fieldset>
+     <div class="text-center">
+      <h4>The wiki "{{ wikiName }}" does not yet exist... create it now? </h4>
+      <a href="{{ path('wiki_add',{ 'wikiname': wikiName }) }}" class="btn btn-success">
+        <i class="fa fa-plus" aria-hidden="true"></i> Create
+      </a>
+     </div>
+  </fieldset>
+{% endblock %}
