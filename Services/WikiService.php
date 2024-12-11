@@ -5,6 +5,7 @@ namespace LinkORB\Bundle\WikiBundle\Services;
 use CzProject\GitPhp\Git;
 use Doctrine\ORM\EntityManagerInterface;
 use League\CommonMark\CommonMarkConverter;
+use League\CommonMark\Extension\Attributes\AttributesExtension;
 use League\CommonMark\Extension\Table\TableExtension;
 use LinkORB\Bundle\WikiBundle\Entity\Wiki;
 use LinkORB\Bundle\WikiBundle\Entity\WikiPage;
@@ -30,7 +31,7 @@ class WikiService
         EntityManagerInterface $em,
         WikiEventService $wikiEventService,
         AuthorizationCheckerInterface $authorizationChecker,
-        private ParameterBagInterface $params
+        private ParameterBagInterface $params,
     ) {
         $this->wikiRepository = $wikiRepository;
         $this->wikiPageRepository = $wikiPageRepository;
@@ -295,6 +296,7 @@ class WikiService
 
         $environment = $converter->getEnvironment();
         $environment->addExtension(new TableExtension());
+        $environment->addExtension(new AttributesExtension());
 
         $html = $converter->convert($markdown ?? '');
 
