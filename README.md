@@ -1,4 +1,8 @@
-## Symfony 4,5 WikiBundle
+> [!WARNING]
+> This is a read-only repository used to release the subtree. Any issues and pull requests should be forwarded to the
+> upstream Nebula repository.c
+
+## Symfony 5|6|7 WikiBundle
 
 Installation
 ============
@@ -27,7 +31,7 @@ in the `config/bundles.php` file of your project (if it isn't exists yet):
 
 return [
     // ...
-    LinkORB\Bundle\WikiBundle\WikiBundle::class => ['all' => true],
+    LinkORB\Bundle\WikiBundle\LinkORBWikiBundle::class => ['all' => true],
     // ...
 ];
 ```
@@ -37,8 +41,8 @@ Create routing file to enable routes from wiki bundle like this:
 And add loading of routes at next way:
 ```yaml
 wiki_bundle:
-  resource: '@WikiBundle/Controller'
-  type: annotation
+  resource: '@LinkORBWikiBundle/src/Controller'
+  type: attribute
 ```
 
 ### Step 3: Append twig block in base twig file
@@ -57,7 +61,7 @@ The repository this feature supports storing and retrieving wiki page content on
 
 Example config in the wiki.config
 
-``` 
+```
 push:
   - type: git
     url: https://github.com/gitHub-username/wiki-git.git
@@ -71,7 +75,7 @@ pull:
 
 - `type`: push target type option(rest, clickup, git) Currently support only `git` option.
 - `url`: GitHub Clone URL(HTTPS) where pull/push content.
-- `secret:` Personal access tokens for authentication. [How to create a personal access token?](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-personal-access-token-classic) 
+- `secret:` Personal access tokens for authentication. [How to create a personal access token?](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-personal-access-token-classic)
 
 
 Git publish and pull links are in the wiki page admin dropdown.

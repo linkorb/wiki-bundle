@@ -1,0 +1,12 @@
+{% extends '@LinkORBWiki/base.wiki.html.twig' %}
+
+{% block title %}Wiki: {{ wiki.name }} :Events {% endblock %}
+
+{% block body %}
+    <h1>Events</h1>
+
+    <fieldset>
+        {% include '@LinkORBWiki/wiki_event/list.html.twig' %}
+    </fieldset>
+
+{% endblock %}

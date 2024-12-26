@@ -1,0 +1,50 @@
+{% extends '@LinkORBWiki/base.html.twig' %}
+
+{% block title %}Wiki {% endblock %}
+
+{% block body %}
+
+    <div class="buttonbox" style="float: right; padding: 0px; margin: 0px;" >
+        <a href="{{ path('wiki_search') }}" class="btn btn-secondary">
+            <i class="fa fa-search" aria-hidden="true"></i> Search
+        </a>
+        {% if is_granted('ROLE_SUPERUSER') %}
+            <a href="{{ path('wiki_add') }}" class="btn btn-success">
+                <i class="fa fa-plus" aria-hidden="true"></i>
+                New wiki
+            </a>
+        {% endif %}
+    </div>
+    <h1>Wikis</h1>
+    <div style="clear: both"></div>
+
+    <fieldset>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for wiki in wikis %}
+                <tr>
+                    <td>
+                        <a href="{{ path('wiki_view', {'wikiName': wiki.name}) }}">
+                            <b>{{ wiki.name }}</b>
+                            <small class="text text-muted">{{ wiki.wikiPages|length }}</small>
+                            <br />
+                        </a>
+                        {{ wiki.description }}
+                    </td>
+
+                </tr>
+            {% else %}
+                <tr>
+                    <td colspan="1">no records found</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </fieldset>
+
+{% endblock %}

@@ -1,6 +1,6 @@
 {
   "name": "linkorb/wiki-bundle",
-  "description": "Symfony 4 project Wiki Bundle",
+  "description": "Symfony 5|6|7 project Wiki Bundle",
   "homepage": "https://github.com/linkorb/wiki-bundle",
   "repositories": [
     {
