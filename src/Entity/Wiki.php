@@ -5,9 +5,11 @@ namespace LinkORB\Bundle\WikiBundle\Entity;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use LinkORB\Bundle\WikiBundle\Repository\WikiRepository;
 use Symfony\Component\Yaml\Yaml;
 
-#[ORM\Entity(repositoryClass: "LinkORB\Bundle\WikiBundle\Repository\WikiRepository")]
+#[ORM\Table('linkorb_wiki_wiki')]
+#[ORM\Entity(repositoryClass: WikiRepository::class)]
 class Wiki
 {
     #[ORM\Id]
@@ -21,7 +23,7 @@ class Wiki
     #[ORM\Column(type: 'string', length: 255)]
     private $description;
 
-    #[ORM\OneToMany(targetEntity: "LinkORB\Bundle\WikiBundle\Entity\WikiPage", mappedBy: 'wiki')]
+    #[ORM\OneToMany(targetEntity: WikiPage::class, mappedBy: 'wiki')]
     #[ORM\OrderBy(['name' => 'ASC'])]
     private $wikiPages;
 

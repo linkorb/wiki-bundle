@@ -3,8 +3,10 @@
 namespace LinkORB\Bundle\WikiBundle\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
+use LinkORB\Bundle\WikiBundle\Repository\WikiPageRepository;
 
-#[ORM\Entity(repositoryClass: "LinkORB\Bundle\WikiBundle\Repository\WikiPageRepository")]
+#[ORM\Table('linkorb_wiki_wiki_page')]
+#[ORM\Entity(repositoryClass: WikiPageRepository::class)]
 class WikiPage
 {
     #[ORM\Id]
@@ -12,7 +14,7 @@ class WikiPage
     #[ORM\Column(type: 'integer')]
     private $id;
 
-    #[ORM\ManyToOne(targetEntity: "LinkORB\Bundle\WikiBundle\Entity\Wiki", inversedBy: 'wikiPages')]
+    #[ORM\ManyToOne(targetEntity: Wiki::class, inversedBy: 'wikiPages')]
     #[ORM\JoinColumn(nullable: false)]
     private $wiki;
 
@@ -25,7 +27,7 @@ class WikiPage
     #[ORM\Column(type: 'text', nullable: true)]
     private $data;
 
-    #[ORM\Column(type: 'integer', options: ['default' => 0], nullable: true)]
+    #[ORM\Column(type: 'integer', nullable: true, options: ['default' => 0])]
     private $parent_id;
 
     /* private variable */

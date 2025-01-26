@@ -3,8 +3,10 @@
 namespace LinkORB\Bundle\WikiBundle\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
+use LinkORB\Bundle\WikiBundle\Repository\WikiEventRepository;
 
-#[ORM\Entity(repositoryClass: "LinkORB\Bundle\WikiBundle\Repository\WikiEventRepository")]
+#[ORM\Table('linkorb_wiki_wiki_event')]
+#[ORM\Entity(repositoryClass: WikiEventRepository::class)]
 class WikiEvent
 {
     #[ORM\Id]
