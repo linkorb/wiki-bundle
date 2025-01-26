@@ -126,7 +126,7 @@ class WikiController extends AbstractController
             throw new AccessDeniedException('Access denied!');
         }
 
-        $this->wikiService->publishWiki($wiki, $this->getUser()->getUsername(), $this->getUser()->getEmail());
+        $this->wikiService->publishWiki($wiki, $this->getUser()->getUserIdentifier(), $this->getUser()->getEmail());
 
         return $this->redirectToRoute('wiki_view', ['wikiName' => $wiki->getName()]);
     }
@@ -163,7 +163,7 @@ class WikiController extends AbstractController
                     $wiki->getId(),
                     json_encode([
                         'deletedAt' => time(),
-                        'deletedBy' => $this->getUser() ? $this->getUser()->getUsername() : '',
+                        'deletedBy' => $this->getUser() ? $this->getUser()->getUserIdentifier() : '',
                         'name' => $wiki->getName(),
                     ])
                 );
@@ -192,7 +192,7 @@ class WikiController extends AbstractController
                     $wiki->getId(),
                     json_encode([
                         'createdAt' => time(),
-                        'createdBy' => $this->getUser() ? $this->getUser()->getUsername() : '',
+                        'createdBy' => $this->getUser() ? $this->getUser()->getUserIdentifier() : '',
                         'name' => $wiki->getName(),
                         'description' => $wiki->getDescription(),
                     ])
@@ -203,7 +203,7 @@ class WikiController extends AbstractController
                     $wiki->getId(),
                     json_encode([
                         'updatedAt' => time(),
-                        'updatedBy' => $this->getUser() ? $this->getUser()->getUsername() : '',
+                        'updatedBy' => $this->getUser() ? $this->getUser()->getUserIdentifier() : '',
                         'name' => $wiki->getName(),
                         'description' => $wiki->getDescription(),
                     ])

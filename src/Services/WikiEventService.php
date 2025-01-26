@@ -23,7 +23,7 @@ class WikiEventService
     public function createEvent($type, $wikiId, $data, $wikiPageId = null)
     {
         $username = ($this->tokenStorage->getToken())
-           ? $this->tokenStorage->getToken()->getUser()->getUsername()
+           ? $this->tokenStorage->getToken()->getUser()->getUserIdentifier()
            : '';
 
         $wikiEvent = new WikiEvent();

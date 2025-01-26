@@ -163,7 +163,7 @@ class WikiPageController extends AbstractController
 
             $eventData = [
                 'updatedAt' => time(),
-                'updatedBy' => $this->getUser() ? $this->getUser()->getUsername() : '',
+                'updatedBy' => $this->getUser() ? $this->getUser()->getUserIdentifier() : '',
                 'name' => $wikiPage->getName(),
             ];
             if (0 !== strcmp($wikiPageBeforeContent, $wikiPage->getContent())) {
@@ -191,7 +191,7 @@ class WikiPageController extends AbstractController
 
             $eventData = [
                 'updatedAt' => time(),
-                'updatedBy' => $this->getUser() ? $this->getUser()->getUsername() : '',
+                'updatedBy' => $this->getUser() ? $this->getUser()->getUserIdentifier() : '',
                 'name' => $wikiPage->getName(),
             ];
             if (0 !== strcmp($wikiPageBeforeTitle, $wikiPage->getName())) {
@@ -251,7 +251,7 @@ class WikiPageController extends AbstractController
             $wikiPage->getWiki()->getId(),
             json_encode([
                 'deletedAt' => time(),
-                'deletedBy' => $this->getUser() ? $this->getUser()->getUsername() : '',
+                'deletedBy' => $this->getUser() ? $this->getUser()->getUserIdentifier() : '',
                 'name' => $wikiPage->getName(),
             ]),
             $wikiPage->getId()
@@ -296,7 +296,7 @@ class WikiPageController extends AbstractController
 
             $eventData = [
                 'createdAt' => time(),
-                'createdBy' => $this->getUser() ? $this->getUser()->getUsername() : '',
+                'createdBy' => $this->getUser() ? $this->getUser()->getUserIdentifier() : '',
                 'name' => $wikiPage->getName(),
             ];
             if (0 !== strcmp($wikiPageBeforeTitle, $wikiPage->getName())) {
@@ -357,7 +357,7 @@ class WikiPageController extends AbstractController
         return $this->wikiService->publishWikiPage(
             $wikiPage->getWiki(),
             $wikiPage,
-            $this->getUser()->getUsername(),
+            $this->getUser()->getUserIdentifier(),
             $this->getUser()->getEmail()
         );
     }
