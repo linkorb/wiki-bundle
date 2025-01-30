@@ -1,6 +1,6 @@
 > [!WARNING]
 > This is a read-only repository used to release the subtree. Any issues and pull requests should be forwarded to the
-> upstream Nebula repository.c
+> upstream [Nebula repository](https://github.com/linkorb/nebula).
 
 ## Symfony 5|6|7 WikiBundle
 
