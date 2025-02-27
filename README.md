@@ -56,11 +56,11 @@ composer require linkorb/wiki-bundle
 
 ## Wiki access control
 
-Use [Symfony security roles](https://symfony.com/doc/current/security.html#roles) defined in your application to control who can access or modify a wiki by setting the appropriate rules in the **Read role** and **Write role** fields of the **Add wiki** form in the application.
+Use [Symfony security roles](https://symfony.com/doc/current/security.html#roles) defined in your application to control who can access or modify a wiki by setting the appropriate rules in the **Read role** and **Write role** fields of the **Add wiki** form of a Symfony application.
 
 ## Wiki configuration
 
-The `config` field of the bundle's **Add wiki** form may be used to customize a wiki using the following settings (in YAML format):
+The `config` field of this bundle's **Add wiki** form may be used to customize a wiki using the following settings (in YAML format):
 
 
 <table>
@@ -82,61 +82,55 @@ The `config` field of the bundle's **Add wiki** form may be used to customize a 
     <td>
       Settings for pulling changes from a wiki that is managed on a third-party platform like GitHub. Each item (repository) in the array takes the following <strong>required</strong> settings:
       <ul>
-        <li><code>type</code>: The project/version management type. Valid options include <strong>rest</strong>,<strong>clickup</strong>, and <strong>git</strong>. However, only the <code>git</code> is supported at this time.</li>
-        <li><code>url</code>: </li>
-        <li><code>secret</code>: </li>
+        <li><code>type</code>: The project/version management type. Valid options include <strong>rest</strong>,<strong>clickup</strong>, and <strong>git</strong>. However, only <code>git</code> is supported at this time.</li>
+        <li><code>url</code>: The target repository's HTTPS URL.</li>
+        <li><code>secret</code>: A <a href="https://github.com/settings/personal-access-tokens">fine-grained</a> or a <a href="https://github.com/settings/personal-access-tokens">classic</a> GitHub personal access token that has <code>push</code> and <code>pull</code> permissions to the target repository specified in the <code>url</code> field.
+        </li>
+      </ul>
     </td>
   </tr>
 
   <tr>
-    <td><code>pull</code>
+    <td><code>push</code>
     <td>Array</td>
     <td>
       Settings for pushing changes from a wiki to a third-party platform where the wiki's content is stored. Each item (repository) in the array takes the following <strong>required</strong> settings:
       <ul>
-        <li><code>type</code>: The project/version management type. Valid options include <strong>rest</strong>,<strong>clickup</strong>, and <strong>git</strong>. However, only the <code>git</code> is supported at this time.</li>
-        <li><code>url</code>: </li>
-        <li><code>secret</code>: </li>
+        <li><code>type</code>: The project/version management type. Valid options include <strong>rest</strong>,<strong>clickup</strong>, and <strong>git</strong>. However, only <code>git</code> is supported at this time.</li>
+        <li><code>url</code>: The target repository's HTTPS URL.</li>
+        <li><code>secret</code>:A <a href="https://github.com/settings/personal-access-tokens">fine-grained</a> or a <a href="https://github.com/settings/personal-access-tokens">classic</a> GitHub personal access token that has <code>push</code> and <code>pull</code> permissions to the target repository specified in the <code>url</code> field.
+        </li>
+      </ul>
     </td>
   </tr>
-  <!-- - `type`: push target type option(rest, clickup, git) Currently support only `git` option.
-  - `url`: HTTPS (HTTPS) where pull/push content.
-  - `secret:` Personal access tokens for authentication. [How to create a personal access token?](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-personal-access-token-classic)
-- `push`: An array of settings for pulling changes from a wiki that is managed on GitHub. Each repository's settings is the same as those in the `pull` setting above. -->
 </table>
 
-> [!TIP]
-> Git publish and pull links are in the wiki page admin dropdown.
 
-> [!NOTE]
-> If the GitHub repository is not empty, Pull first to sync the repository.
+#### Sample wiki configuration
 
-## Store and sync wiki content on/from other platforms
-
-In addition to managing a wiki entry from the application's user interface, this bundle can render wiki content managed on external platforms.
-
-For example, you may store your wiki's content in a GitHub repository and push/pull changes to/from the wiki's pages over HTTPS by adding the following to the `config` field of the **Add wiki** form.
+For example, setting the following wiki configuration prevents users from creating and editing wiki pages that are managed externally (e.g., in a GitHub repository). 
 
 ```yaml
+# wiki.config
+
+read-only: true
+
 push:
   - type: git
-    url: https://github.com/gitHub-username/wiki-git.git
-    secret: `ENV:YOUR_GITHUB_ACCESS_TOKEN`
+    url: https://github.com/<USERNAME>/<WIKI-REPOSITORY.git>
+    secret: `ENV:WIKI_GIT_TOKEN`
 
 pull:
   - type: git
-    url: https://github.com/gitHub-username/wiki-git.git
-    secret: `ENV:YOUR_GITHUB_ACCESS_TOKEN`
+    url: https://github.com/<USERNAME>/<WIKI-REPOSITORY.git>
+    secret: `ENV:WIKI_GIT_TOKEN`
 ```
 
-### Read-only wikis
+> [!TIP]
+> Git publish and pull links are in the wiki page's admin dropdown.
 
-This feature supports preventing users from editing wiki page content that is being managed in git/Github.
-For that, set config option into wiki config field.
-```
-read-only: true
-```
-`read-only`: boolen true/false value. If this is set to true, the edit and add features are prohibited for the user.
+> [!NOTE]
+> If the GitHub repository is not empty, pull from it first to sync the repository before pushing any changes.
 
 ## Brought to you by the LinkORB Engineering team
 
