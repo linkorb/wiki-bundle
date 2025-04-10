@@ -7,12 +7,10 @@ use LinkORB\Bundle\WikiBundle\Repository\WikiPageRepository;
 
 class WikiPageService
 {
-    private $wikiPageRepository;
-    private $chain = [];
+    private array $chain = [];
 
-    public function __construct(WikiPageRepository $wikiPageRepository)
+    public function __construct(private readonly WikiPageRepository $wikiPageRepository)
     {
-        $this->wikiPageRepository = $wikiPageRepository;
     }
 
     protected function makeSpaces(int $level): string

@@ -31,7 +31,7 @@ class WikiService
         EntityManagerInterface $em,
         WikiEventService $wikiEventService,
         AuthorizationCheckerInterface $authorizationChecker,
-        private ParameterBagInterface $params,
+        private readonly ParameterBagInterface $params,
     ) {
         $this->wikiRepository = $wikiRepository;
         $this->wikiPageRepository = $wikiPageRepository;

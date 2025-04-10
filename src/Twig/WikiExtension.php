@@ -8,11 +8,8 @@ use Twig\TwigFunction;
 
 class WikiExtension extends AbstractExtension
 {
-    private $wikiPageService;
-
-    public function __construct(WikiPageService $wikiPageService)
+    public function __construct(private readonly WikiPageService $wikiPageService)
     {
-        $this->wikiPageService = $wikiPageService;
     }
 
     public function getFunctions(): array

@@ -9,15 +9,10 @@ use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInt
 
 class WikiEventService
 {
-    private $wikiEventRepository;
-    private $tokenStorage;
-    private $em;
-
-    public function __construct(TokenStorageInterface $tokenStorage, EntityManagerInterface $em, WikiEventRepository $wikiEventRepository)
-    {
-        $this->tokenStorage = $tokenStorage;
-        $this->wikiEventRepository = $wikiEventRepository;
-        $this->em = $em;
+    public function __construct(
+        private readonly TokenStorageInterface $tokenStorage,
+        private readonly EntityManagerInterface $em
+    ) {
     }
 
     public function createEvent($type, $wikiId, $data, $wikiPageId = null)
