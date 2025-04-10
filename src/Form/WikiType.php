@@ -2,12 +2,11 @@
 
 namespace LinkORB\Bundle\WikiBundle\Form;
 
-use App\Validator\Constraint\CodeConstraint;
 use LinkORB\Bundle\WikiBundle\Entity\Wiki;
 use LinkORB\Bundle\WikiBundle\Repository\WikiRepository;
 use Symfony\Component\Form\AbstractType;
-use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
+use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Validator\Constraints as Assert;
@@ -33,8 +32,6 @@ class WikiType extends AbstractType
                 'trim' => true,
                 'constraints' => [
                     new Assert\NotBlank(),
-                    // TODO: resolve this
-                    // new CodeConstraint(),
                     new Assert\Regex([
                         'pattern' => '/^[a-z0-9\-_]+$/',
                         'htmlPattern' => '^[a-z0-9\-_]+$',

@@ -2,8 +2,6 @@
 
 namespace LinkORB\Bundle\WikiBundle\Form;
 
-use App\Validator\Constraint\CodeConstraint;
-use LinkORB\Bundle\WikiBundle\Entity\Wiki;
 use LinkORB\Bundle\WikiBundle\Entity\WikiPage;
 use LinkORB\Bundle\WikiBundle\Services\WikiPageService;
 use LinkORB\Bundle\WikiBundle\Services\WikiService;
@@ -34,21 +32,6 @@ class WikiPageType extends AbstractType
         }
     }
 
-    /*
-    protected function pageTemplates(Wiki $wiki): array
-    {
-        $array = [];
-
-        foreach ($wiki->getWikiPages() as $wikiPage) {
-            $array[$wikiPage->getId()] = $wikiPage->getName();
-        }
-
-        asort($array);
-
-        return $array;
-    }
-    */
-
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
         $entity = $options['data'];
@@ -62,8 +45,6 @@ class WikiPageType extends AbstractType
                 'help' => 'Part of the URL. Accepts lower case, a-z, 0-9, use dashes for spaces',
                 'constraints' => [
                     new Assert\NotBlank(),
-                    // TODO: Resolve this
-                    // new CodeConstraint(),
                     new Assert\Regex([
                         'pattern' => '/^[a-z0-9\-_]+$/',
                         'htmlPattern' => '^[a-z0-9\-_]+$',
