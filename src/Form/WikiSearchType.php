@@ -10,7 +10,7 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
 
 class WikiSearchType extends AbstractType
 {
-    public function buildForm(FormBuilderInterface $builder, array $options)
+    public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $wikiArray = $options['wikiArray'];
 
@@ -33,7 +33,7 @@ class WikiSearchType extends AbstractType
             ]);
     }
 
-    public function configureOptions(OptionsResolver $resolver)
+    public function configureOptions(OptionsResolver $resolver): void
     {
         $resolver->setDefaults([
             'wikiArray' => 'wikiArray',
@@ -41,7 +41,7 @@ class WikiSearchType extends AbstractType
     }
 
     // This function was to be ovveridden
-    public function getBlockPrefix()
+    public function getBlockPrefix(): string
     {
         return '';
     }

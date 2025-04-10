@@ -14,14 +14,11 @@ use Symfony\Component\Validator\Context\ExecutionContext;
 
 class WikiType extends AbstractType
 {
-    protected $wikiRepository;
-
-    public function __construct(WikiRepository $wikiRepository)
+    public function __construct(private readonly WikiRepository $wikiRepository)
     {
-        $this->wikiRepository = $wikiRepository;
     }
 
-    public function buildForm(FormBuilderInterface $builder, array $options)
+    public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $wikiRepository = $this->wikiRepository;
         $entity = $options['data'];
@@ -76,7 +73,7 @@ class WikiType extends AbstractType
             ]);
     }
 
-    public function configureOptions(OptionsResolver $resolver)
+    public function configureOptions(OptionsResolver $resolver): void
     {
         $resolver->setDefaults([
             'data_class' => Wiki::class,

@@ -12,28 +12,28 @@ use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Validator\Constraints as Assert;
-use Symfony\Component\Validator\Context\ExecutionContext;
+use Symfony\Component\Validator\Context\ExecutionContextInterface;
 
 class WikiPageType extends AbstractType
 {
-    private $wikiPageService;
-    private $arrayPageTemplates = [];
+    private array $arrayPageTemplates = [];
 
-    public function __construct(WikiService $wikiService, WikiPageService $wikiPageService)
+    public function __construct(
+        private readonly WikiService $wikiService,
+        private readonly WikiPageService $wikiPageService
+    ) {
+    }
+
+    public function buildForm(FormBuilderInterface $builder, array $options): void
     {
-        $this->wikiPageService = $wikiPageService;
-
-        if ($wikiTemplate = $wikiService->getWikiByName('templates')) {
+        if ($wikiTemplate = $this->wikiService->getWikiByName('templates')) {
             foreach ($wikiTemplate->getWikiPages() as $wikiPage) {
                 $this->arrayPageTemplates[$wikiPage->getId()] = $wikiPage->getName();
             }
 
             asort($this->arrayPageTemplates);
         }
-    }
 
-    public function buildForm(FormBuilderInterface $builder, array $options)
-    {
         $entity = $options['data'];
         $parentArray = $this->wikiPageService->pageRecursiveArray($entity->getWiki()->getId(), 0, (int) $entity->getId());
 
@@ -51,7 +51,7 @@ class WikiPageType extends AbstractType
                         'message' => 'The string {{ value }} contains an illegal character: it can only contain small letters, numbers, - and _ sign',
                     ]),
                     new Assert\Callback(
-                        function ($name, ExecutionContext $context) use ($entity) {
+                        function ($name, ExecutionContextInterface $context) use ($entity) {
                             if ($findEntity = $this->wikiPageService->getOneByWikiIdAndPageName($entity->getWiki()->getId(), $name)) {
                                 if ($findEntity->getId() != $entity->getId()) {
                                     $context->addViolation('Name already exist');
@@ -100,7 +100,7 @@ class WikiPageType extends AbstractType
         ]);
     }
 
-    public function configureOptions(OptionsResolver $resolver)
+    public function configureOptions(OptionsResolver $resolver): void
     {
         $resolver->setDefaults([
             'data_class' => WikiPage::class,
