@@ -3,27 +3,26 @@
 namespace LinkORB\Bundle\WikiBundle\Command;
 
 use LinkORB\Bundle\WikiBundle\Services\WikiService;
+use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
+#[AsCommand(
+    name: 'wiki:export',
+    description: 'Wiki export as .json file.'
+)]
 class WikiExportCommand extends Command
 {
-    private $wikiService;
-
-    public function __construct(WikiService $wikiService)
+    public function __construct(private readonly WikiService $wikiService)
     {
-        $this->wikiService = $wikiService;
-
         parent::__construct();
     }
 
-    protected function configure()
+    protected function configure(): void
     {
         $this
-            ->setName('wiki:export')
-            ->setDescription('Wiki export as .json file.')
             ->addArgument(
                 'wikiName',
                 InputArgument::REQUIRED,
