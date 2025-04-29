@@ -79,7 +79,7 @@ class WikiEventController extends AbstractController
         $wikiEvents = $this->wikiEventRepository->findByWikiPageId($wikiPage->getId());
 
         usort($wikiEvents, function ($a, $b) {
-            return $a->getCreatedAt() < $b->getCreatedAt();
+            return $a->getCreatedAt() <=> $b->getCreatedAt();
         });
 
         $data = $wikiRoles;
