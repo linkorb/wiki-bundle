@@ -111,6 +111,6 @@ class WikiEvent
 
     public function getDataArray(): ?array
     {
-        return json_decode($this->data, true);
+        return json_decode((string) $this->data, true);
     }
 }

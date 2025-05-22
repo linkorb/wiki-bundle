@@ -17,27 +17,17 @@ use Symfony\Component\Yaml\Yaml;
 
 class WikiService
 {
-    private $wikiRepository;
-    private $wikiPageRepository;
-    private $em;
-    private $wikiEventService;
-    private $authorizationChecker;
     private $gitDirPath;
     private $git;
 
     public function __construct(
-        WikiRepository $wikiRepository,
-        WikiPageRepository $wikiPageRepository,
-        EntityManagerInterface $em,
-        WikiEventService $wikiEventService,
-        AuthorizationCheckerInterface $authorizationChecker,
+        private readonly WikiRepository $wikiRepository,
+        private readonly WikiPageRepository $wikiPageRepository,
+        private readonly EntityManagerInterface $em,
+        private readonly WikiEventService $wikiEventService,
+        private readonly AuthorizationCheckerInterface $authorizationChecker,
         private readonly ParameterBagInterface $params,
     ) {
-        $this->wikiRepository = $wikiRepository;
-        $this->wikiPageRepository = $wikiPageRepository;
-        $this->em = $em;
-        $this->wikiEventService = $wikiEventService;
-        $this->authorizationChecker = $authorizationChecker;
         $this->gitDirPath = $this->params->get('kernel.project_dir').'/var/wiki';
         $this->git = new Git();
     }
@@ -80,9 +70,7 @@ class WikiService
             ];
         }
 
-        usort($array, function ($a, $b) {
-            return $a['parent'] ? 1 : 0;
-        });
+        usort($array, fn($a, $b) => $a['parent'] ? 1 : 0);
 
         return $array;
     }
@@ -144,14 +132,14 @@ class WikiService
                 'updatedBy' => '',
                 'name' => $wikiPage->getName(),
             ];
-            if (0 !== strcmp($wikiPageBeforeTitle, $wikiPage->getName())) {
+            if (0 !== strcmp((string) $wikiPageBeforeTitle, (string) $wikiPage->getName())) {
                 $eventData['changes'][] = $this->wikiEventService->fieldDataChangeArray(
                     'title',
                     $wikiPageBeforeTitle,
                     $wikiPage->getName()
                 );
             }
-            if (0 !== strcmp($wikiPageBeforeContent, $wikiPage->getContent())) {
+            if (0 !== strcmp((string) $wikiPageBeforeContent, (string) $wikiPage->getContent())) {
                 $eventData['changes'][] = $this->wikiEventService->fieldDataChangeArray(
                     'content',
                     $wikiPageBeforeContent,
@@ -197,7 +185,7 @@ class WikiService
             $pageContent = $page->getContent();
 
             $markdown .= '<!-- page:'.$page->getName().' -->'.PHP_EOL;
-            $markdown .= trim($pageContent).PHP_EOL.PHP_EOL;
+            $markdown .= trim((string) $pageContent).PHP_EOL.PHP_EOL;
         }
 
         $markdown = $this->processTwig($wiki, $markdown);
@@ -268,7 +256,7 @@ class WikiService
     public function markdownToHtml(Wiki $wiki, ?string $markdown): ?string
     {
         // preprocess mediawiki style links (convert mediawiki style links into markdown links)
-        preg_match_all('/\[\[(.+?)\]\]/u', $markdown, $matches);
+        preg_match_all('/\[\[(.+?)\]\]/u', (string) $markdown, $matches);
         foreach ($matches[1] as $match) {
             $inner = (string) $match;
             $part = explode('|', $inner);
@@ -342,10 +330,10 @@ class WikiService
             file_put_contents($dataFile, '');
         }
 
-        if (0 !== strcmp($wikiPage->getContent(), file_get_contents($contentFile))) {
+        if (0 !== strcmp((string) $wikiPage->getContent(), file_get_contents($contentFile))) {
             file_put_contents($contentFile, $wikiPage->getContent());
         }
-        if (0 !== strcmp($wikiPage->getData(), file_get_contents($dataFile))) {
+        if (0 !== strcmp((string) $wikiPage->getData(), file_get_contents($dataFile))) {
             file_put_contents($dataFile, $wikiPage->getData());
         }
 
@@ -373,7 +361,7 @@ class WikiService
                     if (!$secret) {
                         throw new \RuntimeException('Unable to resolve secret: '.$pushConfig['secret']);
                     }
-                    $parseUrl = parse_url($pushConfig['url']);
+                    $parseUrl = parse_url((string) $pushConfig['url']);
                     $parseUrl['pass'] = $secret;
                     $pushConfig['url'] = $this->unParseUrl($parseUrl);
                 }
@@ -417,7 +405,7 @@ class WikiService
                     throw new \RuntimeException('Unable to resolve secret: '.$pullConfig['secret']);
                 }
                 if ($secret) {
-                    $parseUrl = parse_url($pullConfig['url']);
+                    $parseUrl = parse_url((string) $pullConfig['url']);
                     $parseUrl['pass'] = $secret;
                     $pullConfig['url'] = $this->unParseUrl($parseUrl);
                 }
@@ -476,14 +464,14 @@ class WikiService
                     'updatedBy' => '',
                     'name' => $wikiPage->getName(),
                 ];
-                if (0 !== strcmp($wikiPageBeforeTitle, $wikiPage->getName())) {
+                if (0 !== strcmp((string) $wikiPageBeforeTitle, (string) $wikiPage->getName())) {
                     $eventData['changes'][] = $this->wikiEventService->fieldDataChangeArray(
                         'title',
                         $wikiPageBeforeTitle,
                         $wikiPage->getName()
                     );
                 }
-                if (0 !== strcmp($wikiPageBeforeContent, $wikiPage->getContent())) {
+                if (0 !== strcmp((string) $wikiPageBeforeContent, (string) $wikiPage->getContent())) {
                     $eventData['changes'][] = $this->wikiEventService->fieldDataChangeArray(
                         'content',
                         $wikiPageBeforeContent,
@@ -513,12 +501,12 @@ class WikiService
     private function unParseUrl(array $parseUrl): ?string
     {
         $scheme = isset($parseUrl['scheme']) ? $parseUrl['scheme'].'://' : '';
-        $host = isset($parseUrl['host']) ? $parseUrl['host'] : '';
+        $host = $parseUrl['host'] ?? '';
         $port = isset($parseUrl['port']) ? ':'.$parseUrl['port'] : '';
-        $user = isset($parseUrl['user']) ? $parseUrl['user'] : '';
+        $user = $parseUrl['user'] ?? '';
         $pass = isset($parseUrl['pass']) ? (isset($parseUrl['user']) ? ':' : '').$parseUrl['pass'] : '';
         $pass = ($user || $pass) ? "$pass@" : '';
-        $path = isset($parseUrl['path']) ? $parseUrl['path'] : '';
+        $path = $parseUrl['path'] ?? '';
         $query = isset($parseUrl['query']) ? '?'.$parseUrl['query'] : '';
         $fragment = isset($parseUrl['fragment']) ? '#'.$parseUrl['fragment'] : '';
 

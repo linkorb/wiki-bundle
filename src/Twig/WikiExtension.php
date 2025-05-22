@@ -15,8 +15,8 @@ class WikiExtension extends AbstractExtension
     public function getFunctions(): array
     {
         return [
-            new TwigFunction('wikiRecursivePages', [$this, 'wikiRecursivePages']),
-            new TwigFunction('wikiPageBreadcrumbs', [$this, 'wikiPageBreadcrumbs']),
+            new TwigFunction('wikiRecursivePages', $this->wikiRecursivePages(...)),
+            new TwigFunction('wikiPageBreadcrumbs', $this->wikiPageBreadcrumbs(...)),
         ];
     }
 

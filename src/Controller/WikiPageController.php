@@ -21,14 +21,9 @@ use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 #[Route('/wiki/{wikiName}')]
 class WikiPageController extends AbstractController
 {
-    private $wikiService;
-    private $em;
-
-    public function __construct(WikiService $wikiService, private WikiPageRepository $wikiPageRepository, EntityManagerInterface $em)
+    public function __construct(private readonly WikiService $wikiService, private WikiPageRepository $wikiPageRepository, private readonly EntityManagerInterface $em)
     {
         $this->wikiPageRepository = $wikiPageRepository;
-        $this->wikiService = $wikiService;
-        $this->em = $em;
     }
 
     #[Route('/pages', name: 'wiki_page_index', methods: ['GET'])]
@@ -166,7 +161,7 @@ class WikiPageController extends AbstractController
                 'updatedBy' => $this->getUser() ? $this->getUser()->getUserIdentifier() : '',
                 'name' => $wikiPage->getName(),
             ];
-            if (0 !== strcmp($wikiPageBeforeContent, $wikiPage->getContent())) {
+            if (0 !== strcmp((string) $wikiPageBeforeContent, (string) $wikiPage->getContent())) {
                 $eventData['changes'][] = $wikiEventService->fieldDataChangeArray(
                     'content',
                     $wikiPageBeforeContent,
@@ -194,14 +189,14 @@ class WikiPageController extends AbstractController
                 'updatedBy' => $this->getUser() ? $this->getUser()->getUserIdentifier() : '',
                 'name' => $wikiPage->getName(),
             ];
-            if (0 !== strcmp($wikiPageBeforeTitle, $wikiPage->getName())) {
+            if (0 !== strcmp((string) $wikiPageBeforeTitle, (string) $wikiPage->getName())) {
                 $eventData['changes'][] = $wikiEventService->fieldDataChangeArray(
                     'title',
                     $wikiPageBeforeTitle,
                     $wikiPage->getName()
                 );
             }
-            if (0 !== strcmp($wikiPageBeforeContent, $wikiPage->getContent())) {
+            if (0 !== strcmp((string) $wikiPageBeforeContent, (string) $wikiPage->getContent())) {
                 $eventData['changes'][] = $wikiEventService->fieldDataChangeArray(
                     'content',
                     $wikiPageBeforeContent,
@@ -299,14 +294,14 @@ class WikiPageController extends AbstractController
                 'createdBy' => $this->getUser() ? $this->getUser()->getUserIdentifier() : '',
                 'name' => $wikiPage->getName(),
             ];
-            if (0 !== strcmp($wikiPageBeforeTitle, $wikiPage->getName())) {
+            if (0 !== strcmp((string) $wikiPageBeforeTitle, (string) $wikiPage->getName())) {
                 $eventData['changes'][] = $wikiEventService->fieldDataChangeArray(
                     'title',
                     $wikiPageBeforeTitle,
                     $wikiPage->getName()
                 );
             }
-            if (0 !== strcmp($wikiPageBeforeContent, $wikiPage->getContent())) {
+            if (0 !== strcmp((string) $wikiPageBeforeContent, (string) $wikiPage->getContent())) {
                 $eventData['changes'][] = $wikiEventService->fieldDataChangeArray(
                     'content',
                     $wikiPageBeforeContent,

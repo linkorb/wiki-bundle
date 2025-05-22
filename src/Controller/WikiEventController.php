@@ -19,10 +19,10 @@ use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 class WikiEventController extends AbstractController
 {
     public function __construct(
-        private WikiService $wikiService,
-        private WikiRepository $wikiRepository,
-        private WikiPageRepository $wikiPageRepository,
-        private WikiEventRepository $wikiEventRepository,
+        private readonly WikiService $wikiService,
+        private readonly WikiRepository $wikiRepository,
+        private readonly WikiPageRepository $wikiPageRepository,
+        private readonly WikiEventRepository $wikiEventRepository,
     ) {
     }
 
@@ -78,9 +78,7 @@ class WikiEventController extends AbstractController
 
         $wikiEvents = $this->wikiEventRepository->findByWikiPageId($wikiPage->getId());
 
-        usort($wikiEvents, function ($a, $b) {
-            return $a->getCreatedAt() <=> $b->getCreatedAt();
-        });
+        usort($wikiEvents, fn($a, $b) => $a->getCreatedAt() <=> $b->getCreatedAt());
 
         $data = $wikiRoles;
         $data['wikiEvents'] = $wikiEvents;

@@ -21,13 +21,8 @@ use Symfony\Component\Yaml\Yaml;
 #[Route('/wiki')]
 class WikiController extends AbstractController
 {
-    private $wikiService;
-    private $em;
-
-    public function __construct(WikiService $wikiService, EntityManagerInterface $em)
+    public function __construct(private readonly WikiService $wikiService, private readonly EntityManagerInterface $em)
     {
-        $this->wikiService = $wikiService;
-        $this->em = $em;
     }
 
     #[Route('', name: 'wiki_index', methods: ['GET'])]
@@ -44,9 +39,7 @@ class WikiController extends AbstractController
             }
         }
 
-        usort($wikiArray, function ($a, $b) {
-            return strcmp($a->getName(), $b->getName());
-        });
+        usort($wikiArray, fn($a, $b) => strcmp((string) $a->getName(), (string) $b->getName()));
 
         return $this->render(
             '@LinkORBWiki/wiki/index.html.twig',
