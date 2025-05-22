@@ -35,7 +35,7 @@ class WikiType extends AbstractType
                         'message' => 'The string {{ value }} contains an illegal character: it can only contain small letters, numbers, - and _ sign',
                     ]),
                     new Assert\Callback(
-                        function ($name, ExecutionContext $context) use ($wikiRepository, $entity) {
+                        function ($name, ExecutionContext $context) use ($wikiRepository, $entity): void {
                             if ($findEntity = $wikiRepository->findOneByName($name)) {
                                 if ($findEntity->getId() != $entity->getId()) {
                                     $context->addViolation('Name already exist');

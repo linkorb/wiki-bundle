@@ -229,7 +229,7 @@ class WikiPageController extends AbstractController
             'wiki' => $wiki,
             'form' => $form->createView(),
         ];
-        $data = $data + $wikiRoles;
+        $data += $wikiRoles;
 
         return $this->render('@LinkORBWiki/wiki_page/edit.html.twig', $data);
     }
@@ -342,7 +342,7 @@ class WikiPageController extends AbstractController
             'wiki' => $wiki,
             'form' => $form->createView(),
         ];
-        $data = $data + $wikiRoles;
+        $data += $wikiRoles;
 
         $tocPage = $this->wikiPageRepository->findOneByWikiIdAndName($wiki->getId(), 'toc');
         if ($tocPage) {

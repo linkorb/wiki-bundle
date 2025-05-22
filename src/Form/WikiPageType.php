@@ -51,7 +51,7 @@ class WikiPageType extends AbstractType
                         'message' => 'The string {{ value }} contains an illegal character: it can only contain small letters, numbers, - and _ sign',
                     ]),
                     new Assert\Callback(
-                        function ($name, ExecutionContextInterface $context) use ($entity) {
+                        function ($name, ExecutionContextInterface $context) use ($entity): void {
                             if ($findEntity = $this->wikiPageService->getOneByWikiIdAndPageName($entity->getWiki()->getId(), $name)) {
                                 if ($findEntity->getId() != $entity->getId()) {
                                     $context->addViolation('Name already exist');
