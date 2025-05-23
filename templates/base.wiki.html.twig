@@ -7,11 +7,6 @@
     .wiki-content img {
       max-width: 100%;
     }
-
-    .wiki-page-content {
-      max-width: 1080px;
-      margin: 0 auto;
-    }
   </style>
 {% endblock %}
 
@@ -61,7 +56,7 @@
 
 
 {% block submenu %}
-    <div style="background: #f8f8f8; border-bottom: 1px solid #fff; min-height: 50px; padding-top: 20px; min-height: 70px">
+    <div style="background: #f8f8f8; border-bottom: 1px solid #fff; padding-top: 20px; min-height: 70px">
         <div class="container-fluid">
 
             {% if wiki.name %}
@@ -74,7 +69,8 @@
                 {% if is_granted('ROLE_SUPERUSER') %}
 
                 <div class="dropdown" style="display: inline; margin-right: 8px">
-                    <button style="margin: 0px" class="btn btn-info dropdown-toggle btn-sm"  type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <button style="margin: 0" class="btn btn-info dropdown-toggle btn-sm"  type="button" id="dropdownMenuButton"
+                            data-bs-toggle="dropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                     Admin
                     </button>
                     <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">

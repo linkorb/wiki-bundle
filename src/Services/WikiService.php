@@ -489,7 +489,7 @@ class WikiService
         }
     }
 
-    public function autoPull(Wiki $wiki)
+    public function autoPull(Wiki $wiki): void
     {
         $dateTime = (new \DateTime(' -5 minutes'))->getTimestamp();
 

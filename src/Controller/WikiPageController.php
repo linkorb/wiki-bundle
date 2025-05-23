@@ -21,9 +21,11 @@ use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 #[Route('/wiki/{wikiName}')]
 class WikiPageController extends AbstractController
 {
-    public function __construct(private readonly WikiService $wikiService, private WikiPageRepository $wikiPageRepository, private readonly EntityManagerInterface $em)
-    {
-        $this->wikiPageRepository = $wikiPageRepository;
+    public function __construct(
+        private readonly WikiService $wikiService,
+        private readonly WikiPageRepository $wikiPageRepository,
+        private readonly EntityManagerInterface $em
+    ) {
     }
 
     #[Route('/pages', name: 'wiki_page_index', methods: ['GET'])]
@@ -32,8 +34,6 @@ class WikiPageController extends AbstractController
         if (!$wikiRoles = $this->wikiService->getWikiPermission($wiki)) {
             throw new AccessDeniedException('Access denied!');
         }
-
-        $wikiPages = $this->wikiPageRepository->findByWikiIdAndParentId($wiki->getId(), 0);
 
         $data = $wikiRoles;
         $data['wikiPages'] = $this->wikiPageRepository->findByWikiId($wiki->getId());
@@ -90,11 +90,7 @@ class WikiPageController extends AbstractController
             $data['tocPage'] = $tocPage;
         }
 
-        $markdown = null;
-
-        if ($wikiPage) {
-            $markdown = $wikiPage->getContent();
-        }
+        $markdown = $wikiPage?->getContent();
         $html = $this->wikiService->markdownToHtml($wiki, $markdown);
 
         foreach ($request->query->all() as $k => $v) {
