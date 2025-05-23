@@ -46,8 +46,7 @@ class WikiPageRepository extends ServiceEntityRepository
 
     public function searWikiPages(string $text, array $wikiIds)
     {
-        return $this->_em->createQueryBuilder()
-            ->from(WikiPage::class, 'wp')
+        return $this->createQueryBuilder('wp')
             ->select('wp,
                 CASE
                     WHEN wp.name LIKE :val THEN 3
