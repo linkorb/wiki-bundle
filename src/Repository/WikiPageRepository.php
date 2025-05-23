@@ -19,56 +19,27 @@ class WikiPageRepository extends ServiceEntityRepository
         parent::__construct($registry, WikiPage::class);
     }
 
-    //    /**
-    //     * @return WikiPage[] Returns an array of WikiPage objects
-    //     */
-    /*
-    public function findByExampleField($value)
-    {
-        return $this->createQueryBuilder('w')
-            ->andWhere('w.exampleField = :val')
-            ->setParameter('val', $value)
-            ->orderBy('w.id', 'ASC')
-            ->setMaxResults(10)
-            ->getQuery()
-            ->getResult()
-        ;
-    }
-    */
-
-    /*
-    public function findOneBySomeField($value): ?WikiPage
-    {
-        return $this->createQueryBuilder('w')
-            ->andWhere('w.exampleField = :val')
-            ->setParameter('val', $value)
-            ->getQuery()
-            ->getOneOrNullResult()
-        ;
-    }
-    */
-
-    public function findByWikiId($wikiId)
+    public function findByWikiId($wikiId): array
     {
         return $this->findBy(['wiki' => $wikiId]);
     }
 
-    public function findOneByWikiIdAndName($wikiId, $name)
+    public function findOneByWikiIdAndName($wikiId, $name): ?WikiPage
     {
         return $this->findOneBy(['wiki' => $wikiId, 'name' => $name]);
     }
 
-    public function findByWikiIdAndParentId(int $wikiId, int $parentId)
+    public function findByWikiIdAndParentId(int $wikiId, int $parentId): array
     {
         return $this->findBy(['wiki' => $wikiId, 'parent_id' => $parentId]);
     }
 
-    public function findByParentId(int $parentId)
+    public function findByParentId(int $parentId): array
     {
         return $this->findBy(['parent_id' => $parentId]);
     }
 
-    public function findOneByWikiIdAndId(int $wikiId, int $id)
+    public function findOneByWikiIdAndId(int $wikiId, int $id): ?WikiPage
     {
         return $this->findOneBy(['wiki' => $wikiId, 'id' => $id]);
     }
