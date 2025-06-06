@@ -16,19 +16,19 @@ class WikiPage
 
     #[ORM\ManyToOne(targetEntity: Wiki::class, inversedBy: 'wikiPages')]
     #[ORM\JoinColumn(nullable: false)]
-    private ?Wiki $wiki;
+    private ?Wiki $wiki = null;
 
     #[ORM\Column(type: 'string', length: 64)]
-    private ?string $name;
+    private ?string $name = null;
 
     #[ORM\Column(type: 'text', nullable: true)]
-    private ?string $content;
+    private ?string $content = null;
 
     #[ORM\Column(type: 'text', nullable: true)]
-    private ?string $data;
+    private ?string $data = null;
 
     #[ORM\Column(type: 'integer', nullable: true, options: ['default' => 0])]
-    private ?int $parent_id;
+    private ?int $parent_id = null;
 
     /* private variable */
     private $points;
