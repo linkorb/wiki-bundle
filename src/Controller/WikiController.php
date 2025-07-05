@@ -110,7 +110,7 @@ class WikiController extends AbstractController
     }
 
     #[Route('/{wikiName}/publish', name: 'wiki_publish', methods: ['GET'])]
-    public function publishAction(Request $request, #[MapEntity(mapping: ['wikiName' => 'name'])] Wiki $wiki): Response
+    public function publishAction(#[MapEntity(mapping: ['wikiName' => 'name'])] Wiki $wiki): Response
     {
         if (!$wikiRoles = $this->wikiService->getWikiPermission($wiki)) {
             throw new AccessDeniedException('Access denied!');
