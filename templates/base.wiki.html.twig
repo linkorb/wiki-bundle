@@ -11,7 +11,7 @@
 {% endblock %}
 
 {% block sidebar %}
-    <i class="fa fa-arrow-left"></i> <a href="{{ path('wiki_index') }}">Wikis</a>
+    <i class="fa fa-arrow-left align-middle"></i> <a class="align-middle" href="{{ path('wiki_index') }}">Wikis</a>
     <hr />
     {% if tocPage is defined %}
     <h4>Table of contents
@@ -19,24 +19,24 @@
     </h4>
     {{ tocPage.content|default('')|markdown_to_html }}
     {% else %}
-      <h4>Pages</h4>
+      <h4 class="u-mb-2">Pages</h4>
 
       <ul class="list-unstyled">
         {% macro macroPageTree(wikiPages , wiki) %}
           {% import _self as macros %}
 
           {% for  page in  wikiPages %}
-            <li class="text-truncate">
+            <li class="text-truncate u-mb-1">
                 <i class="fa fa-angle-right fa-fw" aria-hidden="true"></i>
 
-                <a href="{{ path('wiki_page_add', {'wikiName': wiki.name, 'parentId': page.id } ) }}" class="float-right text-primary"><i class="fa fa-plus"></i></a>
+                <a href="{{ path('wiki_page_add', {'wikiName': wiki.name, 'parentId': page.id } ) }}" class="float-right text-primary"><i class="fa fa-plus align-middle"></i></a>
 
                 <a href="{{ path('wiki_page_view', {'wikiName': wiki.name, 'pageName': page.name} ) }}" title="{{ page.name }}">{{ page.name }}</a>
 
 
 
                  {% if page.getChildPages() %}
-                    <ul style="list-style: none; padding-left: 20px;" class="list-group">
+                    <ul style="list-style: none; padding-left: 20px;" class="list-group u-mt-1">
                         {{ macros.macroPageTree( page.getChildPages(), wiki) }}
                     </ul>
                  {% endif %}
@@ -120,7 +120,7 @@
             </div>
 
             <h4>
-                <i class="fa fa-book"></i>
+                <i class="fa fa-book align-middle"></i>
                 <a href="{{ path('wiki_view', {'wikiName': wiki.name } ) }}">
                     {{ wiki.name }}
                 </a>
