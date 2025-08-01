@@ -2,6 +2,7 @@
 
 namespace LinkORB\Bundle\WikiBundle\Twig;
 
+
 use LinkORB\Bundle\WikiBundle\Contracts\MetaEntityServiceInterface;
 use LinkORB\Bundle\WikiBundle\Entity\WikiPage;
 use LinkORB\Bundle\WikiBundle\Repository\WikiPageRepository;
@@ -45,7 +46,6 @@ class AppExtension
         $recentEntities = [];
 
         foreach ($metaUserEntities as $metaUserEntity) {
-                /** @var MetaEntity|null $metaEntity */
                 $metaEntity = $metaUserEntity->getMetaEntity();
                 $businessKey = preg_replace('/[^0-9]/', '', (string) $metaEntity?->getBusinessKey());
                 if (empty($businessKey)) {
