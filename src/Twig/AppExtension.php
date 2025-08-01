@@ -37,7 +37,6 @@ class AppExtension
             return [];
         }
 
-
         $metaUserEntities = $this->metaEntityService->getFavoriteByBusinessKey($username, WikiPage::class, 10);
         if (empty($metaUserEntities)) {
             return [];
