@@ -26,7 +26,9 @@ class AppExtension
     ) {
     }
 
-    /** @return array<string[]> */
+    /**
+     * @return list<array{ name: string|null, link: string|null}>
+     */
     #[AsTwigFunction('favoriteWikiPagesList')]
     public function favoriteWikiPagesList(): array
     {
@@ -35,17 +37,21 @@ class AppExtension
             return [];
         }
 
+
         $metaUserEntities = $this->metaEntityService->getFavoriteByBusinessKey($username, WikiPage::class, 10);
         if (empty($metaUserEntities)) {
             return [];
         }
 
         $recentEntities = [];
+
         foreach ($metaUserEntities as $metaUserEntity) {
-            $businessKey = preg_replace('/[^0-9]/', '', (string) $metaUserEntity->getMetaEntity()?->getBusinessKey());
-            if (empty($businessKey)) {
-                continue;
-            }
+                /** @var MetaEntity|null $metaEntity */
+                $metaEntity = $metaUserEntity->getMetaEntity();
+                $businessKey = preg_replace('/[^0-9]/', '', (string) $metaEntity?->getBusinessKey());
+                if (empty($businessKey)) {
+                    continue;
+                }
 
             $entity = $this->wikiPageRepository->find($businessKey);
             if (is_null($entity)) {
@@ -56,17 +62,20 @@ class AppExtension
                 'name' => $entity->getName(),
                 'link' => $this->router->generate(
                     'wiki_page_view',
-                    ['wikiName' => $entity->getWiki()->getName(), 'pageName' => $entity->getName()]
+                    ['wikiName' => $entity->getWiki()?->getName(), 'pageName' => $entity->getName()]
                 ),
             ];
+
         }
 
         return $recentEntities;
     }
 
-    /** @return array<string[]> */
+    /**
+     * @return list<array{ name: string|null, link: string|null}>
+     */
     #[AsTwigFunction('recentWikiPagesList')]
-    public function recentWikiPagesList(): array
+    public function recentWikiPagesList(): ?array
     {
         $username = $this->tokenStorage->getToken()?->getUserIdentifier();
         if (!$username) {
@@ -92,7 +101,7 @@ class AppExtension
                 'name' => $entity->getName(),
                 'link' => $this->router->generate(
                     'wiki_page_view',
-                    ['wikiName' => $entity->getWiki()->getName(), 'pageName' => $entity->getName()]
+                    ['wikiName' => $entity->getWiki()?->getName(), 'pageName' => $entity->getName()]
                 ),
             ];
         }
