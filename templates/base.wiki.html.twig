@@ -137,6 +137,21 @@
                     {% endif %}
                   {% endfor %}
 
+                    <small>
+                        {% set getWikiPageMetaUserEntity = getWikiPageMetaUserEntity() %}
+                        {% if getWikiPageMetaUserEntity %}
+                          <a href="{{ path('wiki_page_toggle_favorite', {'wikiName': wiki.name, 'pageName': wikiPage.name }) }}">
+                            {% if getWikiPageMetaUserEntity.isFavorite %}
+                              <i class="icon-lux-star-fill mark-as-default"></i>
+                            {% else %}
+                              <i class="icon-lux-star mark-as-default text-dark"></i>
+                            {% endif %}
+                          </a>
+                        {% else %}
+                          <i class="fa fa-ellipsis-h text text-light"></i>
+                        {% endif %}
+                    </small>
+
                 {% endif %}
             </h4>
             {% endif %}

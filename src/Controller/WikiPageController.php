@@ -2,7 +2,11 @@
 
 namespace LinkORB\Bundle\WikiBundle\Controller;
 
+use App\Bridge\MetaEntityService;
 use Doctrine\ORM\EntityManagerInterface;
+use Github\Api\Meta;
+use LinkORB\Bundle\MetaEntityBundle\Entity\MetaEntity;
+use LinkORB\Bundle\WikiBundle\Contracts\MetaEntityServiceInterface;
 use LinkORB\Bundle\WikiBundle\Entity\Wiki;
 use LinkORB\Bundle\WikiBundle\Entity\WikiPage;
 use LinkORB\Bundle\WikiBundle\Form\WikiPageContentType;
@@ -24,7 +28,8 @@ class WikiPageController extends AbstractController
     public function __construct(
         private readonly WikiService $wikiService,
         private readonly WikiPageRepository $wikiPageRepository,
-        private readonly EntityManagerInterface $em
+        private readonly EntityManagerInterface $em,
+        private readonly MetaEntityServiceInterface $metaEntityService,
     ) {
     }
 
@@ -223,6 +228,30 @@ class WikiPageController extends AbstractController
         $data += $wikiRoles;
 
         return $this->render('@LinkORBWiki/wiki_page/edit.html.twig', $data);
+    }
+
+
+    #[Route('/pages/{pageName}/toggle-favorite', name: 'wiki_page_toggle_favorite', methods: ['GET'])]
+    public function toggleFavoriteAction(#[MapEntity(mapping: ['wikiName' => 'name'])] Wiki $wiki, string $pageName): Response
+    {
+
+        $wikiPage = $this->wikiPageRepository->findOneByWikiIdAndName($wiki->getId(), $pageName);
+        if (!$wikiPage) {
+            throw new AccessDeniedException('Page not found!');
+        }
+
+        $wikiRoles = $this->wikiService->getWikiPermission($wiki);
+        if (!$wikiRoles || !$wikiRoles['readRole']) {
+            throw new AccessDeniedException('Access denied!');
+        }
+
+        $username = $this->getUser()->getUserIdentifier();
+        $this->metaEntityService->toggleFavorite($username, $wikiPage::class.':'.$wikiPage->getId());
+
+        return $this->redirectToRoute('wiki_page_view', [
+            'wikiName' => $wiki->getName(),
+            'pageName' => $pageName,
+        ]);
     }
 
     #[Route('/pages/{pageName}/delete', name: 'wiki_page_delete', methods: ['GET'])]
