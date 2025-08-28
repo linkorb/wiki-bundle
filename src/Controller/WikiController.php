@@ -137,8 +137,11 @@ class WikiController extends AbstractController
         return $this->getEditForm($request, $wiki, $wikiEventService);
     }
 
-    #[Route('/{wikiName}/delete', name: 'wiki_delete', methods: ['GET'])]
-    public function deleteAction(Request $request, #[MapEntity(mapping: ['wikiName' => 'name'])] Wiki $wiki, WikiEventService $wikiEventService): Response
+    #[Route('/{wikiName}/delete', name: 'wiki_delete', methods: ['POST'])]
+    public function deleteAction(
+        #[MapEntity(mapping: ['wikiName' => 'name'])] Wiki $wiki,
+        WikiEventService $wikiEventService
+    ): Response
     {
         if (!$wikiRoles = $this->wikiService->getWikiPermission($wiki)) {
             throw new AccessDeniedException('Access denied!');
@@ -168,7 +171,7 @@ class WikiController extends AbstractController
         return $this->redirectToRoute('wiki_index');
     }
 
-    protected function getEditForm(Request $request, Wiki $wiki, WikiEventService $wikiEventService)
+    protected function getEditForm(Request $request, Wiki $wiki, WikiEventService $wikiEventService): Response
     {
         $form = $this->createForm(WikiType::class, $wiki);
         $form->handleRequest($request);

@@ -62,7 +62,7 @@ class WikiPageService
         return $childPages;
     }
 
-    public function getChain(int $wikiId, WikiPage $wikiPage)
+    public function getChain(int $wikiId, WikiPage $wikiPage): array
     {
         array_unshift($this->chain, $wikiPage);
 

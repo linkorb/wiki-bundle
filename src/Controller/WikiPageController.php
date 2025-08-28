@@ -2,10 +2,7 @@
 
 namespace LinkORB\Bundle\WikiBundle\Controller;
 
-use App\Bridge\MetaEntityService;
 use Doctrine\ORM\EntityManagerInterface;
-use Github\Api\Meta;
-use LinkORB\Bundle\MetaEntityBundle\Entity\MetaEntity;
 use LinkORB\Bundle\WikiBundle\Contracts\MetaEntityServiceInterface;
 use LinkORB\Bundle\WikiBundle\Entity\Wiki;
 use LinkORB\Bundle\WikiBundle\Entity\WikiPage;
@@ -254,8 +251,12 @@ class WikiPageController extends AbstractController
         ]);
     }
 
-    #[Route('/pages/{pageName}/delete', name: 'wiki_page_delete', methods: ['GET'])]
-    public function deleteAction(Request $request, #[MapEntity(mapping: ['wikiName' => 'name'])] Wiki $wiki, WikiEventService $wikiEventService, $pageName): Response
+    #[Route('/pages/{pageName}/delete', name: 'wiki_page_delete', methods: ['POST'])]
+    public function deleteAction(
+        #[MapEntity(mapping: ['wikiName' => 'name'])] Wiki $wiki,
+        WikiEventService $wikiEventService,
+        $pageName
+    ): Response
     {
         $wikiPage = $this->wikiPageRepository->findOneByWikiIdAndName($wiki->getId(), $pageName);
 
