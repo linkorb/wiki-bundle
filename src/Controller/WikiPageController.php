@@ -260,7 +260,7 @@ class WikiPageController extends AbstractController
         Request $request
     ): Response
     {
-        if ($this->isCsrfTokenValid('delete-item', $request->getPayload()->get('token'))) {
+        if (!$this->isCsrfTokenValid('delete-item', $request->getPayload()->get('token'))) {
             throw new BadRequestHttpException('Token invalid!');
         }
 
