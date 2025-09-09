@@ -26,20 +26,7 @@ composer require linkorb/wiki-bundle
 
 ## Setup
 
-1. Ensure the bundle is registered in your Symfony application by adding the following to the ***config/bundles.php*** script if the entry doesn't already exist.
-
-    ```php
-    <?php
-    // config/bundles.php
-
-    return [
-        // ...
-        LinkORB\Bundle\WikiBundle\LinkORBWikiBundle::class => ['all' => true],
-        // ...
-    ];
-    ```
-
-2. Register the bundle's routes by creating a ***config/routes/linkorb-wiki-bundle.yaml*** file with the following as its contents.
+1. Register the bundle's routes by creating a ***config/routes/linkorb-wiki-bundle.yaml*** file with the following as its contents.
 
     ```yaml
     wiki_bundle:
@@ -47,7 +34,7 @@ composer require linkorb/wiki-bundle
       type: attribute
     ```
 
-3. Append the following block in the application's base twig template.
+2. Append the following block in the application's base twig template.
 
     ```twig
       {% block sidebar %}{% endblock %}
@@ -63,7 +50,21 @@ parameters:
 
 ## Wiki access control
 
+> [!DEPRECATED]
 Use [Symfony security roles](https://symfony.com/doc/current/security.html#roles) defined in your application to control who can access or modify a wiki by setting the appropriate rules in the **Read role** and **Write role** fields of the **Add wiki** form of a Symfony application.
+
+Wiki permissions are controllable through access control expression compatible with symfony/expression-language.
+By default within these expressions you can use the `is_granted` function to check role membership (`is_granted("ROLE_ADMIN")`),
+or fine-grained permissions using the symfony Voter pattern (`is_granted(attribute, subject)`).
+
+To extend the types of functions available for access control you should consider creating your own custom access
+control evaluation class, by extending [EvalInterface](./src/AccessControl/EvalInterface.php) and replacing the
+default implementation in your `services.yaml` file.
+
+```yaml
+  LinkORB\Bundle\WikiBundle\AccessControl\EvalInterface:
+    alias: App\Security\MyAccessControlEvaluator
+```
 
 ## Wiki configuration
 
