@@ -9,7 +9,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Attribute\Route;
 
 #[Route('/api/v1')]
 class ApiController extends AbstractController
@@ -33,7 +33,7 @@ class ApiController extends AbstractController
         return $this->getJsonResponse($data, $code);
     }
 
-    protected function getWikiPermission(Wiki $wiki)
+    protected function getWikiPermission(Wiki $wiki): array|false
     {
         $wikiRoles = ['readRole' => false, 'writeRole' => false];
         $flag = false;
@@ -96,7 +96,7 @@ class ApiController extends AbstractController
         #[MapEntity(mapping: ['wikiName' => 'name'])] Wiki $wiki,
         WikiService $wikiService,
     ): Response {
-        if (!$wikiRoles = $this->getWikiPermission($wiki)) {
+        if (!$this->getWikiPermission($wiki)) {
             return $this->getErrorResponse('Access denied!', Response::HTTP_UNAUTHORIZED);
         }
         $data = $wikiService->export($wiki);

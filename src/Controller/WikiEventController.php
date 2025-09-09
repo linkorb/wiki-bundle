@@ -6,22 +6,17 @@ use LinkORB\Bundle\WikiBundle\Entity\Wiki;
 use LinkORB\Bundle\WikiBundle\Entity\WikiEvent;
 use LinkORB\Bundle\WikiBundle\Entity\WikiPage;
 use LinkORB\Bundle\WikiBundle\Repository\WikiEventRepository;
-use LinkORB\Bundle\WikiBundle\Repository\WikiPageRepository;
-use LinkORB\Bundle\WikiBundle\Repository\WikiRepository;
 use LinkORB\Bundle\WikiBundle\Services\WikiService;
 use Symfony\Bridge\Doctrine\Attribute\MapEntity;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Component\Security\Core\Exception\AccessDeniedException;
+use Symfony\Component\Routing\Attribute\Route;
 
 #[Route('/wiki/{wikiName}')]
 class WikiEventController extends AbstractController
 {
     public function __construct(
         private readonly WikiService $wikiService,
-        private readonly WikiRepository $wikiRepository,
-        private readonly WikiPageRepository $wikiPageRepository,
         private readonly WikiEventRepository $wikiEventRepository,
     ) {
     }
@@ -32,10 +27,10 @@ class WikiEventController extends AbstractController
         $wikiEvents = $this->wikiEventRepository->findByWikiId($wiki->getId());
 
         if (!$wikiRoles = $this->wikiService->getWikiPermission($wiki)) {
-            throw new AccessDeniedException('Access denied!');
+            throw $this->createAccessDeniedException('Access denied!');
         }
         if (!$wikiRoles['readRole']) {
-            throw new AccessDeniedException('Access denied!');
+            throw $this->createAccessDeniedException('Access denied!');
         }
 
         $data = $wikiRoles;
@@ -51,10 +46,10 @@ class WikiEventController extends AbstractController
         #[MapEntity(mapping: ['eventId' => 'id'])] WikiEvent $wikiEvent,
     ): Response {
         if (!$wikiRoles = $this->wikiService->getWikiPermission($wiki)) {
-            throw new AccessDeniedException('Access denied!');
+            throw $this->createAccessDeniedException('Access denied!');
         }
         if (!$wikiRoles['readRole']) {
-            throw new AccessDeniedException('Access denied!');
+            throw $this->createAccessDeniedException('Access denied!');
         }
 
         $data = $wikiRoles;
@@ -70,10 +65,10 @@ class WikiEventController extends AbstractController
         #[MapEntity(mapping: ['pageName' => 'name'])] WikiPage $wikiPage,
     ): Response {
         if (!$wikiRoles = $this->wikiService->getWikiPermission($wiki)) {
-            throw new AccessDeniedException('Access denied!');
+            throw $this->createAccessDeniedException('Access denied!');
         }
         if (!$wikiRoles['readRole']) {
-            throw new AccessDeniedException('Access denied!');
+            throw $this->createAccessDeniedException('Access denied!');
         }
 
         $wikiEvents = $this->wikiEventRepository->findByWikiPageId($wikiPage->getId());
