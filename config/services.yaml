@@ -6,3 +6,6 @@ services:
 
   LinkORB\Bundle\WikiBundle\:
     resource: '../src/*'
+
+  LinkORB\Bundle\WikiBundle\AccessControl\EvalInterface:
+    alias: LinkORB\Bundle\WikiBundle\AccessControl\IsGrantedEval

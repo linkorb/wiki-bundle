@@ -3,6 +3,7 @@
 namespace LinkORB\Bundle\WikiBundle\Controller;
 
 use Doctrine\ORM\EntityManagerInterface;
+use LinkORB\Bundle\WikiBundle\AccessControl\EvalInterface;
 use LinkORB\Bundle\WikiBundle\Contracts\MetaEntityServiceInterface;
 use LinkORB\Bundle\WikiBundle\Entity\Wiki;
 use LinkORB\Bundle\WikiBundle\Entity\WikiPage;
@@ -32,8 +33,18 @@ class WikiPageController extends AbstractController
     }
 
     #[Route('/pages', name: 'wiki_page_index', methods: ['GET'])]
-    public function indexAction(#[MapEntity(mapping: ['wikiName' => 'name'])] Wiki $wiki): Response
+    public function indexAction(
+        #[MapEntity(mapping: ['wikiName' => 'name'])] Wiki $wiki,
+        EvalInterface $wikiAccess
+    ): Response
     {
+        $access_control_expression = $wiki->getAccessControlExpression();
+        if (!empty($access_control_expression)) {
+            if (!$wikiAccess->eval($access_control_expression)) {
+                throw $this->createAccessDeniedException();
+            }
+        }
+
         if (!$wikiRoles = $this->wikiService->getWikiPermission($wiki)) {
             throw $this->createAccessDeniedException('Access denied!');
         }
@@ -46,16 +57,38 @@ class WikiPageController extends AbstractController
     }
 
     #[Route('/pages/read-only', name: 'wiki_page_read_only', methods: ['GET'])]
-    public function readOnlyAction(#[MapEntity(mapping: ['wikiName' => 'name'])] Wiki $wiki): Response
+    public function readOnlyAction(
+        #[MapEntity(mapping: ['wikiName' => 'name'])] Wiki $wiki,
+        EvalInterface $wikiAccess
+    ): Response
     {
+        $access_control_expression = $wiki->getAccessControlExpression();
+        if (!empty($access_control_expression)) {
+            if (!$wikiAccess->eval($access_control_expression)) {
+                throw $this->createAccessDeniedException();
+            }
+        }
+
         return $this->render('@LinkORBWiki/wiki_page/read_only.html.twig', [
             'wiki' => $wiki,
         ]);
     }
 
     #[Route('/pages/add', name: 'wiki_page_add', methods: ['GET', 'POST'])]
-    public function addAction(Request $request, #[MapEntity(mapping: ['wikiName' => 'name'])] Wiki $wiki, WikiEventService $wikiEventService): Response
+    public function addAction(
+        Request $request,
+        #[MapEntity(mapping: ['wikiName' => 'name'])] Wiki $wiki,
+        WikiEventService $wikiEventService,
+        EvalInterface $wikiAccess
+    ): Response
     {
+        $access_control_expression = $wiki->getAccessControlExpression();
+        if (!empty($access_control_expression)) {
+            if (!$wikiAccess->eval($access_control_expression)) {
+                throw $this->createAccessDeniedException();
+            }
+        }
+
         $wikiPage = new WikiPage();
         $wikiPage->setWiki($wiki);
 
@@ -76,8 +109,20 @@ class WikiPageController extends AbstractController
     }
 
     #[Route('/{pageName}', name: 'wiki_page_view', methods: ['GET'])]
-    public function viewAction(Request $request, #[MapEntity(mapping: ['wikiName' => 'name'])] Wiki $wiki, string $pageName): Response
+    public function viewAction(
+        Request $request,
+        #[MapEntity(mapping: ['wikiName' => 'name'])] Wiki $wiki,
+        string $pageName,
+        EvalInterface $wikiAccess
+    ): Response
     {
+        $access_control_expression = $wiki->getAccessControlExpression();
+        if (!empty($access_control_expression)) {
+            if (!$wikiAccess->eval($access_control_expression)) {
+                throw $this->createAccessDeniedException();
+            }
+        }
+
         if (!$wikiRoles = $this->wikiService->getWikiPermission($wiki)) {
             throw $this->createAccessDeniedException('Access denied!');
         }
@@ -111,8 +156,21 @@ class WikiPageController extends AbstractController
     }
 
     #[Route('/pages/{pageName}/advanced', name: 'wiki_page_edit_advance', methods: ['GET', 'POST'])]
-    public function editAdvanceAction(Request $request, #[MapEntity(mapping: ['wikiName' => 'name'])] Wiki $wiki, WikiEventService $wikiEventService, $pageName): Response
+    public function editAdvanceAction(
+        Request $request,
+        #[MapEntity(mapping: ['wikiName' => 'name'])] Wiki $wiki,
+        WikiEventService $wikiEventService,
+        $pageName,
+        EvalInterface $wikiAccess
+    ): Response
     {
+        $access_control_expression = $wiki->getAccessControlExpression();
+        if (!empty($access_control_expression)) {
+            if (!$wikiAccess->eval($access_control_expression)) {
+                throw $this->createAccessDeniedException();
+            }
+        }
+
         if ($wiki->isReadOnly()) {
             return $this->redirectToRoute('wiki_page_read_only', [
                 'wikiName' => $wiki->getName(),
@@ -125,8 +183,21 @@ class WikiPageController extends AbstractController
     }
 
     #[Route('/pages/{pageName}/edit', name: 'wiki_page_edit', methods: ['GET', 'POST'])]
-    public function editAction(Request $request, #[MapEntity(mapping: ['wikiName' => 'name'])] Wiki $wiki, WikiEventService $wikiEventService, $pageName): Response
+    public function editAction(
+        Request $request,
+        #[MapEntity(mapping: ['wikiName' => 'name'])] Wiki $wiki,
+        WikiEventService $wikiEventService,
+        $pageName,
+        EvalInterface $wikiAccess
+    ): Response
     {
+        $access_control_expression = $wiki->getAccessControlExpression();
+        if (!empty($access_control_expression)) {
+            if (!$wikiAccess->eval($access_control_expression)) {
+                throw $this->createAccessDeniedException();
+            }
+        }
+
         if ($wiki->isReadOnly()) {
             return $this->redirectToRoute('wiki_page_read_only', [
                 'wikiName' => $wiki->getName(),
@@ -230,8 +301,18 @@ class WikiPageController extends AbstractController
 
 
     #[Route('/pages/{pageName}/toggle-favorite', name: 'wiki_page_toggle_favorite', methods: ['GET'])]
-    public function toggleFavoriteAction(#[MapEntity(mapping: ['wikiName' => 'name'])] Wiki $wiki, string $pageName): Response
+    public function toggleFavoriteAction(
+        #[MapEntity(mapping: ['wikiName' => 'name'])] Wiki $wiki,
+        string $pageName,
+        EvalInterface $wikiAccess
+    ): Response
     {
+        $access_control_expression = $wiki->getAccessControlExpression();
+        if (!empty($access_control_expression)) {
+            if (!$wikiAccess->eval($access_control_expression)) {
+                throw $this->createAccessDeniedException();
+            }
+        }
 
         $wikiPage = $this->wikiPageRepository->findOneByWikiIdAndName($wiki->getId(), $pageName);
         if (!$wikiPage) {

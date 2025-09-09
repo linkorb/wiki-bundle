@@ -3,6 +3,7 @@
 namespace LinkORB\Bundle\WikiBundle\Controller;
 
 use Doctrine\ORM\EntityManagerInterface;
+use LinkORB\Bundle\WikiBundle\AccessControl\EvalInterface;
 use LinkORB\Bundle\WikiBundle\Entity\Wiki;
 use LinkORB\Bundle\WikiBundle\Form\WikiSearchType;
 use LinkORB\Bundle\WikiBundle\Form\WikiType;
@@ -145,7 +146,7 @@ class WikiController extends AbstractController
         Request $request
     ): Response
     {
-        if (!$this->isCsrfTokenValid('delete-item', $request->getPayload()->get('token'))) {
+        if (!$this->isCsrfTokenValid('delete-item', (string) $request->getPayload()->get('token'))) {
             throw new BadRequestHttpException('CSRF token invalid!');
         }
         if (!$wikiRoles = $this->wikiService->getWikiPermission($wiki)) {
@@ -221,13 +222,17 @@ class WikiController extends AbstractController
     }
 
     #[Route('/{wikiName}', name: 'wiki_view', methods: ['GET'])]
-    public function viewAction(WikiPageService $wikiPageService, $wikiName): Response
+    public function viewAction(
+        WikiPageService $wikiPageService,
+        #[MapEntity(mapping: ['wikiName' => 'name'])] Wiki $wiki,
+        EvalInterface $wikiAccess
+    ): Response
     {
-        if (!$wiki = $this->wikiService->getWikiByName($wikiName)) {
-            return $this->render(
-                '@LinkORBWiki/wiki/new.html.twig',
-                ['wikiName' => $wikiName]
-            );
+        $access_control_expression = $wiki->getAccessControlExpression();
+        if (!empty($access_control_expression)) {
+            if (!$wikiAccess->eval($access_control_expression)) {
+                throw $this->createAccessDeniedException();
+            }
         }
 
         if (!$wikiRoles = $this->wikiService->getWikiPermission($wiki)) {

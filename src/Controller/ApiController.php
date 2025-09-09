@@ -2,6 +2,7 @@
 
 namespace LinkORB\Bundle\WikiBundle\Controller;
 
+use LinkORB\Bundle\WikiBundle\AccessControl\EvalInterface;
 use LinkORB\Bundle\WikiBundle\Entity\Wiki;
 use LinkORB\Bundle\WikiBundle\Services\WikiService;
 use Symfony\Bridge\Doctrine\Attribute\MapEntity;
@@ -95,7 +96,15 @@ class ApiController extends AbstractController
     public function wikiExportAction(
         #[MapEntity(mapping: ['wikiName' => 'name'])] Wiki $wiki,
         WikiService $wikiService,
+        EvalInterface $wikiAccess
     ): Response {
+        $access_control_expression = $wiki->getAccessControlExpression();
+        if (!empty($access_control_expression)) {
+            if (!$wikiAccess->eval($access_control_expression)) {
+                throw $this->createAccessDeniedException();
+            }
+        }
+
         if (!$this->getWikiPermission($wiki)) {
             return $this->getErrorResponse('Access denied!', Response::HTTP_UNAUTHORIZED);
         }
@@ -108,10 +117,14 @@ class ApiController extends AbstractController
     public function wikiImportAction(
         Request $request,
         WikiService $wikiService,
-        #[MapEntity(mapping: ['wikiName' => 'name'])] string $wikiName,
+        #[MapEntity(mapping: ['wikiName' => 'name'])] Wiki $wiki,
+        EvalInterface $wikiAccess
     ): Response {
-        if (!$wiki = $wikiService->getWikiByName($wikiName)) {
-            return $this->getErrorResponse('Wiki not found!', Response::HTTP_NOT_FOUND);
+        $access_control_expression = $wiki->getAccessControlExpression();
+        if (!empty($access_control_expression)) {
+            if (!$wikiAccess->eval($access_control_expression)) {
+                throw $this->createAccessDeniedException();
+            }
         }
 
         if ($request->isMethod('POST')) {

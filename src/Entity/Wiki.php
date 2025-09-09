@@ -27,11 +27,21 @@ class Wiki
     #[ORM\OrderBy(['name' => 'ASC'])]
     private $wikiPages;
 
+    /**
+     * @deprecated
+     */
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
     private $read_role;
 
+    /**
+     * @deprecated
+     */
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
     private $write_role;
+
+
+    #[ORM\Column(type: 'text', length: 255, nullable: true)]
+    private string|null $access_control_expression = null;
 
     #[ORM\Column(type: 'text', nullable: true)]
     private $config;
@@ -104,6 +114,11 @@ class Wiki
         return $this;
     }
 
+    /**
+     * @param string|null $read_role
+     * @return $this
+     * @deprecated
+     */
     public function setReadRole(?string $read_role): self
     {
         $this->read_role = $read_role;
@@ -111,11 +126,20 @@ class Wiki
         return $this;
     }
 
+    /**
+     * @return string|null
+     * @deprecated
+     */
     public function getReadRole(): ?string
     {
         return $this->read_role;
     }
 
+    /**
+     * @param string|null $write_role
+     * @return $this
+     * @deprecated
+     */
     public function setWriteRole(?string $write_role): self
     {
         $this->write_role = $write_role;
@@ -123,9 +147,24 @@ class Wiki
         return $this;
     }
 
+    /**
+     * @return string|null
+     * @deprecated
+     */
     public function getWriteRole(): ?string
     {
         return $this->write_role;
+    }
+
+    public function setAccessControlExpression(?string $access_control_expression): self
+    {
+        $this->access_control_expression = $access_control_expression;
+        return $this;
+    }
+
+    public function getAccessControlExpression(): ?string
+    {
+        return $this->access_control_expression;
     }
 
     public function getConfig(): ?string

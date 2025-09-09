@@ -2,6 +2,7 @@
 
 namespace LinkORB\Bundle\WikiBundle\Controller;
 
+use LinkORB\Bundle\WikiBundle\AccessControl\EvalInterface;
 use LinkORB\Bundle\WikiBundle\Entity\Wiki;
 use LinkORB\Bundle\WikiBundle\Entity\WikiEvent;
 use LinkORB\Bundle\WikiBundle\Entity\WikiPage;
@@ -22,8 +23,18 @@ class WikiEventController extends AbstractController
     }
 
     #[Route('/events', name: 'wiki_event_index', methods: ['GET'])]
-    public function indexAction(#[MapEntity(mapping: ['wikiName' => 'name'])] Wiki $wiki): Response
+    public function indexAction(
+        #[MapEntity(mapping: ['wikiName' => 'name'])] Wiki $wiki,
+        EvalInterface $wikiAccess
+    ): Response
     {
+        $access_control_expression = $wiki->getAccessControlExpression();
+        if (!empty($access_control_expression)) {
+            if (!$wikiAccess->eval($access_control_expression)) {
+                throw $this->createAccessDeniedException();
+            }
+        }
+
         $wikiEvents = $this->wikiEventRepository->findByWikiId($wiki->getId());
 
         if (!$wikiRoles = $this->wikiService->getWikiPermission($wiki)) {
@@ -44,7 +55,15 @@ class WikiEventController extends AbstractController
     public function viewEventAction(
         #[MapEntity(mapping: ['wikiName' => 'name'])] Wiki $wiki,
         #[MapEntity(mapping: ['eventId' => 'id'])] WikiEvent $wikiEvent,
+        EvalInterface $wikiAccess
     ): Response {
+        $access_control_expression = $wiki->getAccessControlExpression();
+        if (!empty($access_control_expression)) {
+            if (!$wikiAccess->eval($access_control_expression)) {
+                throw $this->createAccessDeniedException();
+            }
+        }
+
         if (!$wikiRoles = $this->wikiService->getWikiPermission($wiki)) {
             throw $this->createAccessDeniedException('Access denied!');
         }
@@ -63,7 +82,15 @@ class WikiEventController extends AbstractController
     public function wikiPageEventsAction(
         #[MapEntity(mapping: ['wikiName' => 'name'])] Wiki $wiki,
         #[MapEntity(mapping: ['pageName' => 'name'])] WikiPage $wikiPage,
+        EvalInterface $wikiAccess
     ): Response {
+        $access_control_expression = $wiki->getAccessControlExpression();
+        if (!empty($access_control_expression)) {
+            if (!$wikiAccess->eval($access_control_expression)) {
+                throw $this->createAccessDeniedException();
+            }
+        }
+
         if (!$wikiRoles = $this->wikiService->getWikiPermission($wiki)) {
             throw $this->createAccessDeniedException('Access denied!');
         }

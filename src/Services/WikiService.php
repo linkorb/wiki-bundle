@@ -216,7 +216,7 @@ class WikiService
         return $content;
     }
 
-    public function getWikiPermission(Wiki $wiki)
+    public function getWikiPermission(Wiki $wiki): array|false
     {
         $wikiRoles = ['readRole' => false, 'writeRole' => false];
         $flag = false;
