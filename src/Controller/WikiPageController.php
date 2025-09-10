@@ -254,7 +254,7 @@ class WikiPageController extends AbstractController
         MetaEntityServiceInterface $metaEntityService
     ): Response
     {
-        $this->denyAccessUnlessGranted('view', $wiki);
+        $this->denyAccessUnlessGranted('access', $wiki);
 
         $wikiPage = $wikiPageRepository->findOneByWikiIdAndName($wiki->getId(), $pageName);
         if (!$wikiPage) {

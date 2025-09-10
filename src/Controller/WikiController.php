@@ -211,7 +211,7 @@ class WikiController extends AbstractController
         WikiService $wikiService
     ): Response
     {
-        $this->denyAccessUnlessGranted('view', $wiki);
+        $this->denyAccessUnlessGranted('access', $wiki);
 
         $data = [];
 
