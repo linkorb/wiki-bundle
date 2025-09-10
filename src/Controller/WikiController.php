@@ -23,18 +23,18 @@ use Symfony\Component\Yaml\Yaml;
 #[Route('/wiki')]
 class WikiController extends AbstractController
 {
-    public function __construct(private readonly WikiService $wikiService, private readonly EntityManagerInterface $em)
+    public function __construct(private readonly EntityManagerInterface $em)
     {
     }
 
     #[Route('', name: 'wiki_index', methods: ['GET'])]
-    public function indexAction(): Response
+    public function indexAction(WikiService $wikiService): Response
     {
-        $wikis = $this->wikiService->getAllWikis();
+        $wikis = $wikiService->getAllWikis();
 
         $wikiArray = [];
         foreach ($wikis as $wiki) {
-            if ($wikiRoles = $this->wikiService->getWikiPermission($wiki)) {
+            if ($wikiRoles = $wikiService->getWikiPermission($wiki)) {
                 if ($wikiRoles['readRole']) {
                     $wikiArray[] = $wiki;
                 }
@@ -61,14 +61,14 @@ class WikiController extends AbstractController
     }
 
     #[Route('/search', name: 'wiki_search', methods: ['GET', 'POST'])]
-    public function searchAction(Request $request): Response
+    public function searchAction(Request $request, WikiService $wikiService): Response
     {
         $wikiArray = [];
         $wikiIds = [];
         $wikiPages = [];
 
-        foreach ($this->wikiService->getAllWikis() as $wiki) {
-            if ($wikiRoles = $this->wikiService->getWikiPermission($wiki)) {
+        foreach ($wikiService->getAllWikis() as $wiki) {
+            if ($wikiRoles = $wikiService->getWikiPermission($wiki)) {
                 if ($wikiRoles['readRole']) {
                     $wikiArray[$wiki->getName()] = $wiki->getName();
                     $wikiIds[] = $wiki->getId();
@@ -84,10 +84,10 @@ class WikiController extends AbstractController
             $formData = $form->getData();
 
             if (!empty($formData['wikiName'])) {
-                if (!$wiki = $this->wikiService->getWikiByName($formData['wikiName'])) {
+                if (!$wiki = $wikiService->getWikiByName($formData['wikiName'])) {
                     throw new \RuntimeException('Wiki '.$formData['wikiName'].' not found', Response::HTTP_NOT_FOUND);
                 }
-                if (!$wikiRoles = $this->wikiService->getWikiPermission($wiki)) {
+                if (!$wikiService->getWikiPermission($wiki)) {
                     throw new AccessDeniedException('Access denied!');
                 }
                 $wikiIds = [$wiki->getId()];
@@ -95,7 +95,7 @@ class WikiController extends AbstractController
 
             $wikiPageResults = [];
             if (!empty($formData['search'])) {
-                $wikiPageResults = $this->wikiService->searchWiki($formData['search'], $wikiIds);
+                $wikiPageResults = $wikiService->searchWiki($formData['search'], $wikiIds);
             }
 
             foreach ($wikiPageResults as $wikiPageResult) {
@@ -112,24 +112,29 @@ class WikiController extends AbstractController
     }
 
     #[Route('/{wikiName}/publish', name: 'wiki_publish', methods: ['GET'])]
-    public function publishAction(#[MapEntity(mapping: ['wikiName' => 'name'])] Wiki $wiki): Response
+    public function publishAction(#[MapEntity(mapping: ['wikiName' => 'name'])] Wiki $wiki, WikiService $wikiService): Response
     {
-        if (!$wikiRoles = $this->wikiService->getWikiPermission($wiki)) {
+        if (!$wikiRoles = $wikiService->getWikiPermission($wiki)) {
             throw new AccessDeniedException('Access denied!');
         }
         if (!$wikiRoles['writeRole']) {
             throw new AccessDeniedException('Access denied!');
         }
 
-        $this->wikiService->publishWiki($wiki, $this->getUser()->getUserIdentifier(), $this->getUser()->getEmail());
+        $wikiService->publishWiki($wiki, $this->getUser()->getUserIdentifier(), $this->getUser()->getEmail());
 
         return $this->redirectToRoute('wiki_view', ['wikiName' => $wiki->getName()]);
     }
 
     #[Route('/{wikiName}/edit', name: 'wiki_edit', methods: ['GET', 'POST'])]
-    public function editAction(Request $request, #[MapEntity(mapping: ['wikiName' => 'name'])] Wiki $wiki, WikiEventService $wikiEventService): Response
+    public function editAction(
+        Request $request,
+        #[MapEntity(mapping: ['wikiName' => 'name'])] Wiki $wiki,
+        WikiEventService $wikiEventService,
+        WikiService $wikiService
+    ): Response
     {
-        if (!$wikiRoles = $this->wikiService->getWikiPermission($wiki)) {
+        if (!$wikiRoles = $wikiService->getWikiPermission($wiki)) {
             throw new AccessDeniedException('Access denied!');
         }
         if (!$wikiRoles['writeRole']) {
@@ -143,13 +148,14 @@ class WikiController extends AbstractController
     public function deleteAction(
         #[MapEntity(mapping: ['wikiName' => 'name'])] Wiki $wiki,
         WikiEventService $wikiEventService,
-        Request $request
+        Request $request,
+        WikiService $wikiService
     ): Response
     {
         if (!$this->isCsrfTokenValid('delete-item', (string) $request->getPayload()->get('token'))) {
             throw new BadRequestHttpException('CSRF token invalid!');
         }
-        if (!$wikiRoles = $this->wikiService->getWikiPermission($wiki)) {
+        if (!$wikiRoles = $wikiService->getWikiPermission($wiki)) {
             throw new AccessDeniedException('Access denied!');
         }
         if (!$wikiRoles['writeRole']) {
@@ -225,7 +231,8 @@ class WikiController extends AbstractController
     public function viewAction(
         WikiPageService $wikiPageService,
         #[MapEntity(mapping: ['wikiName' => 'name'])] Wiki $wiki,
-        EvalInterface $wikiAccess
+        EvalInterface $wikiAccess,
+        WikiService $wikiService
     ): Response
     {
         $access_control_expression = $wiki->getAccessControlExpression();
@@ -235,7 +242,7 @@ class WikiController extends AbstractController
             }
         }
 
-        if (!$wikiRoles = $this->wikiService->getWikiPermission($wiki)) {
+        if (!$wikiRoles = $wikiService->getWikiPermission($wiki)) {
             throw new AccessDeniedException('Access denied!');
         }
 
@@ -256,15 +263,18 @@ class WikiController extends AbstractController
         $data['wikiPages'] = $wikiPages;
         $data['wiki'] = $wiki;
 
-        $this->wikiService->autoPull($wiki);
+        $wikiService->autoPull($wiki);
 
         return $this->render('@LinkORBWiki/wiki_page/index.html.twig', $data);
     }
 
     #[Route('/{wikiName}/export', name: 'wiki_export', methods: ['GET'])]
-    public function exportAction(#[MapEntity(mapping: ['wikiName' => 'name'])] Wiki $wiki, WikiService $wikiService): Response
+    public function exportAction(
+        #[MapEntity(mapping: ['wikiName' => 'name'])] Wiki $wiki,
+        WikiService $wikiService
+    ): Response
     {
-        if (!$wikiRoles = $this->wikiService->getWikiPermission($wiki)) {
+        if (!$wikiService->getWikiPermission($wiki)) {
             throw new AccessDeniedException('Access denied!');
         }
 
@@ -283,62 +293,55 @@ class WikiController extends AbstractController
     }
 
     #[Route('/{wikiName}/export-single-markdown', name: 'wiki_export_single_markdown', methods: ['GET'])]
-    public function exportSingleMarkdownAction(#[MapEntity(mapping: ['wikiName' => 'name'])] Wiki $wiki, WikiService $wikiService): Response
+    public function exportSingleMarkdownAction(
+        #[MapEntity(mapping: ['wikiName' => 'name'])] Wiki $wiki,
+        WikiService $wikiService
+    ): Response
     {
-        if (!$wikiRoles = $this->wikiService->getWikiPermission($wiki)) {
+        if (!$wikiService->getWikiPermission($wiki)) {
             throw new AccessDeniedException('Access denied!');
         }
 
-        $markdown = $this->wikiService->renderSingleMarkdown($wiki);
+        $markdown = $wikiService->renderSingleMarkdown($wiki);
 
-        $filename = $wiki->getName().'.md';
         $response = new Response($markdown);
-        // To force download:
-        // $disposition = $response->headers->makeDisposition(
-        //     ResponseHeaderBag::DISPOSITION_ATTACHMENT,
-        //     $filename
-        // );
-        // $response->headers->set('Content-Disposition', $disposition);
-
         $response->headers->set('Content-type', 'text/markdown');
 
         return $response;
     }
 
     #[Route('/{wikiName}/export-single-html', name: 'wiki_export_single_html', methods: ['GET'])]
-    public function exportSingleHtmlAction(#[MapEntity(mapping: ['wikiName' => 'name'])] Wiki $wiki, WikiService $wikiService): Response
+    public function exportSingleHtmlAction(
+        #[MapEntity(mapping: ['wikiName' => 'name'])] Wiki $wiki,
+        WikiService $wikiService
+    ): Response
     {
-        if (!$wikiRoles = $this->wikiService->getWikiPermission($wiki)) {
+        if (!$wikiService->getWikiPermission($wiki)) {
             throw new AccessDeniedException('Access denied!');
         }
 
-        $markdown = $this->wikiService->renderSingleMarkdown($wiki);
-        $html = $this->wikiService->markdownToHtml($wiki, $markdown);
+        $markdown = $wikiService->renderSingleMarkdown($wiki);
+        $html = $wikiService->markdownToHtml($wiki, $markdown);
         $yaml = $wiki->getConfig() ?? '';
         $config = Yaml::parse($yaml);
         if (isset($config['layout'])) {
             $layout = file_get_contents($config['layout']);
-            $html = $this->wikiService->processTwig($wiki, $layout, ['content' => $html]);
+            $html = $wikiService->processTwig($wiki, $layout, ['content' => $html]);
         }
 
-        $filename = $wiki->getName().'.html';
         $response = new Response($html);
-        // To force download:
-        // $disposition = $response->headers->makeDisposition(
-        //     ResponseHeaderBag::DISPOSITION_ATTACHMENT,
-        //     $filename
-        // );
-        // $response->headers->set('Content-Disposition', $disposition);
-
         $response->headers->set('Content-type', 'text/html');
 
         return $response;
     }
 
     #[Route('/{wikiName}/pull', name: 'wiki_pull', methods: ['GET'])]
-    public function gitPullAction(#[MapEntity(mapping: ['wikiName' => 'name'])] Wiki $wiki): Response
+    public function gitPullAction(
+        #[MapEntity(mapping: ['wikiName' => 'name'])] Wiki $wiki,
+        WikiService $wikiService
+    ): Response
     {
-        $this->wikiService->pull($wiki);
+        $wikiService->pull($wiki);
 
         return $this->redirectToRoute('wiki_view', ['wikiName' => $wiki->getName()]);
     }
