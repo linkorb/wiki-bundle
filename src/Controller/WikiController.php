@@ -3,7 +3,6 @@
 namespace LinkORB\Bundle\WikiBundle\Controller;
 
 use Doctrine\ORM\EntityManagerInterface;
-use LinkORB\Bundle\WikiBundle\AccessControl\EvalInterface;
 use LinkORB\Bundle\WikiBundle\Entity\Wiki;
 use LinkORB\Bundle\WikiBundle\Form\WikiSearchType;
 use LinkORB\Bundle\WikiBundle\Form\WikiType;
@@ -34,10 +33,8 @@ class WikiController extends AbstractController
 
         $wikiArray = [];
         foreach ($wikis as $wiki) {
-            if ($wikiRoles = $wikiService->getWikiPermission($wiki)) {
-                if ($wikiRoles['readRole']) {
-                    $wikiArray[] = $wiki;
-                }
+            if ($this->isGranted('access', $wiki)) {
+                $wikiArray[] = $wiki;
             }
         }
 
@@ -52,6 +49,7 @@ class WikiController extends AbstractController
     #[Route('/add', name: 'wiki_add', methods: ['GET', 'POST'])]
     public function addAction(Request $request, WikiEventService $wikiEventService): Response
     {
+        $this->denyAccessUnlessGranted('create', 'wikis');
         $wiki = new Wiki();
         if ($request->get('wikiname')) {
             $wiki->setName($request->get('wikiname'));
@@ -68,11 +66,9 @@ class WikiController extends AbstractController
         $wikiPages = [];
 
         foreach ($wikiService->getAllWikis() as $wiki) {
-            if ($wikiRoles = $wikiService->getWikiPermission($wiki)) {
-                if ($wikiRoles['readRole']) {
-                    $wikiArray[$wiki->getName()] = $wiki->getName();
-                    $wikiIds[] = $wiki->getId();
-                }
+            if ($this->isGranted('access', $wiki)) {
+                $wikiArray[$wiki->getName()] = $wiki->getName();
+                $wikiIds[] = $wiki->getId();
             }
         }
 
@@ -85,11 +81,9 @@ class WikiController extends AbstractController
 
             if (!empty($formData['wikiName'])) {
                 if (!$wiki = $wikiService->getWikiByName($formData['wikiName'])) {
-                    throw new \RuntimeException('Wiki '.$formData['wikiName'].' not found', Response::HTTP_NOT_FOUND);
+                    throw $this->createNotFoundException();
                 }
-                if (!$wikiService->getWikiPermission($wiki)) {
-                    throw new AccessDeniedException('Access denied!');
-                }
+                $this->denyAccessUnlessGranted('access', $wiki);
                 $wikiIds = [$wiki->getId()];
             }
 
@@ -114,12 +108,7 @@ class WikiController extends AbstractController
     #[Route('/{wikiName}/publish', name: 'wiki_publish', methods: ['GET'])]
     public function publishAction(#[MapEntity(mapping: ['wikiName' => 'name'])] Wiki $wiki, WikiService $wikiService): Response
     {
-        if (!$wikiRoles = $wikiService->getWikiPermission($wiki)) {
-            throw new AccessDeniedException('Access denied!');
-        }
-        if (!$wikiRoles['writeRole']) {
-            throw new AccessDeniedException('Access denied!');
-        }
+        $this->denyAccessUnlessGranted('modify', $wiki);
 
         $wikiService->publishWiki($wiki, $this->getUser()->getUserIdentifier(), $this->getUser()->getEmail());
 
@@ -130,16 +119,10 @@ class WikiController extends AbstractController
     public function editAction(
         Request $request,
         #[MapEntity(mapping: ['wikiName' => 'name'])] Wiki $wiki,
-        WikiEventService $wikiEventService,
-        WikiService $wikiService
+        WikiEventService $wikiEventService
     ): Response
     {
-        if (!$wikiRoles = $wikiService->getWikiPermission($wiki)) {
-            throw new AccessDeniedException('Access denied!');
-        }
-        if (!$wikiRoles['writeRole']) {
-            throw new AccessDeniedException('Access denied!');
-        }
+        $this->denyAccessUnlessGranted('modify', $wiki);
 
         return $this->getEditForm($request, $wiki, $wikiEventService);
     }
@@ -148,18 +131,12 @@ class WikiController extends AbstractController
     public function deleteAction(
         #[MapEntity(mapping: ['wikiName' => 'name'])] Wiki $wiki,
         WikiEventService $wikiEventService,
-        Request $request,
-        WikiService $wikiService
+        Request $request
     ): Response
     {
+        $this->denyAccessUnlessGranted('delete', $wiki);
         if (!$this->isCsrfTokenValid('delete-item', (string) $request->getPayload()->get('token'))) {
             throw new BadRequestHttpException('CSRF token invalid!');
-        }
-        if (!$wikiRoles = $wikiService->getWikiPermission($wiki)) {
-            throw new AccessDeniedException('Access denied!');
-        }
-        if (!$wikiRoles['writeRole']) {
-            throw new AccessDeniedException('Access denied!');
         }
 
         if (count($wiki->getWikiPages())) {
@@ -231,17 +208,12 @@ class WikiController extends AbstractController
     public function viewAction(
         WikiPageService $wikiPageService,
         #[MapEntity(mapping: ['wikiName' => 'name'])] Wiki $wiki,
-        EvalInterface $wikiAccess,
         WikiService $wikiService
     ): Response
     {
-        $access_control_expression = $wiki->getAccessControlExpression();
-        if (!empty($access_control_expression)) {
-            if (!$wikiAccess->eval($access_control_expression)) {
-                throw $this->createAccessDeniedException();
-            }
-        }
+        $this->denyAccessUnlessGranted('view', $wiki);
 
+        /** @todo remove wikiRoles reference from controller and view */
         if (!$wikiRoles = $wikiService->getWikiPermission($wiki)) {
             throw new AccessDeniedException('Access denied!');
         }
@@ -274,9 +246,7 @@ class WikiController extends AbstractController
         WikiService $wikiService
     ): Response
     {
-        if (!$wikiService->getWikiPermission($wiki)) {
-            throw new AccessDeniedException('Access denied!');
-        }
+        $this->denyAccessUnlessGranted('manage', $wiki);
 
         $json = json_encode($wikiService->export($wiki), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
 
@@ -298,9 +268,7 @@ class WikiController extends AbstractController
         WikiService $wikiService
     ): Response
     {
-        if (!$wikiService->getWikiPermission($wiki)) {
-            throw new AccessDeniedException('Access denied!');
-        }
+        $this->denyAccessUnlessGranted('manage', $wiki);
 
         $markdown = $wikiService->renderSingleMarkdown($wiki);
 
@@ -316,9 +284,7 @@ class WikiController extends AbstractController
         WikiService $wikiService
     ): Response
     {
-        if (!$wikiService->getWikiPermission($wiki)) {
-            throw new AccessDeniedException('Access denied!');
-        }
+        $this->denyAccessUnlessGranted('manage', $wiki);
 
         $markdown = $wikiService->renderSingleMarkdown($wiki);
         $html = $wikiService->markdownToHtml($wiki, $markdown);
@@ -341,6 +307,8 @@ class WikiController extends AbstractController
         WikiService $wikiService
     ): Response
     {
+        $this->denyAccessUnlessGranted('manage', $wiki);
+
         $wikiService->pull($wiki);
 
         return $this->redirectToRoute('wiki_view', ['wikiName' => $wiki->getName()]);

@@ -3,7 +3,6 @@
 namespace LinkORB\Bundle\WikiBundle\Controller;
 
 use Doctrine\ORM\EntityManagerInterface;
-use LinkORB\Bundle\WikiBundle\AccessControl\EvalInterface;
 use LinkORB\Bundle\WikiBundle\Contracts\MetaEntityServiceInterface;
 use LinkORB\Bundle\WikiBundle\Entity\Wiki;
 use LinkORB\Bundle\WikiBundle\Entity\WikiPage;
@@ -21,6 +20,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\Routing\Attribute\Route;
 
+// @todo remove WikiRoles from controllers and templates
 #[Route('/wiki/{wikiName}')]
 class WikiPageController extends AbstractController
 {
@@ -33,22 +33,11 @@ class WikiPageController extends AbstractController
     }
 
     #[Route('/pages', name: 'wiki_page_index', methods: ['GET'])]
-    public function indexAction(
-        #[MapEntity(mapping: ['wikiName' => 'name'])] Wiki $wiki,
-        EvalInterface $wikiAccess
-    ): Response
+    public function indexAction(#[MapEntity(mapping: ['wikiName' => 'name'])] Wiki $wiki): Response
     {
-        $access_control_expression = $wiki->getAccessControlExpression();
-        if (!empty($access_control_expression)) {
-            if (!$wikiAccess->eval($access_control_expression)) {
-                throw $this->createAccessDeniedException();
-            }
-        }
+        $this->denyAccessUnlessGranted('access', $wiki);
 
-        if (!$wikiRoles = $this->wikiService->getWikiPermission($wiki)) {
-            throw $this->createAccessDeniedException('Access denied!');
-        }
-
+        $wikiRoles = $this->wikiService->getWikiPermission($wiki);
         $data = $wikiRoles;
         $data['wikiPages'] = $this->wikiPageRepository->findByWikiId($wiki->getId());
         $data['wiki'] = $wiki;
@@ -57,17 +46,9 @@ class WikiPageController extends AbstractController
     }
 
     #[Route('/pages/read-only', name: 'wiki_page_read_only', methods: ['GET'])]
-    public function readOnlyAction(
-        #[MapEntity(mapping: ['wikiName' => 'name'])] Wiki $wiki,
-        EvalInterface $wikiAccess
-    ): Response
+    public function readOnlyAction(#[MapEntity(mapping: ['wikiName' => 'name'])] Wiki $wiki): Response
     {
-        $access_control_expression = $wiki->getAccessControlExpression();
-        if (!empty($access_control_expression)) {
-            if (!$wikiAccess->eval($access_control_expression)) {
-                throw $this->createAccessDeniedException();
-            }
-        }
+        $this->denyAccessUnlessGranted('access', $wiki);
 
         return $this->render('@LinkORBWiki/wiki_page/read_only.html.twig', [
             'wiki' => $wiki,
@@ -78,16 +59,10 @@ class WikiPageController extends AbstractController
     public function addAction(
         Request $request,
         #[MapEntity(mapping: ['wikiName' => 'name'])] Wiki $wiki,
-        WikiEventService $wikiEventService,
-        EvalInterface $wikiAccess
+        WikiEventService $wikiEventService
     ): Response
     {
-        $access_control_expression = $wiki->getAccessControlExpression();
-        if (!empty($access_control_expression)) {
-            if (!$wikiAccess->eval($access_control_expression)) {
-                throw $this->createAccessDeniedException();
-            }
-        }
+        $this->denyAccessUnlessGranted('create', 'wiki_pages');
 
         $wikiPage = new WikiPage();
         $wikiPage->setWiki($wiki);
@@ -112,25 +87,13 @@ class WikiPageController extends AbstractController
     public function viewAction(
         Request $request,
         #[MapEntity(mapping: ['wikiName' => 'name'])] Wiki $wiki,
-        string $pageName,
-        EvalInterface $wikiAccess
+        string $pageName
     ): Response
     {
-        $access_control_expression = $wiki->getAccessControlExpression();
-        if (!empty($access_control_expression)) {
-            if (!$wikiAccess->eval($access_control_expression)) {
-                throw $this->createAccessDeniedException();
-            }
-        }
+        $this->denyAccessUnlessGranted('access', $wiki);
 
-        if (!$wikiRoles = $this->wikiService->getWikiPermission($wiki)) {
-            throw $this->createAccessDeniedException('Access denied!');
-        }
-        if (!$wikiRoles['readRole']) {
-            throw $this->createAccessDeniedException('Access denied!');
-        }
         $wikiPage = $this->wikiPageRepository->findOneByWikiIdAndName($wiki->getId(), $pageName);
-
+        $wikiRoles = $this->wikiService->getWikiPermission($wiki);
         $data = $wikiRoles;
 
         $tocPage = $this->wikiPageRepository->findOneByWikiIdAndName($wiki->getId(), 'toc');
@@ -160,16 +123,10 @@ class WikiPageController extends AbstractController
         Request $request,
         #[MapEntity(mapping: ['wikiName' => 'name'])] Wiki $wiki,
         WikiEventService $wikiEventService,
-        $pageName,
-        EvalInterface $wikiAccess
+        string $pageName
     ): Response
     {
-        $access_control_expression = $wiki->getAccessControlExpression();
-        if (!empty($access_control_expression)) {
-            if (!$wikiAccess->eval($access_control_expression)) {
-                throw $this->createAccessDeniedException();
-            }
-        }
+        $this->denyAccessUnlessGranted('modify', $wiki);
 
         if ($wiki->isReadOnly()) {
             return $this->redirectToRoute('wiki_page_read_only', [
@@ -187,16 +144,10 @@ class WikiPageController extends AbstractController
         Request $request,
         #[MapEntity(mapping: ['wikiName' => 'name'])] Wiki $wiki,
         WikiEventService $wikiEventService,
-        $pageName,
-        EvalInterface $wikiAccess
+        string $pageName
     ): Response
     {
-        $access_control_expression = $wiki->getAccessControlExpression();
-        if (!empty($access_control_expression)) {
-            if (!$wikiAccess->eval($access_control_expression)) {
-                throw $this->createAccessDeniedException();
-            }
-        }
+        $this->denyAccessUnlessGranted('modify', $wiki);
 
         if ($wiki->isReadOnly()) {
             return $this->redirectToRoute('wiki_page_read_only', [
@@ -205,13 +156,6 @@ class WikiPageController extends AbstractController
         }
 
         $wikiPage = $this->wikiPageRepository->findOneByWikiIdAndName($wiki->getId(), $pageName);
-
-        if (!$wikiRoles = $this->wikiService->getWikiPermission($wikiPage->getWiki())) {
-            throw $this->createAccessDeniedException('Access denied!');
-        }
-        if (!$wikiRoles['writeRole']) {
-            throw $this->createAccessDeniedException('Access denied!');
-        }
 
         $wikiPageBeforeTitle = $wikiPage->getName();
         $wikiPageBeforeContent = $wikiPage->getContent();
@@ -294,6 +238,7 @@ class WikiPageController extends AbstractController
             'wiki' => $wiki,
             'form' => $form->createView(),
         ];
+        $wikiRoles = $this->wikiService->getWikiPermission($wikiPage->getWiki());
         $data += $wikiRoles;
 
         return $this->render('@LinkORBWiki/wiki_page/edit.html.twig', $data);
@@ -303,16 +248,10 @@ class WikiPageController extends AbstractController
     #[Route('/pages/{pageName}/toggle-favorite', name: 'wiki_page_toggle_favorite', methods: ['GET'])]
     public function toggleFavoriteAction(
         #[MapEntity(mapping: ['wikiName' => 'name'])] Wiki $wiki,
-        string $pageName,
-        EvalInterface $wikiAccess
+        string $pageName
     ): Response
     {
-        $access_control_expression = $wiki->getAccessControlExpression();
-        if (!empty($access_control_expression)) {
-            if (!$wikiAccess->eval($access_control_expression)) {
-                throw $this->createAccessDeniedException();
-            }
-        }
+        $this->denyAccessUnlessGranted('view', $wiki);
 
         $wikiPage = $this->wikiPageRepository->findOneByWikiIdAndName($wiki->getId(), $pageName);
         if (!$wikiPage) {
@@ -320,9 +259,6 @@ class WikiPageController extends AbstractController
         }
 
         $wikiRoles = $this->wikiService->getWikiPermission($wiki);
-        if (!$wikiRoles || !$wikiRoles['readRole']) {
-            throw $this->createAccessDeniedException('Access denied!');
-        }
 
         $username = $this->getUser()->getUserIdentifier();
         $this->metaEntityService->toggleFavorite($username, $wikiPage::class.':'.$wikiPage->getId());
@@ -341,18 +277,13 @@ class WikiPageController extends AbstractController
         Request $request
     ): Response
     {
-        if (!$this->isCsrfTokenValid('delete-item', $request->getPayload()->get('token'))) {
+        $this->denyAccessUnlessGranted('delete', $wiki);
+
+        if (!$this->isCsrfTokenValid('delete-item', (string) $request->getPayload()->get('token'))) {
             throw new BadRequestHttpException('CSRF token invalid!');
         }
 
         $wikiPage = $this->wikiPageRepository->findOneByWikiIdAndName($wiki->getId(), $pageName);
-
-        if (!$wikiRoles = $this->wikiService->getWikiPermission($wiki)) {
-            throw $this->createAccessDeniedException('Access denied!');
-        }
-        if (!$wikiRoles['writeRole']) {
-            throw $this->createAccessDeniedException('Access denied!');
-        }
 
         $wikiEventService->createEvent(
             'page.deleted',

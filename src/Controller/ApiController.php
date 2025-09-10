@@ -2,7 +2,6 @@
 
 namespace LinkORB\Bundle\WikiBundle\Controller;
 
-use LinkORB\Bundle\WikiBundle\AccessControl\EvalInterface;
 use LinkORB\Bundle\WikiBundle\Entity\Wiki;
 use LinkORB\Bundle\WikiBundle\Services\WikiService;
 use Symfony\Bridge\Doctrine\Attribute\MapEntity;
@@ -95,19 +94,10 @@ class ApiController extends AbstractController
     #[Route('/wiki/{wikiName}/export', name: 'wiki_bundle__api_wiki_export', methods: ['GET'])]
     public function wikiExportAction(
         #[MapEntity(mapping: ['wikiName' => 'name'])] Wiki $wiki,
-        WikiService $wikiService,
-        EvalInterface $wikiAccess
+        WikiService $wikiService
     ): Response {
-        $access_control_expression = $wiki->getAccessControlExpression();
-        if (!empty($access_control_expression)) {
-            if (!$wikiAccess->eval($access_control_expression)) {
-                throw $this->createAccessDeniedException();
-            }
-        }
+        $this->denyAccessUnlessGranted('manage', $wiki);
 
-        if (!$this->getWikiPermission($wiki)) {
-            return $this->getErrorResponse('Access denied!', Response::HTTP_UNAUTHORIZED);
-        }
         $data = $wikiService->export($wiki);
 
         return $this->getJsonResponse($data);
@@ -117,15 +107,9 @@ class ApiController extends AbstractController
     public function wikiImportAction(
         Request $request,
         WikiService $wikiService,
-        #[MapEntity(mapping: ['wikiName' => 'name'])] Wiki $wiki,
-        EvalInterface $wikiAccess
+        #[MapEntity(mapping: ['wikiName' => 'name'])] Wiki $wiki
     ): Response {
-        $access_control_expression = $wiki->getAccessControlExpression();
-        if (!empty($access_control_expression)) {
-            if (!$wikiAccess->eval($access_control_expression)) {
-                throw $this->createAccessDeniedException();
-            }
-        }
+        $this->denyAccessUnlessGranted('manage', $wiki);
 
         if ($request->isMethod('POST')) {
             if ($jsonContent = json_decode($request->getContent(), true)) {
