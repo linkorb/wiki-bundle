@@ -167,6 +167,11 @@ class Wiki
         return $this->access_control_expression;
     }
 
+    public function hasAccessControlExpression(): bool
+    {
+        return !empty($this->getAccessControlExpression());
+    }
+
     public function getConfig(): ?string
     {
         return $this->config;

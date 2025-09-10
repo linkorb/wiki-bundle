@@ -46,6 +46,9 @@
               </tbody>
           </table>
         </fieldset>
+        {% if wiki.hasAccessControlExpression %}
+          <small>Restricted to <code>{{ wiki.getAccessControlExpression }}</code></small>
+        {% endif %}
       </div>
     </div>
 {% endblock %}

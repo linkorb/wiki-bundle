@@ -21,6 +21,9 @@
                     {{ contentHtml|raw }}
                 </div>
             </fieldset>
+        {% if wikiPage.wiki.hasAccessControlExpression %}
+          <small>Restricted to <code>{{ wikiPage.wiki.getAccessControlExpression }}</code></small>
+        {% endif %}
     {% endif %}
 
 {% endblock %}
