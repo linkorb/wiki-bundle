@@ -216,44 +216,6 @@ class WikiService
         return $content;
     }
 
-    public function getWikiPermission(Wiki $wiki): array|false
-    {
-        $wikiRoles = ['readRole' => false, 'writeRole' => false];
-        $flag = false;
-
-        if ($this->authorizationChecker->isGranted('ROLE_SUPERUSER')) {
-            $wikiRoles['readRole'] = true;
-            $wikiRoles['writeRole'] = true;
-            $flag = true;
-        } else {
-            if (!empty($wiki->getReadRole())) {
-                $readArray = explode(',', $wiki->getReadRole());
-                $readArray = array_map('trim', $readArray);
-
-                foreach ($readArray as $read) {
-                    if ($this->authorizationChecker->isGranted($read)) {
-                        $wikiRoles['readRole'] = true;
-                        $flag = true;
-                    }
-                }
-            }
-
-            if (!empty($wiki->getWriteRole())) {
-                $writeArray = explode(',', $wiki->getWriteRole());
-                $writeArray = array_map('trim', $writeArray);
-
-                foreach ($writeArray as $write) {
-                    if ($this->authorizationChecker->isGranted($write)) {
-                        $flag = true;
-                        $wikiRoles['writeRole'] = true;
-                    }
-                }
-            }
-        }
-
-        return $flag ? $wikiRoles : false;
-    }
-
     public function markdownToHtml(Wiki $wiki, ?string $markdown): ?string
     {
         // preprocess mediawiki style links (convert mediawiki style links into markdown links)

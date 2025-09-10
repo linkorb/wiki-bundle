@@ -6,34 +6,25 @@ use LinkORB\Bundle\WikiBundle\Entity\Wiki;
 use LinkORB\Bundle\WikiBundle\Entity\WikiEvent;
 use LinkORB\Bundle\WikiBundle\Entity\WikiPage;
 use LinkORB\Bundle\WikiBundle\Repository\WikiEventRepository;
-use LinkORB\Bundle\WikiBundle\Services\WikiService;
 use Symfony\Bridge\Doctrine\Attribute\MapEntity;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
-// @todo remove wikiRoles from controller and templates
 #[Route('/wiki/{wikiName}')]
 class WikiEventController extends AbstractController
 {
-    public function __construct(
-        private readonly WikiService $wikiService,
-        private readonly WikiEventRepository $wikiEventRepository,
-    ) {
-    }
-
     #[Route('/events', name: 'wiki_event_index', methods: ['GET'])]
     public function indexAction(
-        #[MapEntity(mapping: ['wikiName' => 'name'])] Wiki $wiki
+        #[MapEntity(mapping: ['wikiName' => 'name'])] Wiki $wiki,
+        WikiEventRepository $wikiEventRepository
     ): Response
     {
         $this->denyAccessUnlessGranted('access', $wiki);
 
-        $wikiEvents = $this->wikiEventRepository->findByWikiId($wiki->getId());
+        $wikiEvents = $wikiEventRepository->findByWikiId($wiki->getId());
 
-        $wikiRoles = $this->wikiService->getWikiPermission($wiki);
-
-        $data = $wikiRoles;
+        $data = [];
         $data['wikiEvents'] = $wikiEvents;
         $data['wiki'] = $wiki;
 
@@ -45,10 +36,9 @@ class WikiEventController extends AbstractController
         #[MapEntity(mapping: ['wikiName' => 'name'])] Wiki $wiki,
         #[MapEntity(mapping: ['eventId' => 'id'])] WikiEvent $wikiEvent
     ): Response {
-        $this->denyAccessUnlessGranted('view', $wiki);
+        $this->denyAccessUnlessGranted('access', $wiki);
 
-        $wikiRoles = $this->wikiService->getWikiPermission($wiki);
-        $data = $wikiRoles;
+        $data = [];
         $data['wikiEvent'] = $wikiEvent;
         $data['wiki'] = $wiki;
 
@@ -58,17 +48,16 @@ class WikiEventController extends AbstractController
     #[Route('/{pageName}/events', name: 'wiki_page_event_index', methods: ['GET'])]
     public function wikiPageEventsAction(
         #[MapEntity(mapping: ['wikiName' => 'name'])] Wiki $wiki,
-        #[MapEntity(mapping: ['pageName' => 'name'])] WikiPage $wikiPage
+        #[MapEntity(mapping: ['pageName' => 'name'])] WikiPage $wikiPage,
+        WikiEventRepository $wikiEventRepository
     ): Response {
-        $this->denyAccessUnlessGranted('view', $wiki);
+        $this->denyAccessUnlessGranted('access', $wiki);
 
-        $wikiRoles = $this->wikiService->getWikiPermission($wiki);
-
-        $wikiEvents = $this->wikiEventRepository->findByWikiPageId($wikiPage->getId());
+        $wikiEvents = $wikiEventRepository->findByWikiPageId($wikiPage->getId());
 
         usort($wikiEvents, fn($a, $b) => $a->getCreatedAt() <=> $b->getCreatedAt());
 
-        $data = $wikiRoles;
+        $data = [];
         $data['wikiEvents'] = $wikiEvents;
         $data['wiki'] = $wiki;
         $data['wikiPage'] = $wikiPage;

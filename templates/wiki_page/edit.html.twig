@@ -21,7 +21,7 @@
   </fieldset>
   {{ form_end(form) }}
 
-  {% if wikiPage.id %}
+  {% if wikiPage.id and is_granted('delete', wikiPage.wiki) %}
     <div>
       <form action="{{ path('wiki_page_delete', {'wikiName':  wikiPage.wiki.name, 'pageName': wikiPage.name }) }}"
             method="post"

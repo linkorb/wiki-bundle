@@ -20,26 +20,19 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\Routing\Attribute\Route;
 
-// @todo remove WikiRoles from controllers and templates
 #[Route('/wiki/{wikiName}')]
 class WikiPageController extends AbstractController
 {
-    public function __construct(
-        private readonly WikiService $wikiService,
-        private readonly WikiPageRepository $wikiPageRepository,
-        private readonly EntityManagerInterface $em,
-        private readonly MetaEntityServiceInterface $metaEntityService,
-    ) {
-    }
-
     #[Route('/pages', name: 'wiki_page_index', methods: ['GET'])]
-    public function indexAction(#[MapEntity(mapping: ['wikiName' => 'name'])] Wiki $wiki): Response
+    public function indexAction(
+        #[MapEntity(mapping: ['wikiName' => 'name'])] Wiki $wiki,
+        WikiPageRepository $wikiPageRepository
+    ): Response
     {
         $this->denyAccessUnlessGranted('access', $wiki);
 
-        $wikiRoles = $this->wikiService->getWikiPermission($wiki);
-        $data = $wikiRoles;
-        $data['wikiPages'] = $this->wikiPageRepository->findByWikiId($wiki->getId());
+        $data = [];
+        $data['wikiPages'] = $wikiPageRepository->findByWikiId($wiki->getId());
         $data['wiki'] = $wiki;
 
         return $this->render('@LinkORBWiki/wiki_page/index.html.twig', $data);
@@ -59,7 +52,10 @@ class WikiPageController extends AbstractController
     public function addAction(
         Request $request,
         #[MapEntity(mapping: ['wikiName' => 'name'])] Wiki $wiki,
-        WikiEventService $wikiEventService
+        WikiEventService $wikiEventService,
+        WikiPageRepository $wikiPageRepository,
+        WikiService $wikiService,
+        EntityManagerInterface $em
     ): Response
     {
         $this->denyAccessUnlessGranted('create', 'wiki_pages');
@@ -80,29 +76,30 @@ class WikiPageController extends AbstractController
             $wikiPage->setParentId($parentId);
         }
 
-        return $this->getEditForm($request, $wikiPage, $wikiEventService);
+        return $this->getEditForm($request, $wikiPage, $wikiEventService, $wikiPageRepository, $wikiService, $em);
     }
 
     #[Route('/{pageName}', name: 'wiki_page_view', methods: ['GET'])]
     public function viewAction(
         Request $request,
         #[MapEntity(mapping: ['wikiName' => 'name'])] Wiki $wiki,
-        string $pageName
+        string $pageName,
+        WikiPageRepository $wikiPageRepository,
+        WikiService $wikiService
     ): Response
     {
         $this->denyAccessUnlessGranted('access', $wiki);
 
-        $wikiPage = $this->wikiPageRepository->findOneByWikiIdAndName($wiki->getId(), $pageName);
-        $wikiRoles = $this->wikiService->getWikiPermission($wiki);
-        $data = $wikiRoles;
+        $wikiPage = $wikiPageRepository->findOneByWikiIdAndName($wiki->getId(), $pageName);
+        $data = [];
 
-        $tocPage = $this->wikiPageRepository->findOneByWikiIdAndName($wiki->getId(), 'toc');
+        $tocPage = $wikiPageRepository->findOneByWikiIdAndName($wiki->getId(), 'toc');
         if ($tocPage) {
             $data['tocPage'] = $tocPage;
         }
 
         $markdown = $wikiPage?->getContent();
-        $html = $this->wikiService->markdownToHtml($wiki, $markdown);
+        $html = $wikiService->markdownToHtml($wiki, $markdown);
 
         foreach ($request->query->all() as $k => $v) {
             $html = str_replace('{{'.$k.'}}', $v, $html);
@@ -113,7 +110,7 @@ class WikiPageController extends AbstractController
         $data['wikiPage'] = $wikiPage;
         $data['wiki'] = $wiki;
 
-        $this->wikiService->autoPull($wiki);
+        $wikiService->autoPull($wiki);
 
         return $this->render('@LinkORBWiki/wiki_page/view.html.twig', $data);
     }
@@ -123,7 +120,10 @@ class WikiPageController extends AbstractController
         Request $request,
         #[MapEntity(mapping: ['wikiName' => 'name'])] Wiki $wiki,
         WikiEventService $wikiEventService,
-        string $pageName
+        string $pageName,
+        WikiPageRepository $wikiPageRepository,
+        WikiService $wikiService,
+        EntityManagerInterface $em
     ): Response
     {
         $this->denyAccessUnlessGranted('modify', $wiki);
@@ -134,9 +134,9 @@ class WikiPageController extends AbstractController
             ]);
         }
 
-        $wikiPage = $this->wikiPageRepository->findOneByWikiIdAndName($wiki->getId(), $pageName);
+        $wikiPage = $wikiPageRepository->findOneByWikiIdAndName($wiki->getId(), $pageName);
 
-        return $this->getEditForm($request, $wikiPage, $wikiEventService);
+        return $this->getEditForm($request, $wikiPage, $wikiEventService, $wikiPageRepository, $wikiService, $em);
     }
 
     #[Route('/pages/{pageName}/edit', name: 'wiki_page_edit', methods: ['GET', 'POST'])]
@@ -144,7 +144,10 @@ class WikiPageController extends AbstractController
         Request $request,
         #[MapEntity(mapping: ['wikiName' => 'name'])] Wiki $wiki,
         WikiEventService $wikiEventService,
-        string $pageName
+        string $pageName,
+        WikiPageRepository $wikiPageRepository,
+        WikiService $wikiService,
+        EntityManagerInterface $em
     ): Response
     {
         $this->denyAccessUnlessGranted('modify', $wiki);
@@ -155,7 +158,7 @@ class WikiPageController extends AbstractController
             ]);
         }
 
-        $wikiPage = $this->wikiPageRepository->findOneByWikiIdAndName($wiki->getId(), $pageName);
+        $wikiPage = $wikiPageRepository->findOneByWikiIdAndName($wiki->getId(), $pageName);
 
         $wikiPageBeforeTitle = $wikiPage->getName();
         $wikiPageBeforeContent = $wikiPage->getContent();
@@ -167,8 +170,8 @@ class WikiPageController extends AbstractController
             $data = json_decode($request->getContent(), true);
             $wikiPage->setContent($data['content']);
 
-            $this->em->persist($wikiPage);
-            $this->em->flush();
+            $em->persist($wikiPage);
+            $em->flush();
 
             $eventData = [
                 'updatedAt' => time(),
@@ -190,13 +193,13 @@ class WikiPageController extends AbstractController
                 $wikiPage->getId()
             );
 
-            $this->publishPage($wikiPage);
+            $this->publishPage($wikiPage, $wikiService);
 
             return new JsonResponse(['status' => 'success']);
         }
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $this->em->flush();
+            $em->flush();
 
             $eventData = [
                 'updatedAt' => time(),
@@ -225,7 +228,7 @@ class WikiPageController extends AbstractController
                 $wikiPage->getId()
             );
 
-            $this->publishPage($wikiPage);
+            $this->publishPage($wikiPage, $wikiService);
 
             return $this->redirectToRoute('wiki_page_view', [
                 'wikiName' => $wikiPage->getWiki()->getName(),
@@ -238,8 +241,6 @@ class WikiPageController extends AbstractController
             'wiki' => $wiki,
             'form' => $form->createView(),
         ];
-        $wikiRoles = $this->wikiService->getWikiPermission($wikiPage->getWiki());
-        $data += $wikiRoles;
 
         return $this->render('@LinkORBWiki/wiki_page/edit.html.twig', $data);
     }
@@ -248,20 +249,20 @@ class WikiPageController extends AbstractController
     #[Route('/pages/{pageName}/toggle-favorite', name: 'wiki_page_toggle_favorite', methods: ['GET'])]
     public function toggleFavoriteAction(
         #[MapEntity(mapping: ['wikiName' => 'name'])] Wiki $wiki,
-        string $pageName
+        string $pageName,
+        WikiPageRepository $wikiPageRepository,
+        MetaEntityServiceInterface $metaEntityService
     ): Response
     {
         $this->denyAccessUnlessGranted('view', $wiki);
 
-        $wikiPage = $this->wikiPageRepository->findOneByWikiIdAndName($wiki->getId(), $pageName);
+        $wikiPage = $wikiPageRepository->findOneByWikiIdAndName($wiki->getId(), $pageName);
         if (!$wikiPage) {
             throw $this->createAccessDeniedException('Page not found!');
         }
 
-        $wikiRoles = $this->wikiService->getWikiPermission($wiki);
-
         $username = $this->getUser()->getUserIdentifier();
-        $this->metaEntityService->toggleFavorite($username, $wikiPage::class.':'.$wikiPage->getId());
+        $metaEntityService->toggleFavorite($username, $wikiPage::class.':'.$wikiPage->getId());
 
         return $this->redirectToRoute('wiki_page_view', [
             'wikiName' => $wiki->getName(),
@@ -274,7 +275,9 @@ class WikiPageController extends AbstractController
         #[MapEntity(mapping: ['wikiName' => 'name'])] Wiki $wiki,
         WikiEventService $wikiEventService,
         string $pageName,
-        Request $request
+        Request $request,
+        WikiPageRepository $wikiPageRepository,
+        EntityManagerInterface $em
     ): Response
     {
         $this->denyAccessUnlessGranted('delete', $wiki);
@@ -283,7 +286,7 @@ class WikiPageController extends AbstractController
             throw new BadRequestHttpException('CSRF token invalid!');
         }
 
-        $wikiPage = $this->wikiPageRepository->findOneByWikiIdAndName($wiki->getId(), $pageName);
+        $wikiPage = $wikiPageRepository->findOneByWikiIdAndName($wiki->getId(), $pageName);
 
         $wikiEventService->createEvent(
             'page.deleted',
@@ -296,22 +299,23 @@ class WikiPageController extends AbstractController
             $wikiPage->getId()
         );
 
-        $this->em->remove($wikiPage);
-        $this->em->flush();
+        $em->remove($wikiPage);
+        $em->flush();
 
         return $this->redirectToRoute('wiki_page_index', [
             'wikiName' => $wiki->getName(),
         ]);
     }
 
-    protected function getEditForm($request, $wikiPage, WikiEventService $wikiEventService): RedirectResponse|Response
+    protected function getEditForm(
+        $request,
+        $wikiPage,
+        WikiEventService $wikiEventService,
+        WikiPageRepository $wikiPageRepository,
+        WikiService $wikiService,
+        EntityManagerInterface $em
+    ): RedirectResponse|Response
     {
-        if (!$wikiRoles = $this->wikiService->getWikiPermission($wikiPage->getWiki())) {
-            throw $this->createAccessDeniedException('Access denied!');
-        }
-        if (!$wikiRoles['writeRole']) {
-            throw $this->createAccessDeniedException('Access denied!');
-        }
         $wikiPageBeforeTitle = $wikiPage->getName();
         $wikiPageBeforeContent = $wikiPage->getContent();
 
@@ -325,13 +329,13 @@ class WikiPageController extends AbstractController
 
             if ($add) {
                 if ($pageTemplateId = (int) $form->get('page_template')->getData()) {
-                    if ($wikiPageTemplate = $this->wikiPageRepository->find($pageTemplateId)) {
+                    if ($wikiPageTemplate = $wikiPageRepository->find($pageTemplateId)) {
                         $wikiPage->setContent($wikiPageTemplate->getContent());
                     }
                 }
             }
-            $this->em->persist($wikiPage);
-            $this->em->flush();
+            $em->persist($wikiPage);
+            $em->flush();
 
             $eventData = [
                 'createdAt' => time(),
@@ -360,7 +364,7 @@ class WikiPageController extends AbstractController
                 $wikiPage->getId()
             );
 
-            $this->publishPage($wikiPage);
+            $this->publishPage($wikiPage, $wikiService);
 
             if ($add) {
                 return $this->redirectToRoute('wiki_page_edit', [
@@ -381,14 +385,13 @@ class WikiPageController extends AbstractController
             'wiki' => $wiki,
             'form' => $form->createView(),
         ];
-        $data += $wikiRoles;
 
         return $this->render('@LinkORBWiki/wiki_page/advanced.html.twig', $data);
     }
 
-    private function publishPage(WikiPage $wikiPage): void
+    private function publishPage(WikiPage $wikiPage, WikiService $wikiService): void
     {
-        $this->wikiService->publishWikiPage(
+        $wikiService->publishWikiPage(
             $wikiPage->getWiki(),
             $wikiPage,
             $this->getUser()->getUserIdentifier(),

@@ -213,13 +213,7 @@ class WikiController extends AbstractController
     {
         $this->denyAccessUnlessGranted('view', $wiki);
 
-        /** @todo remove wikiRoles reference from controller and view */
-        if (!$wikiRoles = $wikiService->getWikiPermission($wiki)) {
-            throw new AccessDeniedException('Access denied!');
-        }
-
-        $data = $wikiRoles;
-        // $wikiPageRepository = $this->get('LinkORB\Bundle\WikiBundle\Repository\WikiPageRepository');
+        $data = [];
 
         $indexPage = $wikiPageService->getOneByWikiIdAndPageName($wiki->getId(), 'index');
         if ($indexPage) {

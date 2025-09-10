@@ -10,9 +10,9 @@
     {% else %}
             <fieldset class="wiki-page-content">
                 <legend><i class="fa fa-file-o"></i> {{ wikiPage.name }}</legend>
-                {% if is_granted('ROLE_SUPERUSER') or writeRole %}
+                {% if is_granted('modify', wiki) %}
                   <div class="text-right">
-                    <a href="{{ path('wiki_page_edit', {'wikiName':  wikiPage.wiki.name,'pageName': wikiPage.name }) }}" class="text text-muted">
+                    <a href="{{ path('wiki_page_edit', {'wikiName':  wikiPage.wiki.name, 'pageName': wikiPage.name }) }}" class="text text-muted">
                        <i class="fa fa-edit fa-fw" aria-hidden="true"></i> Edit page
                     </a> &nbsp;
                   </div>
