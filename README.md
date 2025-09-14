@@ -53,13 +53,27 @@ parameters:
 > [!DEPRECATED]
 Use [Symfony security roles](https://symfony.com/doc/current/security.html#roles) defined in your application to control who can access or modify a wiki by setting the appropriate rules in the **Read role** and **Write role** fields of the **Add wiki** form of a Symfony application.
 
-Wiki permissions are controllable through access control expression compatible with symfony/expression-language.
-By default within these expressions you can use the `is_granted` function to check role membership (`is_granted("ROLE_ADMIN")`),
-or fine-grained permissions using the symfony Voter pattern (`is_granted(attribute, subject)`).
+To extend the capabilities of wiki (and their sub-pages) access control rules, the wikis have an editable
+access control expression field. This field allows end-users to write additional rules using symfony's expression language.
+Example: `is_granted("ROLE_ADMIN")`
 
-To extend the types of functions available for access control you should consider creating your own custom access
-control evaluation class, by extending [EvalInterface](./src/AccessControl/EvalInterface.php) and replacing the
-default implementation in your `services.yaml` file.
+The access control checks are left to the application embedding this bundle. One way you could do that would be in your
+Voter class, which handles the `Wiki` and `WikiPage` entities (`$wikiPage->getWiki()`).
+
+```php
+  $aclExpression = $wiki->getAccessControlExpression();
+  $hasAclExpression = !empty($aclExpression);
+  return !$hasAclExpression || $aclEval->eval($aclExpression);
+```
+
+Assume in this example that `$aclEval` is an instance of [IsGrantedEval](src/AccessControl/IsGrantedEval.php) (can be autowired).
+
+`IsGrantedEval` is the default provided implementation of the [AccessControl/EvalInterface](src/AccessControl/EvalInterface.php).
+It provides a single function to use in the ACL expression; the `is_granted` function, which behaves like the built-in symfony
+function.
+
+If you want to extend the types of access control functions users have access to in the ACL expression field, you must
+extend the `EvalInterface`, and swap out the implementation in the service config.
 
 ```yaml
   LinkORB\Bundle\WikiBundle\AccessControl\EvalInterface:
