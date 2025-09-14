@@ -2,28 +2,30 @@
 
 {% block body %}
 
-    {% if not wikiPage %}
+  {% if not wikiPage %}
     <center>
-        <p>This page does not (yet) exist: <b>{{ pageName }}</b></p>
-        <a href="{{ path('wiki_page_add', {'wikiName': wiki.name, 'pageName': pageName } ) }}" class="btn btn-success">Add now</a>
+      <p>This page does not (yet) exist: <b>{{ pageName }}</b></p>
+      <a href="{{ path('wiki_page_add', {'wikiName': wiki.name, 'pageName': pageName } ) }}" class="btn btn-success">Add
+        now</a>
     </center>
-    {% else %}
-            <fieldset class="wiki-page-content">
-                <legend><i class="fa fa-file-o"></i> {{ wikiPage.name }}</legend>
-                {% if is_granted('modify', wiki) %}
-                  <div class="text-right">
-                    <a href="{{ path('wiki_page_edit', {'wikiName':  wikiPage.wiki.name, 'pageName': wikiPage.name }) }}" class="text text-muted">
-                       <i class="fa fa-edit fa-fw" aria-hidden="true"></i> Edit page
-                    </a> &nbsp;
-                  </div>
-                {% endif %}
-                <div class="mt-2 wiki-content">
-                    {{ contentHtml|raw }}
-                </div>
-            </fieldset>
-        {% if wikiPage.wiki.hasAccessControlExpression %}
-          <small>Restricted to <code>{{ wikiPage.wiki.getAccessControlExpression }}</code></small>
+  {% else %}
+    <div class="wiki-page-content">
+      <div>
+        <h1 style="display: inline">{{ wikiPage.name }}</h1>
+        {% if is_granted('modify', wiki) %}
+          <a href="{{ path('wiki_page_edit', {'wikiName':  wikiPage.wiki.name, 'pageName': wikiPage.name }) }}">
+            <i class="fa fa-edit fa-fw" aria-hidden="true"></i> Edit page
+          </a>
         {% endif %}
+      </div>
+      <div class="mt-2 wiki-content">
+        {{ contentHtml|raw }}
+      </div>
+    </div>
+
+    {% if wikiPage.wiki.hasAccessControlExpression %}
+      <div class="mt-4 small">Restricted to <code>{{ wikiPage.wiki.getAccessControlExpression }}</code></div>
     {% endif %}
+  {% endif %}
 
 {% endblock %}
