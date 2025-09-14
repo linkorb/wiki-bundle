@@ -111,7 +111,7 @@
                 </a>
                 {% endif %}
 
-                {% if is_granted('ROLE_SUPERUSER') or writeRole is defined %}
+                {% if is_granted('create', 'wiki_pages') %}
                 <a href="{{ path('wiki_page_add',{'wikiName': wiki.name}) }}" class="btn btn-sm btn-success">
                     <i class="fa fa-plus" aria-hidden="true"></i>
                     New page
