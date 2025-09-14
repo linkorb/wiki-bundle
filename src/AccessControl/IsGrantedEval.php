@@ -12,12 +12,12 @@ readonly class IsGrantedEval implements EvalInterface
 
     public function __construct(private Security $security)
     {
+        $this->expressionLanguage = new ExpressionLanguage();
         $this->setupExpressionLanguage();
     }
 
     private function setupExpressionLanguage(): void
     {
-        $this->expressionLanguage = new ExpressionLanguage();
         $this->expressionLanguage->register(
             'is_granted',
             fn() => null, // ignore compilation related function
@@ -32,12 +32,16 @@ readonly class IsGrantedEval implements EvalInterface
 
     public function eval(string $expression): bool
     {
-        return $this->expressionLanguage->evaluate($expression);
-    }
+        $result = $this->expressionLanguage->evaluate($expression);
+        if (!is_bool($result)) {
+            throw new \InvalidArgumentException(sprintf(
+                "Wiki ACL expression should evaluate to a boolean value. Expression '%s' returned type %s",
+                $expression,
+                gettype($result)
+            ));
+        }
 
-    public function getFunctionNames(): array
-    {
-        return ['is_granted'];
+        return $result;
     }
 
     public function getExamplesHtml(): string

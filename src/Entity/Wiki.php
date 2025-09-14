@@ -15,13 +15,13 @@ class Wiki
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
-    private $id;
+    private int $id;
 
     #[ORM\Column(type: 'string', length: 64)]
-    private $name;
+    private string $name;
 
     #[ORM\Column(type: 'string', length: 255)]
-    private $description;
+    private string $description;
 
     #[ORM\OneToMany(targetEntity: WikiPage::class, mappedBy: 'wiki')]
     #[ORM\OrderBy(['name' => 'ASC'])]
@@ -31,23 +31,23 @@ class Wiki
      * @deprecated
      */
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
-    private $read_role;
+    private string|null $read_role = null;
 
     /**
      * @deprecated
      */
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
-    private $write_role;
+    private string|null $write_role = null;
 
 
     #[ORM\Column(type: 'text', length: 255, nullable: true)]
     private string|null $access_control_expression = null;
 
     #[ORM\Column(type: 'text', nullable: true)]
-    private $config;
+    private string|null $config = null;
 
     #[ORM\Column(type: 'integer', nullable: true)]
-    private $lastPullAt;
+    private int|null $lastPullAt = null;
 
     public function __construct()
     {
@@ -184,9 +184,14 @@ class Wiki
         return $this;
     }
 
-    public function getConfigArray()
+    /**
+     * @return array{read-only?: bool, ...}
+     */
+    public function getConfigArray(): array
     {
-        return Yaml::parse($this->config ?? '') ?? [];
+        $parsed = Yaml::parse($this->config ?? '');
+        /** @phpstan-ignore-next-line  */
+        return is_array($parsed) ? $parsed : [];
     }
 
     public function getLastPullAt(): ?int
@@ -203,6 +208,6 @@ class Wiki
 
     public function isReadOnly(): bool
     {
-        return (bool) !empty($this->getConfigArray()['read-only']) ? $this->getConfigArray()['read-only'] : false;
+        return !empty($this->getConfigArray()['read-only']) ? $this->getConfigArray()['read-only'] : false;
     }
 }

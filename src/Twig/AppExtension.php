@@ -74,7 +74,7 @@ class AppExtension
      * @return list<array{ name: string|null, link: string|null}>
      */
     #[AsTwigFunction('recentWikiPagesList')]
-    public function recentWikiPagesList(): ?array
+    public function recentWikiPagesList(): array
     {
         $username = $this->tokenStorage->getToken()?->getUserIdentifier();
         if (!$username) {

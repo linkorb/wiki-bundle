@@ -17,6 +17,12 @@ class LinkORBWikiBundle extends AbstractBundle
         ));
     }
 
+    /**
+     * @param array<string,mixed> $config
+     * @param ContainerConfigurator $container
+     * @param ContainerBuilder $builder
+     * @return void
+     */
     public function loadExtension(
         array $config,
         ContainerConfigurator $container,
