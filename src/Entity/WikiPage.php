@@ -12,7 +12,7 @@ class WikiPage
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
-    private $id;
+    private int $id;
 
     #[ORM\ManyToOne(targetEntity: Wiki::class, inversedBy: 'wikiPages')]
     #[ORM\JoinColumn(nullable: false)]
@@ -31,7 +31,7 @@ class WikiPage
     private ?int $parent_id = null;
 
     /* private variable */
-    private $points;
+    private int $points;
 
     public function getId(): ?int
     {
@@ -121,17 +121,12 @@ class WikiPage
     /**
      * Get the value of points.
      */
-    public function getPoints()
+    public function getPoints(): int
     {
         return $this->points;
     }
 
-    /**
-     * Set the value of points.
-     *
-     * @return self
-     */
-    public function setPoints($points)
+    public function setPoints(int $points): self
     {
         $this->points = $points;
 

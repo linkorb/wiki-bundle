@@ -25,7 +25,7 @@ class Wiki
 
     #[ORM\OneToMany(targetEntity: WikiPage::class, mappedBy: 'wiki')]
     #[ORM\OrderBy(['name' => 'ASC'])]
-    private $wikiPages;
+    private Collection $wikiPages;
 
     /**
      * @deprecated
@@ -84,7 +84,7 @@ class Wiki
     }
 
     /**
-     * @return Collection|WikiPage[]
+     * @return Collection<int, WikiPage>
      */
     public function getWikiPages(): Collection
     {

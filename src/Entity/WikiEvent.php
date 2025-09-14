@@ -12,27 +12,27 @@ class WikiEvent
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
-    private $id;
+    private int $id;
 
     #[ORM\Column(type: 'string', length: 32)]
-    private $type;
+    private string $type;
 
     #[ORM\Column(type: 'integer')]
-    private $created_at;
+    private int $created_at;
 
     #[ORM\Column(type: 'string', length: 64)]
-    private $created_by;
+    private string $created_by;
 
     #[ORM\Column(type: 'integer', nullable: true)]
-    private $wiki_page_id;
+    private int|null $wiki_page_id;
 
     #[ORM\Column(type: 'text', nullable: true)]
-    private $data;
+    private string|null $data = null;
 
     #[ORM\Column(type: 'integer', nullable: true)]
-    private $wiki_id;
+    private int|null $wiki_id;
 
-    public function getId(): ?int
+    public function getId(): int
     {
         return $this->id;
     }
@@ -109,8 +109,16 @@ class WikiEvent
         return $this;
     }
 
-    public function getDataArray(): ?array
+    public function getDataArray(): array
     {
-        return json_decode((string) $this->data, true);
+        if (is_null($this->data)) {
+            return [];
+        }
+        $data = json_decode($this->data, true);
+        if (!is_array($data)) {
+            return [];
+        }
+
+        return $data;
     }
 }

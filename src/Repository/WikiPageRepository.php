@@ -19,21 +19,34 @@ class WikiPageRepository extends ServiceEntityRepository
         parent::__construct($registry, WikiPage::class);
     }
 
-    public function findByWikiId($wikiId): array
+    /**
+     * @param int $wikiId
+     * @return WikiPage[]
+     */
+    public function findByWikiId(int $wikiId): array
     {
         return $this->findBy(['wiki' => $wikiId]);
     }
 
-    public function findOneByWikiIdAndName($wikiId, $name): ?WikiPage
+    public function findOneByWikiIdAndName(int $wikiId, string $name): ?WikiPage
     {
         return $this->findOneBy(['wiki' => $wikiId, 'name' => $name]);
     }
 
+    /**
+     * @param int $wikiId
+     * @param int $parentId
+     * @return WikiPage[]
+     */
     public function findByWikiIdAndParentId(int $wikiId, int $parentId): array
     {
         return $this->findBy(['wiki' => $wikiId, 'parent_id' => $parentId]);
     }
 
+    /**
+     * @param int $parentId
+     * @return WikiPage[]
+     */
     public function findByParentId(int $parentId): array
     {
         return $this->findBy(['parent_id' => $parentId]);
@@ -44,8 +57,14 @@ class WikiPageRepository extends ServiceEntityRepository
         return $this->findOneBy(['wiki' => $wikiId, 'id' => $id]);
     }
 
-    public function searWikiPages(string $text, array $wikiIds)
+    /**
+     * @param string $text
+     * @param int[] $wikiIds
+     * @return array<int,array{0: WikiPage, points: int}>
+     */
+    public function searWikiPages(string $text, array $wikiIds): array
     {
+        /** @phpstan-ignore-next-line  */
         return $this->createQueryBuilder('wp')
             ->select('wp,
                 CASE

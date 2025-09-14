@@ -4,6 +4,7 @@ namespace LinkORB\Bundle\WikiBundle\Controller;
 
 use Doctrine\ORM\EntityManagerInterface;
 use LinkORB\Bundle\WikiBundle\Entity\Wiki;
+use LinkORB\Bundle\WikiBundle\Entity\WikiPage;
 use LinkORB\Bundle\WikiBundle\Form\WikiSearchType;
 use LinkORB\Bundle\WikiBundle\Form\WikiType;
 use LinkORB\Bundle\WikiBundle\Services\WikiEventService;
@@ -16,7 +17,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\Routing\Attribute\Route;
-use Symfony\Component\Security\Core\Exception\AccessDeniedException;
+use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Yaml\Yaml;
 
 #[Route('/wiki')]
@@ -51,8 +52,10 @@ class WikiController extends AbstractController
     {
         $this->denyAccessUnlessGranted('create', 'wikis');
         $wiki = new Wiki();
-        if ($request->get('wikiname')) {
-            $wiki->setName($request->get('wikiname'));
+        /** @var string|null $wiki_name */
+        $wiki_name = $request->get('wikiname');
+        if (!empty($wiki_name)) {
+            $wiki->setName($wiki_name);
         }
 
         return $this->getEditForm($request, $wiki, $wikiEventService);
@@ -68,23 +71,33 @@ class WikiController extends AbstractController
         foreach ($wikiService->getAllWikis() as $wiki) {
             if ($this->isGranted('access', $wiki)) {
                 $wikiArray[$wiki->getName()] = $wiki->getName();
-                $wikiIds[] = $wiki->getId();
+                /** @var int $id */
+                $id = $wiki->getId();
+                $wikiIds[] = $id;
             }
         }
 
         asort($wikiArray);
-        $form = $this->createForm(WikiSearchType::class, ['wikiName' => $request->get('wikiName')], ['method' => 'GET', 'csrf_protection' => false, 'wikiArray' => $wikiArray]);
+        $form = $this->createForm(
+            WikiSearchType::class,
+            ['wikiName' => $request->get('wikiName')],
+            ['method' => 'GET', 'csrf_protection' => false, 'wikiArray' => $wikiArray]
+        );
         $form->handleRequest($request);
 
         if ($form->isSubmitted()) {
+            /** @var array{search: string, wikiName: string} $formData*/
             $formData = $form->getData();
 
             if (!empty($formData['wikiName'])) {
-                if (!$wiki = $wikiService->getWikiByName($formData['wikiName'])) {
+                $wiki = $wikiService->getWikiByName($formData['wikiName']);
+                if (!$wiki instanceof Wiki) {
                     throw $this->createNotFoundException();
                 }
                 $this->denyAccessUnlessGranted('access', $wiki);
-                $wikiIds = [$wiki->getId()];
+                /** @var int $id */
+                $id = $wiki->getId();
+                $wikiIds = [$id];
             }
 
             $wikiPageResults = [];
@@ -94,7 +107,7 @@ class WikiController extends AbstractController
 
             foreach ($wikiPageResults as $wikiPageResult) {
                 $tmpVar = $wikiPageResult[0];
-                $tmpVar->setPoints($wikiPageResult['points']);
+                $tmpVar->setPoints((int)$wikiPageResult['points']);
                 $wikiPages[] = $tmpVar;
             }
         }
@@ -109,8 +122,10 @@ class WikiController extends AbstractController
     public function publishAction(#[MapEntity(mapping: ['wikiName' => 'name'])] Wiki $wiki, WikiService $wikiService): Response
     {
         $this->denyAccessUnlessGranted('modify', $wiki);
+        /** @var UserInterface $user */
+        $user = $this->getUser();
 
-        $wikiService->publishWiki($wiki, $this->getUser()->getUserIdentifier(), $this->getUser()->getEmail());
+        $wikiService->publishWiki($wiki, $user->getUserIdentifier(), $user->getEmail());
 
         return $this->redirectToRoute('wiki_view', ['wikiName' => $wiki->getName()]);
     }
@@ -165,7 +180,7 @@ class WikiController extends AbstractController
         $form = $this->createForm(WikiType::class, $wiki);
         $form->handleRequest($request);
 
-        $add = !$wiki->getid();
+        $add = !$wiki->getId();
 
         if ($form->isSubmitted() && $form->isValid()) {
             $this->em->persist($wiki);
@@ -215,12 +230,19 @@ class WikiController extends AbstractController
 
         $data = [];
 
-        $indexPage = $wikiPageService->getOneByWikiIdAndPageName($wiki->getId(), 'index');
-        if ($indexPage) {
-            return $this->redirectToRoute('wiki_page_view', ['wikiName' => $wiki->getName(), 'pageName' => $indexPage->getName()]);
+        /** @var int $wiki_id */
+        $wiki_id = $wiki->getId();
+
+        $indexPage = $wikiPageService->getOneByWikiIdAndPageName($wiki_id, 'index');
+        if ($indexPage instanceof WikiPage) {
+            return $this->redirectToRoute('wiki_page_view', [
+                'wikiName' => $wiki->getName(),
+                'pageName' => $indexPage->getName()
+            ]);
         }
 
-        $wikiPages = $wikiPageService->getByWikiIdAndParentId($wiki->getId());
+        /** @var WikiPage[] $wikiPages */
+        $wikiPages = $wikiPageService->getByWikiIdAndParentId($wiki_id);
 
         foreach ($wikiPages as $wikiPage) {
             $wikiPage->setChildPages($wikiPageService->recursiveChild($wikiPage));

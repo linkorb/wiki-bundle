@@ -13,7 +13,6 @@ use LinkORB\Bundle\WikiBundle\Repository\WikiPageRepository;
 use LinkORB\Bundle\WikiBundle\Repository\WikiRepository;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
-use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 use Symfony\Component\Yaml\Yaml;
 
 class WikiService
@@ -25,7 +24,6 @@ class WikiService
         private readonly WikiPageRepository $wikiPageRepository,
         private readonly EntityManagerInterface $em,
         private readonly WikiEventService $wikiEventService,
-        private readonly AuthorizationCheckerInterface $authorizationChecker,
         private readonly ParameterBagInterface $params,
         #[Autowire(param: 'wiki_bundle_data_dir')]
         private readonly string $gitDirPath
@@ -33,7 +31,10 @@ class WikiService
         $this->git = new Git();
     }
 
-    public function getAllWikis()
+    /**
+     * @return Wiki[]
+     */
+    public function getAllWikis(): array
     {
         return $this->wikiRepository->findAll();
     }
@@ -157,7 +158,12 @@ class WikiService
         }
     }
 
-    public function searchWiki(string $text, array $wikiIds)
+    /**
+     * @param string $text
+     * @param int[] $wikiIds
+     * @return array<int,array{0: WikiPage, points: int}>
+     */
+    public function searchWiki(string $text, array $wikiIds): array
     {
         return $this->wikiPageRepository->searWikiPages($text, $wikiIds);
     }

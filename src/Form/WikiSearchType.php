@@ -12,6 +12,7 @@ class WikiSearchType extends AbstractType
 {
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
+        /** @var int[] $wikiArray */
         $wikiArray = $options['wikiArray'];
 
         $builder
