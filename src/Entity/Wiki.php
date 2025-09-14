@@ -15,10 +15,13 @@ class Wiki
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
-    private int $id;
+    private ?int $id = null;
+
+    #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    private string|null $owner = null;
 
     #[ORM\Column(type: 'string', length: 64)]
-    private string $name;
+    private ?string $name = null;
 
     #[ORM\Column(type: 'string', length: 255)]
     private string $description;
@@ -57,6 +60,17 @@ class Wiki
     public function getId(): ?int
     {
         return $this->id;
+    }
+
+    public function getOwner(): ?string
+    {
+        return $this->owner;
+    }
+
+    public function setOwner(string|null $owner): self
+    {
+        $this->owner = $owner;
+        return $this;
     }
 
     public function getName(): ?string

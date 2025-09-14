@@ -45,6 +45,7 @@
                 {{ macros.macroTree(wikiPages, wiki) }}
               </tbody>
           </table>
+          <a href="{{ path('wiki_page_add', {wikiName: wiki.name}) }}" class="btn btn-primary">Add Page</a>
         </fieldset>
         {% if wiki.hasAccessControlExpression %}
           <small>Restricted to <code>{{ wiki.getAccessControlExpression }}</code></small>

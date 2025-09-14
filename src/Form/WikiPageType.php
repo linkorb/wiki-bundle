@@ -2,6 +2,7 @@
 
 namespace LinkORB\Bundle\WikiBundle\Form;
 
+use LinkORB\Bundle\WikiBundle\Entity\Wiki;
 use LinkORB\Bundle\WikiBundle\Entity\WikiPage;
 use LinkORB\Bundle\WikiBundle\Services\WikiPageService;
 use LinkORB\Bundle\WikiBundle\Services\WikiService;
@@ -16,6 +17,7 @@ use Symfony\Component\Validator\Context\ExecutionContextInterface;
 
 class WikiPageType extends AbstractType
 {
+    /** @var array<int, string> */
     private array $arrayPageTemplates = [];
 
     public function __construct(
@@ -26,9 +28,15 @@ class WikiPageType extends AbstractType
 
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
-        if ($wikiTemplate = $this->wikiService->getWikiByName('templates')) {
+        $wikiTemplate = $this->wikiService->getWikiByName('templates');
+        if ($wikiTemplate instanceof Wiki) {
             foreach ($wikiTemplate->getWikiPages() as $wikiPage) {
-                $this->arrayPageTemplates[$wikiPage->getId()] = $wikiPage->getName();
+                $id = $wikiPage->getId();
+                assert(is_int($id));
+                $name = $wikiPage->getName();
+                assert(is_string($name));
+
+                $this->arrayPageTemplates[$id] = $name;
             }
 
             asort($this->arrayPageTemplates);
@@ -57,6 +65,9 @@ class WikiPageType extends AbstractType
                     ),
                 ],
             ])
+            ->add('owner', TextType::class, [
+                'disabled' => true,
+            ])
             ->add('parent_id', ChoiceType::class, [
                 'required' => false,
                 'trim' => true,
@@ -65,15 +76,6 @@ class WikiPageType extends AbstractType
                 'choices' => array_flip($parentArray),
             ]);
 
-        /*
-        if (!$entity->getId()) {
-            $builder
-                ->add('content', TextareaType::class, [
-                    'required' => false,
-                    'trim' => true,
-                ]);
-        }
-        */
         if (!$entity->getId()) {
             $builder
                 ->add('page_template', ChoiceType::class, [

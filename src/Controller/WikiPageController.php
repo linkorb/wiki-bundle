@@ -19,6 +19,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Core\User\UserInterface;
 
 #[Route('/wiki/{wikiName}')]
 class WikiPageController extends AbstractController
@@ -59,9 +60,12 @@ class WikiPageController extends AbstractController
     ): Response
     {
         $this->denyAccessUnlessGranted('create', 'wiki_pages');
+        /** @var UserInterface $user */
+        $user = $this->getUser();
 
         $wikiPage = new WikiPage();
         $wikiPage->setWiki($wiki);
+        $wikiPage->setOwner($user->getUserIdentifier());
 
         if ($wiki->isReadOnly()) {
             return $this->redirectToRoute('wiki_page_read_only', [

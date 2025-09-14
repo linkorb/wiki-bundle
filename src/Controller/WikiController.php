@@ -57,8 +57,9 @@ class WikiController extends AbstractController
         if (!empty($wiki_name)) {
             $wiki->setName($wiki_name);
         }
+        $wiki->setOwner($this->getUser()?->getUserIdentifier());
 
-        return $this->getEditForm($request, $wiki, $wikiEventService);
+        return $this->getEditForm($request, $wiki, $wikiEventService, true);
     }
 
     #[Route('/search', name: 'wiki_search', methods: ['GET', 'POST'])]
@@ -175,12 +176,10 @@ class WikiController extends AbstractController
         return $this->redirectToRoute('wiki_index');
     }
 
-    protected function getEditForm(Request $request, Wiki $wiki, WikiEventService $wikiEventService): Response
+    protected function getEditForm(Request $request, Wiki $wiki, WikiEventService $wikiEventService, bool $add = false): Response
     {
         $form = $this->createForm(WikiType::class, $wiki);
         $form->handleRequest($request);
-
-        $add = !$wiki->getId();
 
         if ($form->isSubmitted() && $form->isValid()) {
             $this->em->persist($wiki);

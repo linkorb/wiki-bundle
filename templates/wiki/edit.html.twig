@@ -5,7 +5,6 @@
   {{ form_start(form) }}
 
   <fieldset>
-    <legend>Wiki details</legend>
     {{ form_widget(form) }}
 
     <div class="buttonbox">
@@ -18,7 +17,7 @@
   </fieldset>
   {{ form_end(form) }}
 
-  {% if wiki.id %}
+  {% if wiki.id and is_granted('delete', wiki) %}
     <div>
       <form action="{{ path('wiki_delete', {'wikiName': wiki.name}) }}"
             method="post"
