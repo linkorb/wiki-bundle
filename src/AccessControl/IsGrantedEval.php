@@ -21,7 +21,8 @@ readonly class IsGrantedEval implements EvalInterface
         $this->expressionLanguage->register(
             'is_granted',
             fn() => null, // ignore compilation related function
-            fn (string $attribute, string|null $subject) : bool  => $this->security->isGranted($attribute, $subject)
+            fn (array $arguments, string $attribute, string|null $subject) : bool
+                => $this->security->isGranted($attribute, $subject)
         );
     }
 
