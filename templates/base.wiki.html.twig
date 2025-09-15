@@ -11,152 +11,157 @@
 {% endblock %}
 
 {% block sidebar %}
-    <i class="fa fa-arrow-left align-middle"></i> <a class="align-middle" href="{{ path('wiki_index') }}">Wikis</a>
-    <hr />
-    {% if tocPage is defined %}
+  <i class="fa fa-arrow-left align-middle"></i> <a class="align-middle" href="{{ path('wiki_index') }}">Wikis</a>
+  <hr/>
+  {% if tocPage is defined %}
     <h4>Table of contents
-        <small><a class="text text-muted" href="{{ path('wiki_page_edit', {'wikiName': wiki.name, 'id': tocPage.id } )}}"><i class="fa fa-edit"></i></a></small>
+      <small><a class="text text-muted"
+                href="{{ path('wiki_page_edit', {'wikiName': wiki.name, 'id': tocPage.id } ) }}"><i
+            class="fa fa-edit"></i></a></small>
     </h4>
     {{ tocPage.content|default('')|markdown_to_html }}
-    {% else %}
-      <h4 class="u-mb-2">Pages</h4>
+  {% else %}
+    <h4 class="u-mb-2">Pages</h4>
 
-      <ul class="list-unstyled">
-        {% macro macroPageTree(wikiPages , wiki) %}
-          {% import _self as macros %}
-
-          {% for  page in  wikiPages %}
-            <li class="text-truncate u-mb-1">
-                <i class="fa fa-angle-right fa-fw" aria-hidden="true"></i>
-
-                <a href="{{ path('wiki_page_add', {'wikiName': wiki.name, 'parentId': page.id } ) }}" class="float-right text-primary"><i class="fa fa-plus align-middle"></i></a>
-
-                <a href="{{ path('wiki_page_view', {'wikiName': wiki.name, 'pageName': page.name} ) }}" title="{{ page.name }}">{{ page.name }}</a>
-
-
-
-                 {% if page.getChildPages() %}
-                    <ul style="list-style: none; padding-left: 20px;" class="list-group u-mt-1">
-                        {{ macros.macroPageTree( page.getChildPages(), wiki) }}
-                    </ul>
-                 {% endif %}
-
-            </li>
-          {% endfor %}
-
-        {% endmacro %}
+    <ul class="list-unstyled">
+      {% macro macroPageTree(wikiPages , wiki) %}
         {% import _self as macros %}
-        {{ macros.macroPageTree(  wikiRecursivePages(wiki.id), wiki ) }}
-      </ul>
 
-    {% endif %}
-    <br /><br /><br />
+        {% for  page in  wikiPages %}
+          <li class="text-truncate u-mb-1">
+            <i class="fa fa-angle-right fa-fw" aria-hidden="true"></i>
+
+            <a href="{{ path('wiki_page_add', {'wikiName': wiki.name, 'parentId': page.id } ) }}"
+               class="float-right text-primary"><i class="fa fa-plus align-middle"></i></a>
+
+            <a href="{{ path('wiki_page_view', {'wikiName': wiki.name, 'pageName': page.name} ) }}"
+               title="{{ page.name }}">{{ page.name }}</a>
+
+
+            {% if page.getChildPages() %}
+              <ul style="list-style: none; padding-left: 20px;" class="list-group u-mt-1">
+                {{ macros.macroPageTree( page.getChildPages(), wiki) }}
+              </ul>
+            {% endif %}
+
+          </li>
+        {% endfor %}
+
+      {% endmacro %}
+      {% import _self as macros %}
+      {{ macros.macroPageTree(  wikiRecursivePages(wiki.id), wiki ) }}
+    </ul>
+
+  {% endif %}
+  <br/><br/><br/>
 
 {% endblock %}
 
 
 {% block submenu %}
-    <div style="background: #f8f8f8; border-bottom: 1px solid #fff; padding-top: 20px; min-height: 70px">
-        <div class="container-fluid">
+  <div style="background: #f8f8f8; border-bottom: 1px solid #fff; padding-top: 20px; min-height: 70px">
+    <div class="container-fluid">
 
-            {% if wiki.name %}
-            <div style="float: right;">
+      {% if wiki.name %}
+        <div style="float: right;">
 
-                <a href="{{ path('wiki_search',{ 'wikiName': wiki.name }) }}" class="btn btn-sm btn-secondary">
-                  <i class="fa fa-search" aria-hidden="true"></i> Search
+          <a href="{{ path('wiki_search',{ 'wikiName': wiki.name }) }}" class="btn btn-sm btn-secondary">
+            <i class="fa fa-search" aria-hidden="true"></i> Search
+          </a>
+
+          {% if is_granted('ROLE_SUPERUSER') %}
+
+            <div class="dropdown">
+              <button style="margin: 0" class="btn btn-info dropdown-toggle btn-sm" type="button"
+                      id="dropdownMenuButton"
+                      data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                Admin
+              </button>
+              <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                <a href="{{ path('wiki_edit', {'wikiName': wiki.name}) }}" class="dropdown-item">
+                  <i class="fa fa-edit"></i> Wiki settings
                 </a>
-
-                {% if is_granted('ROLE_SUPERUSER') %}
-
-                <div class="dropdown">
-                    <button style="margin: 0" class="btn btn-info dropdown-toggle btn-sm"  type="button" id="dropdownMenuButton"
-                            data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    Admin
-                    </button>
-                    <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                      <a href="{{ path('wiki_edit', {'wikiName': wiki.name}) }}" class="dropdown-item">
-                          <i class="fa fa-edit"></i> Wiki settings
-                      </a>
-                      <a href="{{ path('wiki_publish', {'wikiName': wiki.name}) }}" class="dropdown-item">
-                        <i class="fa fa-github"></i> Publish
-                      </a>
-                      <a href="{{ path('wiki_pull', {'wikiName': wiki.name}) }}" class="dropdown-item">
-                        <i class="fa fa-github"></i> Pull
-                      </a>
-                      <a href="{{ path('wiki_event_index', {'wikiName': wiki.name}) }}" class="dropdown-item">
-                          <i class="fa fa-calendar" aria-hidden="true"></i> Events
-                      </a>
-                      <a href="{{ path('wiki_export',{'wikiName': wiki.name}) }}" class="dropdown-item">
-                        <i class="fa fa-download" aria-hidden="true"></i> Export
-                      </a>
-                      <a href="{{ path('wiki_export_single_markdown', {'wikiName': wiki.name}) }}" class="dropdown-item">
-                        <i class="fa fa-download"></i> Export single markdown
-                      </a>
-                      <a href="{{ path('wiki_export_single_html', {'wikiName': wiki.name}) }}" class="dropdown-item">
-                        <i class="fa fa-download"></i> Export single HTML
-                      </a>
-                  </div>
-                </div>
-                {% endif %}
-
-                <a href="{{ path('wiki_page_index',{'wikiName': wiki.name}) }}" class="btn btn-sm btn-secondary">
-                    <i class="fa fa-list" aria-hidden="true"></i>
-                    List pages
+                <a href="{{ path('wiki_publish', {'wikiName': wiki.name}) }}" class="dropdown-item">
+                  <i class="fa fa-github"></i> Publish
                 </a>
-
-                {% if wikiPage is defined and wikiPage.id %}
-                    <a href="{{ path('wiki_page_event_index',{'wikiName': wiki.name, 'pageName': wikiPage.name}) }}" class="btn btn-sm btn-secondary">
-                    <i class="fa fa-list" aria-hidden="true"></i>
-                    page Events
+                <a href="{{ path('wiki_pull', {'wikiName': wiki.name}) }}" class="dropdown-item">
+                  <i class="fa fa-github"></i> Pull
                 </a>
-                {% endif %}
-
-                {% if is_granted('create', 'wiki_pages') %}
-                <a href="{{ path('wiki_page_add',{'wikiName': wiki.name}) }}" class="btn btn-sm btn-success">
-                    <i class="fa fa-plus" aria-hidden="true"></i>
-                    New page
+                <a href="{{ path('wiki_event_index', {'wikiName': wiki.name}) }}" class="dropdown-item">
+                  <i class="fa fa-calendar" aria-hidden="true"></i> Events
                 </a>
-                {% endif %}
+                <a href="{{ path('wiki_export',{'wikiName': wiki.name}) }}" class="dropdown-item">
+                  <i class="fa fa-download" aria-hidden="true"></i> Export
+                </a>
+                <a href="{{ path('wiki_export_single_markdown', {'wikiName': wiki.name}) }}" class="dropdown-item">
+                  <i class="fa fa-download"></i> Export single markdown
+                </a>
+                <a href="{{ path('wiki_export_single_html', {'wikiName': wiki.name}) }}" class="dropdown-item">
+                  <i class="fa fa-download"></i> Export single HTML
+                </a>
+              </div>
             </div>
+          {% endif %}
 
-            <h4>
-                <i class="fa fa-book align-middle"></i>
-                <a href="{{ path('wiki_view', {'wikiName': wiki.name } ) }}">
-                    {{ wiki.name }}
-                </a>
-                {% if wikiPage is defined and wikiPage and wikiPage.id %}
+          <a href="{{ path('wiki_page_index',{'wikiName': wiki.name}) }}" class="btn btn-sm btn-secondary">
+            <i class="fa fa-list" aria-hidden="true"></i>
+            List pages
+          </a>
 
-                  {% for wikiPageBreadcrumb in wikiPageBreadcrumbs(wiki.id, wikiPage.id) %}
-                    /
-                    {% if loop.last %}
-                        {{ wikiPageBreadcrumb.name }}
-                    {% else %}
-                      <a href="{{ path('wiki_page_view',{'wikiName': wiki.name, 'pageName': wikiPageBreadcrumb.name }) }}">
-                        {{ wikiPageBreadcrumb.name }}
-                      </a>
-                    {% endif %}
-                  {% endfor %}
+          {% if wikiPage is defined and wikiPage.id %}
+            <a href="{{ path('wiki_page_event_index',{'wikiName': wiki.name, 'pageName': wikiPage.name}) }}"
+               class="btn btn-sm btn-secondary">
+              <i class="fa fa-list" aria-hidden="true"></i>
+              page Events
+            </a>
+          {% endif %}
 
-                    <small>
-                        {% set getWikiPageMetaUserEntity = getWikiPageMetaUserEntity() %}
-                        {% if getWikiPageMetaUserEntity %}
-                          <a href="{{ path('wiki_page_toggle_favorite', {'wikiName': wiki.name, 'pageName': wikiPage.name }) }}">
-                            {% if getWikiPageMetaUserEntity.isFavorite %}
-                              <i class="icon-lux-star-fill mark-as-default"></i>
-                            {% else %}
-                              <i class="icon-lux-star mark-as-default text-dark"></i>
-                            {% endif %}
-                          </a>
-                        {% else %}
-                          <i class="fa fa-ellipsis-h text text-light"></i>
-                        {% endif %}
-                    </small>
-
-                {% endif %}
-            </h4>
-            {% endif %}
+          {% if is_granted('create', 'wiki_pages') %}
+            <a href="{{ path('wiki_page_add',{'wikiName': wiki.name}) }}" class="btn btn-sm btn-success">
+              <i class="fa fa-plus" aria-hidden="true"></i>
+              New page
+            </a>
+          {% endif %}
         </div>
+
+        <h4>
+          <i class="fa fa-book align-middle"></i>
+          <a href="{{ path('wiki_view', {'wikiName': wiki.name } ) }}">
+            {{ wiki.name }}
+          </a>
+          {% if wikiPage is defined and wikiPage and wikiPage.id %}
+
+            {% for wikiPageBreadcrumb in wikiPageBreadcrumbs(wiki.id, wikiPage.id) %}
+              /
+              {% if loop.last %}
+                {{ wikiPageBreadcrumb.name }}
+              {% else %}
+                <a href="{{ path('wiki_page_view',{'wikiName': wiki.name, 'pageName': wikiPageBreadcrumb.name }) }}">
+                  {{ wikiPageBreadcrumb.name }}
+                </a>
+              {% endif %}
+            {% endfor %}
+
+            <small>
+              {% set getWikiPageMetaUserEntity = getWikiPageMetaUserEntity() %}
+              {% if getWikiPageMetaUserEntity %}
+                <a href="{{ path('wiki_page_toggle_favorite', {'wikiName': wiki.name, 'pageName': wikiPage.name }) }}">
+                  {% if getWikiPageMetaUserEntity.isFavorite %}
+                    <i class="icon-lux-star-fill mark-as-default"></i>
+                  {% else %}
+                    <i class="icon-lux-star mark-as-default text-dark"></i>
+                  {% endif %}
+                </a>
+              {% else %}
+                <i class="fa fa-ellipsis-h text text-light"></i>
+              {% endif %}
+            </small>
+
+          {% endif %}
+        </h4>
+      {% endif %}
     </div>
+  </div>
 {% endblock %}
 
 {% block body %}
