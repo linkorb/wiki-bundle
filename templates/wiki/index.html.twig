@@ -4,13 +4,13 @@
 
 {% block body %}
 
-  <div class="buttonbox" style="float: right; padding: 0px; margin: 0px;">
-    <a href="{{ path('wiki_search') }}" class="btn btn-secondary">
-      <i class="fa fa-search" aria-hidden="true"></i> Search
+  <div class="buttonbox" style="float: right; padding: 0; margin: 0;">
+    <a href="{{ path('wiki_search') }}" class="c-btn c-btn--secondary">
+      <i class="icon-lux-search-fill"></i> Search
     </a>
     {% if is_granted('ROLE_SUPERUSER') %}
-      <a href="{{ path('wiki_add') }}" class="btn btn-success">
-        <i class="fa fa-plus" aria-hidden="true"></i>
+      <a href="{{ path('wiki_add') }}" class="c-btn c-btn--outline-primary">
+        <i class="icon-lux-add-fill"></i>
         New wiki
       </a>
     {% endif %}
@@ -30,12 +30,16 @@
         <tr>
           <td>
             <a href="{{ path('wiki_view', {'wikiName': wiki.name}) }}">
-              <b>{{ wiki.name }}</b>
-              <small class="text text-muted">{{ wiki.wikiPages|length }}</small>
+              <h2 class="d-inline u-fs-3">{{ wiki.name }}</h2>
+              <small class="text">{{ wiki.wikiPages|length }} pages</small>
               <br/>
             </a>
             {{ wiki.description }}
 
+            {% if wiki.hasAccessControlExpression %}
+              <br><br>
+              Restricted to <code>{{ wiki.getAccessControlExpression }}</code>
+            {% endif %}
           </td>
 
         </tr>
