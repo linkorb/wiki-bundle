@@ -65,60 +65,75 @@
       {% if wiki.name %}
         <div style="float: right;">
 
-          <a href="{{ path('wiki_search',{ 'wikiName': wiki.name }) }}" class="btn btn-sm btn-secondary">
-            <i class="fa fa-search" aria-hidden="true"></i> Search
+          <a href="{{ path('wiki_search',{ 'wikiName': wiki.name }) }}" class="c-btn c-btn--secondary">
+            <i class="icon-lux-search-fill"></i> Search
           </a>
 
           {% if is_granted('ROLE_SUPERUSER') %}
-
-            <div class="dropdown">
-              <button style="margin: 0" class="btn btn-info dropdown-toggle btn-sm" type="button"
-                      id="dropdownMenuButton"
-                      data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                Admin
+            <div class="c-dropdown">
+              <button class="c-dropdown__toggle c-btn c-btn--secondary">
+                Wiki Admin <i class="c-dropdown__toggle-icon icon-lux-caret-down"></i>
               </button>
-              <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                <a href="{{ path('wiki_edit', {'wikiName': wiki.name}) }}" class="dropdown-item">
-                  <i class="fa fa-edit"></i> Wiki settings
-                </a>
-                <a href="{{ path('wiki_publish', {'wikiName': wiki.name}) }}" class="dropdown-item">
-                  <i class="fa fa-github"></i> Publish
-                </a>
-                <a href="{{ path('wiki_pull', {'wikiName': wiki.name}) }}" class="dropdown-item">
-                  <i class="fa fa-github"></i> Pull
-                </a>
-                <a href="{{ path('wiki_event_index', {'wikiName': wiki.name}) }}" class="dropdown-item">
-                  <i class="fa fa-calendar" aria-hidden="true"></i> Events
-                </a>
-                <a href="{{ path('wiki_export',{'wikiName': wiki.name}) }}" class="dropdown-item">
-                  <i class="fa fa-download" aria-hidden="true"></i> Export
-                </a>
-                <a href="{{ path('wiki_export_single_markdown', {'wikiName': wiki.name}) }}" class="dropdown-item">
-                  <i class="fa fa-download"></i> Export single markdown
-                </a>
-                <a href="{{ path('wiki_export_single_html', {'wikiName': wiki.name}) }}" class="dropdown-item">
-                  <i class="fa fa-download"></i> Export single HTML
-                </a>
+              <div class="c-dropdown__menu-wrapper">
+                <div class="c-dropdown__menu-inner">
+                  <ul class="c-dropdown__menu">
+                    <li class="c-dropdown__menu-item">
+                      <a href="{{ path('wiki_edit', {'wikiName': wiki.name}) }}" class="c-dropdown__menu-link">
+                        Settings <i class="icon-lux-settings"></i>
+                      </a>
+                    </li>
+                    <li class="c-dropdown__menu-item">
+                      <a href="{{ path('wiki_publish', {'wikiName': wiki.name}) }}" class="c-dropdown__menu-link">
+                        Publish <i class="icon-lux-github-logo"></i>
+                      </a>
+                    </li>
+                    <li class="c-dropdown__menu-item">
+                      <a href="{{ path('wiki_pull', {'wikiName': wiki.name}) }}" class="c-dropdown__menu-link">
+                        Pull <i class="icon-lux-github-logo"></i>
+                      </a>
+                    </li>
+                    <li class="c-dropdown__menu-item">
+                      <a href="{{ path('wiki_event_index', {'wikiName': wiki.name}) }}" class="c-dropdown__menu-link">
+                        Events <i class="icon-lux-list"></i>
+                      </a>
+                    </li>
+                    <li class="c-dropdown__menu-item">
+                      <a href="{{ path('wiki_export',{'wikiName': wiki.name}) }}" class="c-dropdown__menu-link">
+                        Export <i class="icon-lux-archive-fill"></i>
+                      </a>
+                    </li>
+                    <li class="c-dropdown__menu-item">
+                      <a href="{{ path('wiki_export_single_markdown', {'wikiName': wiki.name}) }}" class="c-dropdown__menu-link">
+                        Export single markdown <i class="icon-lux-file-arrow-down-fill"></i>
+                      </a>
+                    </li>
+                    <li class="c-dropdown__menu-item">
+                      <a href="{{ path('wiki_export_single_html', {'wikiName': wiki.name}) }}" class="c-dropdown__menu-link">
+                        Export single HTML <i class="icon-lux-file-arrow-down"></i>
+                      </a>
+                    </li>
+                  </ul>
+                </div>
               </div>
             </div>
           {% endif %}
 
-          <a href="{{ path('wiki_page_index',{'wikiName': wiki.name}) }}" class="btn btn-sm btn-secondary">
-            <i class="fa fa-list" aria-hidden="true"></i>
+          <a href="{{ path('wiki_page_index',{'wikiName': wiki.name}) }}" class="c-btn c-btn--secondary">
+            <i class="icon-lux-list-fill"></i>
             List pages
           </a>
 
           {% if wikiPage is defined and wikiPage.id %}
             <a href="{{ path('wiki_page_event_index',{'wikiName': wiki.name, 'pageName': wikiPage.name}) }}"
-               class="btn btn-sm btn-secondary">
-              <i class="fa fa-list" aria-hidden="true"></i>
+                class="c-btn c-btn--secondary">
+              <i class="icon-lux-list-fill"></i>
               page Events
             </a>
           {% endif %}
 
           {% if is_granted('create', 'wiki_pages') %}
-            <a href="{{ path('wiki_page_add',{'wikiName': wiki.name}) }}" class="btn btn-sm btn-success">
-              <i class="fa fa-plus" aria-hidden="true"></i>
+            <a href="{{ path('wiki_page_add',{'wikiName': wiki.name}) }}" class="c-btn c-btn--outline-primary">
+              <i class="icon-lux-add-fill"></i>
               New page
             </a>
           {% endif %}
