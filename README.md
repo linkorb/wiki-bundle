@@ -54,6 +54,13 @@ composer require linkorb/wiki-bundle
       {% block submenu %}{% endblock %}
     ```
 
+4. Configure the data directory in your services.yaml file
+
+```yaml
+parameters:
+  wiki_bundle_data_dir: '%kernel.project_dir%/var'
+```
+
 ## Wiki access control
 
 Use [Symfony security roles](https://symfony.com/doc/current/security.html#roles) defined in your application to control who can access or modify a wiki by setting the appropriate rules in the **Read role** and **Write role** fields of the **Add wiki** form of a Symfony application.
@@ -108,7 +115,7 @@ The `config` field of this bundle's **Add wiki** form may be used to customize a
 
 #### Sample wiki configuration
 
-For example, setting the following wiki configuration prevents users from creating and editing wiki pages that are managed externally (e.g., in a GitHub repository). 
+For example, setting the following wiki configuration prevents users from creating and editing wiki pages that are managed externally (e.g., in a GitHub repository).
 
 ```yaml
 # wiki.config

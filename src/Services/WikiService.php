@@ -11,13 +11,13 @@ use LinkORB\Bundle\WikiBundle\Entity\Wiki;
 use LinkORB\Bundle\WikiBundle\Entity\WikiPage;
 use LinkORB\Bundle\WikiBundle\Repository\WikiPageRepository;
 use LinkORB\Bundle\WikiBundle\Repository\WikiRepository;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 use Symfony\Component\Yaml\Yaml;
 
 class WikiService
 {
-    private $gitDirPath;
     private $git;
 
     public function __construct(
@@ -27,8 +27,9 @@ class WikiService
         private readonly WikiEventService $wikiEventService,
         private readonly AuthorizationCheckerInterface $authorizationChecker,
         private readonly ParameterBagInterface $params,
+        #[Autowire(param: 'wiki_bundle_data_dir')]
+        private readonly string $gitDirPath
     ) {
-        $this->gitDirPath = $this->params->get('kernel.project_dir').'/var/wiki';
         $this->git = new Git();
     }
 
