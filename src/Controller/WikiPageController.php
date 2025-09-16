@@ -65,7 +65,6 @@ class WikiPageController extends AbstractController
 
         $wikiPage = new WikiPage();
         $wikiPage->setWiki($wiki);
-        $wikiPage->setOwner($user->getUserIdentifier());
 
         if ($wiki->isReadOnly()) {
             return $this->redirectToRoute('wiki_page_read_only', [

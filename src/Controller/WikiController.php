@@ -57,8 +57,6 @@ class WikiController extends AbstractController
         if (!empty($wiki_name)) {
             $wiki->setName($wiki_name);
         }
-        $wiki->setOwner($this->getUser()?->getUserIdentifier());
-
         return $this->getEditForm($request, $wiki, $wikiEventService, true);
     }
 

@@ -14,9 +14,6 @@ class WikiPage
     #[ORM\Column(type: 'integer')]
     private ?int $id = null;
 
-    #[ORM\Column(type: 'string', length: 255, nullable: true)]
-    private string|null $owner = null;
-
     #[ORM\ManyToOne(targetEntity: Wiki::class, inversedBy: 'wikiPages')]
     #[ORM\JoinColumn(nullable: false)]
     private ?Wiki $wiki = null;
@@ -39,17 +36,6 @@ class WikiPage
     public function getId(): ?int
     {
         return $this->id;
-    }
-
-    public function getOwner(): ?string
-    {
-        return $this->owner;
-    }
-
-    public function setOwner(string|null $owner): self
-    {
-        $this->owner = $owner;
-        return $this;
     }
 
     public function getWiki(): ?Wiki
