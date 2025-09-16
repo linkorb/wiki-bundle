@@ -8,7 +8,7 @@
     <a href="{{ path('wiki_search') }}" class="c-btn c-btn--secondary">
       <i class="icon-lux-search-fill"></i> Search
     </a>
-    {% if is_granted('ROLE_SUPERUSER') %}
+    {% if is_granted('create', 'wikis') %}
       <a href="{{ path('wiki_add') }}" class="c-btn c-btn--outline-primary">
         <i class="icon-lux-add-fill"></i>
         New wiki
