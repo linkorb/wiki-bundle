@@ -45,11 +45,7 @@ class WikiPageType extends AbstractType
                 'help' => 'Part of the URL. Accepts lower case, a-z, 0-9, use dashes for spaces',
                 'constraints' => [
                     new Assert\NotBlank(),
-                    new Assert\Regex([
-                        'pattern' => '/^[a-z0-9\-_]+$/',
-                        'htmlPattern' => '^[a-z0-9\-_]+$',
-                        'message' => 'The string {{ value }} contains an illegal character: it can only contain small letters, numbers, - and _ sign',
-                    ]),
+                    new Assert\Regex(pattern: '/^[a-z0-9\-_]+$/', htmlPattern: '^[a-z0-9\-_]+$', message: 'The string {{ value }} contains an illegal character: it can only contain small letters, numbers, - and _ sign'),
                     new Assert\Callback(
                         function ($name, ExecutionContextInterface $context) use ($entity): void {
                             if ($findEntity = $this->wikiPageService->getOneByWikiIdAndPageName($entity->getWiki()->getId(), $name)) {

@@ -29,11 +29,7 @@ class WikiType extends AbstractType
                 'trim' => true,
                 'constraints' => [
                     new Assert\NotBlank(),
-                    new Assert\Regex([
-                        'pattern' => '/^[a-z0-9\-_]+$/',
-                        'htmlPattern' => '^[a-z0-9\-_]+$',
-                        'message' => 'The string {{ value }} contains an illegal character: it can only contain small letters, numbers, - and _ sign',
-                    ]),
+                    new Assert\Regex(pattern: '/^[a-z0-9\-_]+$/', htmlPattern: '^[a-z0-9\-_]+$', message: 'The string {{ value }} contains an illegal character: it can only contain small letters, numbers, - and _ sign'),
                     new Assert\Callback(
                         function ($name, ExecutionContext $context) use ($wikiRepository, $entity): void {
                             if ($findEntity = $wikiRepository->findOneByName($name)) {
