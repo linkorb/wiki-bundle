@@ -146,7 +146,7 @@ class WikiController extends AbstractController
     ): Response
     {
         if (!$this->isCsrfTokenValid('delete-item', $request->getPayload()->get('token'))) {
-            throw new BadRequestHttpException('Token invalid!');
+            throw new BadRequestHttpException('CSRF token invalid!');
         }
         if (!$wikiRoles = $this->wikiService->getWikiPermission($wiki)) {
             throw new AccessDeniedException('Access denied!');

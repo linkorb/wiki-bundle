@@ -261,7 +261,7 @@ class WikiPageController extends AbstractController
     ): Response
     {
         if (!$this->isCsrfTokenValid('delete-item', $request->getPayload()->get('token'))) {
-            throw new BadRequestHttpException('Token invalid!');
+            throw new BadRequestHttpException('CSRF token invalid!');
         }
 
         $wikiPage = $this->wikiPageRepository->findOneByWikiIdAndName($wiki->getId(), $pageName);
