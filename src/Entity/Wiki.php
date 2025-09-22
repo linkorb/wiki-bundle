@@ -40,7 +40,7 @@ class Wiki
     private string|null $write_role = null;
 
 
-    #[ORM\Column(type: 'text', length: 255, nullable: true)]
+    #[ORM\Column(type: 'text', length: 2048, nullable: true)]
     private string|null $access_control_expression = null;
 
     #[ORM\Column(type: 'text', nullable: true)]
