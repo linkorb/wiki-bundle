@@ -46,9 +46,6 @@ class WikiType extends AbstractType
                     ),
                 ],
             ])
-            ->add('owner', TextType::class, [
-                'disabled' => true
-            ])
             ->add('description', TextType::class, [
                 'required' => true,
                 'trim' => true,

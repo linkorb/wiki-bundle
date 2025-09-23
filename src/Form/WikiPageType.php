@@ -65,9 +65,6 @@ class WikiPageType extends AbstractType
                     ),
                 ],
             ])
-            ->add('owner', TextType::class, [
-                'disabled' => true,
-            ])
             ->add('parent_id', ChoiceType::class, [
                 'required' => false,
                 'trim' => true,
