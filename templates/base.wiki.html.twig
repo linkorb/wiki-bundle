@@ -69,7 +69,7 @@
             <i class="icon-lux-search-fill"></i> Search
           </a>
 
-          {% if is_granted('ROLE_SUPERUSER') %}
+          {% if is_granted('admin', 'wikis') %}
             <div class="c-dropdown">
               <button class="c-dropdown__toggle c-btn c-btn--secondary">
                 Wiki Admin <i class="c-dropdown__toggle-icon icon-lux-caret-down"></i>
