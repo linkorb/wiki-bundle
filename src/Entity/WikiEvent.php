@@ -24,13 +24,13 @@ class WikiEvent
     private string $created_by;
 
     #[ORM\Column(type: 'integer', nullable: true)]
-    private int|null $wiki_page_id;
+    private int|null $wiki_page_id = null;
 
     #[ORM\Column(type: 'text', nullable: true)]
     private string|null $data = null;
 
     #[ORM\Column(type: 'integer', nullable: true)]
-    private int|null $wiki_id;
+    private int|null $wiki_id = null;
 
     public function getId(): int
     {
