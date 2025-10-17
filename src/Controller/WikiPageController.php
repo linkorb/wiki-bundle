@@ -59,7 +59,7 @@ class WikiPageController extends AbstractController
         EntityManagerInterface $em
     ): Response
     {
-        $this->denyAccessUnlessGranted('create', 'wiki_pages');
+        $this->denyAccessUnlessGranted('modify', $wiki);
         /** @var UserInterface $user */
         $user = $this->getUser();
 
