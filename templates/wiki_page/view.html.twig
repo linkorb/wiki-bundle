@@ -5,8 +5,10 @@
   {% if not wikiPage %}
     <center>
       <p>This page does not (yet) exist: <b>{{ pageName }}</b></p>
+      {% if is_granted('modify', wiki) %}
       <a href="{{ path('wiki_page_add', {'wikiName': wiki.name, 'pageName': pageName } ) }}" class="btn btn-success">Add
         now</a>
+      {% endif %}
     </center>
   {% else %}
     <div class="wiki-page-content">
