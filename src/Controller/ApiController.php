@@ -27,7 +27,7 @@ class ApiController extends AbstractController
         #[MapEntity(mapping: ['wikiName' => 'name'])] Wiki $wiki,
         WikiService $wikiService
     ): Response {
-        $this->denyAccessUnlessGranted('manage', $wiki);
+        $this->denyAccessUnlessGranted('access', $wiki);
 
         $data = $wikiService->export($wiki);
 
