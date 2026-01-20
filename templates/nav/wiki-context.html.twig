@@ -1,0 +1,96 @@
+{#
+    Wiki-context navigation for when viewing a specific wiki.
+    
+    This nav template shows the wiki's pages in the left sidebar,
+    providing easy navigation within the wiki context.
+    
+    Custom Navigation:
+    If a page named "navigation" exists in the wiki, its markdown content
+    will be rendered instead of the automatic page hierarchy. This allows
+    wiki maintainers to create a custom navigation structure.
+#}
+<a href="{{ path('wiki_lander') }}" class="nav-link">
+    <i class="icon-lux-arrow-left me-2"></i> All Wikis
+</a>
+<hr class="my-2">
+
+{% if wiki is defined and wiki %}
+    <div class="nav-link active fw-bold">
+        <i class="icon-lux-article me-2"></i> {{ wiki.name }}
+    </div>
+    
+    <hr class="my-2">
+    
+    <a href="{{ path('wiki_view', {'wikiName': wiki.name}) }}" class="nav-link{% if app.request.attributes.get('_route') == 'wiki_view' %} active{% endif %}">
+        <i class="icon-lux-home me-2"></i> Wiki Home
+    </a>
+    <a href="{{ path('wiki_page_index', {'wikiName': wiki.name}) }}" class="nav-link{% if app.request.attributes.get('_route') == 'wiki_page_index' %} active{% endif %}">
+        <i class="icon-lux-list me-2"></i> All Pages
+    </a>
+    <a href="{{ path('wiki_search', {'wikiName': wiki.name}) }}" class="nav-link{% if app.request.attributes.get('_route') == 'wiki_search' %} active{% endif %}">
+        <i class="icon-lux-search me-2"></i> Search
+    </a>
+    
+    {% if is_granted('modify', wiki) %}
+    <a href="{{ path('wiki_page_add', {'wikiName': wiki.name}) }}" class="nav-link{% if app.request.attributes.get('_route') == 'wiki_page_add' %} active{% endif %}">
+        <i class="icon-lux-add me-2"></i> New Page
+    </a>
+    {% endif %}
+    
+    <hr class="my-2">
+    
+    {# Check for custom navigation page #}
+    {% set navigationPage = wikiPageByName(wiki.id, 'navigation') %}
+    
+    {% if navigationPage %}
+        {# Custom navigation from "navigation" page #}
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <div class="small text-muted">Navigation</div>
+            {% if is_granted('modify', wiki) %}
+                <a href="{{ path('wiki_page_edit', {'wikiName': wiki.name, 'pageName': 'navigation'}) }}" 
+                   class="small text-muted" title="Edit navigation">
+                    <i class="icon-lux-edit"></i>
+                </a>
+            {% endif %}
+        </div>
+        <div class="wiki-custom-nav">
+            {{ navigationPage.content|default('')|markdown_to_html }}
+        </div>
+    {% else %}
+        {# Automatic page tree #}
+        <div class="small text-muted mb-2">Pages</div>
+        
+        {% macro pageTree(pages, wiki, currentPage) %}
+            {% import _self as macros %}
+            {% for page in pages %}
+                <a href="{{ path('wiki_page_view', {'wikiName': wiki.name, 'pageName': page.name}) }}" 
+                   class="nav-link py-1{% if currentPage is defined and currentPage and currentPage.id == page.id %} active{% endif %}"
+                   title="{{ page.name }}">
+                    <i class="icon-lux-file-text me-2"></i>
+                    <span class="text-truncate">{{ page.name }}</span>
+                </a>
+                {% if page.childPages|default([]) %}
+                    <div class="ms-3">
+                        {{ macros.pageTree(page.childPages, wiki, currentPage) }}
+                    </div>
+                {% endif %}
+            {% endfor %}
+        {% endmacro %}
+        
+        {% import _self as macros %}
+        <div class="wiki-page-tree">
+            {{ macros.pageTree(wikiRecursivePages(wiki.id), wiki, wikiPage|default(null)) }}
+        </div>
+    {% endif %}
+    
+    {% if is_granted('admin', 'wikis') %}
+    <hr class="my-2">
+    <div class="small text-muted mb-2">Admin</div>
+    <a href="{{ path('wiki_edit', {'wikiName': wiki.name}) }}" class="nav-link">
+        <i class="icon-lux-settings me-2"></i> Settings
+    </a>
+    <a href="{{ path('wiki_event_index', {'wikiName': wiki.name}) }}" class="nav-link">
+        <i class="icon-lux-list me-2"></i> Events
+    </a>
+    {% endif %}
+{% endif %}

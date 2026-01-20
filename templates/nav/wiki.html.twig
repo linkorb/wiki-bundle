@@ -1,0 +1,22 @@
+{#
+    Module-level navigation for the Wiki module.
+    
+    This nav template is used for routes at the wiki module level
+    (wiki list, search, add wiki).
+#}
+<a href="{{ path('wiki_lander') }}" class="nav-link{% if app.request.attributes.get('_route') == 'wiki_lander' %} active{% endif %}">
+    <i class="icon-lux-home me-2"></i> Overview
+</a>
+<hr class="my-2">
+<a href="{{ path('wiki_index') }}" class="nav-link{% if app.request.attributes.get('_route') == 'wiki_index' %} active{% endif %}">
+    <i class="icon-lux-article me-2"></i> All Wikis
+</a>
+<a href="{{ path('wiki_search') }}" class="nav-link{% if app.request.attributes.get('_route') == 'wiki_search' %} active{% endif %}">
+    <i class="icon-lux-search me-2"></i> Search
+</a>
+{% if is_granted('create', 'wikis') %}
+<hr class="my-2">
+<a href="{{ path('wiki_add') }}" class="nav-link{% if app.request.attributes.get('_route') == 'wiki_add' %} active{% endif %}">
+    <i class="icon-lux-add me-2"></i> New Wiki
+</a>
+{% endif %}
