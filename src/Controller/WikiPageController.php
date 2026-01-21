@@ -3,8 +3,11 @@
 namespace LinkORB\Bundle\WikiBundle\Controller;
 
 use Doctrine\ORM\EntityManagerInterface;
+use LinkORB\Bundle\NebulaBundle\Attribute\Breadcrumb;
+use LinkORB\Bundle\NebulaBundle\Contracts\Breadcrumb as BreadcrumbType;
 use LinkORB\Bundle\WikiBundle\Contracts\MetaEntityServiceInterface;
 use LinkORB\Bundle\WikiBundle\Entity\Wiki;
+use LinkORB\Bundle\WikiBundle\Services\WikiPageService;
 use LinkORB\Bundle\WikiBundle\Entity\WikiPage;
 use LinkORB\Bundle\WikiBundle\Form\WikiPageContentType;
 use LinkORB\Bundle\WikiBundle\Form\WikiPageType;
@@ -25,15 +28,31 @@ use Symfony\Component\Security\Core\User\UserInterface;
 class WikiPageController extends AbstractController
 {
     #[Route('/pages', name: 'wiki_page_index', methods: ['GET'])]
+    #[Breadcrumb(
+        label: 'Pages',
+        parentRoute: 'wiki_view',
+        icon: 'icon-lux-article',
+        title: 'All pages',
+        type: BreadcrumbType::TYPE_ENTITY_INDEX,
+    )]
     public function indexAction(
         #[MapEntity(mapping: ['wikiName' => 'name'])] Wiki $wiki,
-        WikiPageRepository $wikiPageRepository
+        WikiPageService $wikiPageService
     ): Response
     {
         $this->denyAccessUnlessGranted('access', $wiki);
 
+        /** @var int $wikiId */
+        $wikiId = $wiki->getId();
+
+        // Get root pages with children populated recursively (matches navigation)
+        $wikiPages = $wikiPageService->getByWikiIdAndParentId($wikiId);
+        foreach ($wikiPages as $wikiPage) {
+            $wikiPage->setChildPages($wikiPageService->recursiveChild($wikiPage));
+        }
+
         $data = [];
-        $data['wikiPages'] = $wikiPageRepository->findByWikiId($wiki->getId());
+        $data['wikiPages'] = $wikiPages;
         $data['wiki'] = $wiki;
 
         return $this->render('@LinkORBWiki/wiki_page/index.html.twig', $data);
@@ -50,6 +69,13 @@ class WikiPageController extends AbstractController
     }
 
     #[Route('/pages/add', name: 'wiki_page_add', methods: ['GET', 'POST'])]
+    #[Breadcrumb(
+        label: 'New Page',
+        parentRoute: 'wiki_page_index',
+        icon: 'icon-lux-add',
+        title: 'Create new page',
+        type: BreadcrumbType::TYPE_ACTION,
+    )]
     public function addAction(
         Request $request,
         #[MapEntity(mapping: ['wikiName' => 'name'])] Wiki $wiki,
@@ -83,6 +109,13 @@ class WikiPageController extends AbstractController
     }
 
     #[Route('/{pageName}', name: 'wiki_page_view', methods: ['GET'])]
+    #[Breadcrumb(
+        label: '{pageName}',
+        parentRoute: 'wiki_view',
+        icon: 'icon-lux-article',
+        title: 'View page',
+        type: BreadcrumbType::TYPE_ENTITY,
+    )]
     public function viewAction(
         Request $request,
         #[MapEntity(mapping: ['wikiName' => 'name'])] Wiki $wiki,
@@ -118,7 +151,14 @@ class WikiPageController extends AbstractController
         return $this->render('@LinkORBWiki/wiki_page/view.html.twig', $data);
     }
 
-    #[Route('/pages/{pageName}/advanced', name: 'wiki_page_edit_advance', methods: ['GET', 'POST'])]
+    #[Route('/pages/{pageName}/advanced', name: 'wiki_page_edit_advanced', methods: ['GET', 'POST'])]
+    #[Breadcrumb(
+        label: 'Advanced',
+        parentRoute: 'wiki_page_view',
+        icon: 'icon-lux-settings',
+        title: 'Advanced page settings',
+        type: BreadcrumbType::TYPE_ACTION,
+    )]
     public function editAdvanceAction(
         Request $request,
         #[MapEntity(mapping: ['wikiName' => 'name'])] Wiki $wiki,
@@ -143,6 +183,13 @@ class WikiPageController extends AbstractController
     }
 
     #[Route('/pages/{pageName}/edit', name: 'wiki_page_edit', methods: ['GET', 'POST'])]
+    #[Breadcrumb(
+        label: 'Edit',
+        parentRoute: 'wiki_page_view',
+        icon: 'icon-lux-edit',
+        title: 'Edit page',
+        type: BreadcrumbType::TYPE_ACTION,
+    )]
     public function editAction(
         Request $request,
         #[MapEntity(mapping: ['wikiName' => 'name'])] Wiki $wiki,
