@@ -102,10 +102,12 @@ class WikiPageController extends AbstractController
         }
 
         $markdown = $wikiPage?->getContent();
-        $html = $wikiService->markdownToHtml($wiki, $markdown);
+        $html = $wikiService->markdownToHtml($wiki, $markdown) ?? '';
 
         foreach ($request->query->all() as $k => $v) {
-            $html = str_replace('{{'.$k.'}}', $v, $html);
+            if (is_string($v)) {
+                $html = str_replace('{{'.$k.'}}', htmlspecialchars($v, ENT_QUOTES, 'UTF-8'), $html);
+            }
         }
 
         $data['contentHtml'] = $html;
