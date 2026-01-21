@@ -3,6 +3,8 @@
 namespace LinkORB\Bundle\WikiBundle\Controller;
 
 use Doctrine\ORM\EntityManagerInterface;
+use LinkORB\Bundle\NebulaBundle\Attribute\Breadcrumb;
+use LinkORB\Bundle\NebulaBundle\Contracts\Breadcrumb as BreadcrumbType;
 use LinkORB\Bundle\WikiBundle\Entity\Wiki;
 use LinkORB\Bundle\WikiBundle\Entity\WikiPage;
 use LinkORB\Bundle\WikiBundle\Form\WikiSearchType;
@@ -27,7 +29,14 @@ class WikiController extends AbstractController
     {
     }
 
-    #[Route('', name: 'wiki_index', methods: ['GET'])]
+    #[Route('/wikis', name: 'wiki_index', methods: ['GET'])]
+    #[Breadcrumb(
+        label: 'Wikis',
+        parentRoute: 'wiki_lander',
+        icon: 'icon-lux-article',
+        title: 'Browse all wikis',
+        type: BreadcrumbType::TYPE_ENTITY_INDEX,
+    )]
     public function indexAction(WikiService $wikiService): Response
     {
         $wikis = $wikiService->getAllWikis();
