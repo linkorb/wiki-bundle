@@ -4,6 +4,7 @@ namespace LinkORB\Bundle\WikiBundle\Controller;
 
 use Doctrine\ORM\EntityManagerInterface;
 use LinkORB\Bundle\NebulaBundle\Attribute\Breadcrumb;
+use LinkORB\Bundle\NebulaBundle\Attribute\NebulaNav;
 use LinkORB\Bundle\NebulaBundle\Contracts\Breadcrumb as BreadcrumbType;
 use LinkORB\Bundle\WikiBundle\Entity\Wiki;
 use LinkORB\Bundle\WikiBundle\Entity\WikiPage;
@@ -57,6 +58,13 @@ class WikiController extends AbstractController
     }
 
     #[Route('/add', name: 'wiki_add', methods: ['GET', 'POST'])]
+    #[Breadcrumb(
+        label: 'New Wiki',
+        parentRoute: 'wiki_index',
+        icon: 'icon-lux-add',
+        title: 'Create new wiki',
+        type: BreadcrumbType::TYPE_ACTION,
+    )]
     public function addAction(Request $request, WikiEventService $wikiEventService): Response
     {
         $this->denyAccessUnlessGranted('create', 'wikis');
@@ -70,6 +78,13 @@ class WikiController extends AbstractController
     }
 
     #[Route('/search', name: 'wiki_search', methods: ['GET', 'POST'])]
+    #[Breadcrumb(
+        label: 'Search',
+        parentRoute: 'wiki_index',
+        icon: 'icon-lux-search',
+        title: 'Search wikis',
+        type: BreadcrumbType::TYPE_ACTION,
+    )]
     public function searchAction(Request $request, WikiService $wikiService): Response
     {
         $wikiArray = [];
@@ -139,6 +154,13 @@ class WikiController extends AbstractController
     }
 
     #[Route('/{wikiName}/edit', name: 'wiki_edit', methods: ['GET', 'POST'])]
+    #[Breadcrumb(
+        label: 'Edit',
+        parentRoute: 'wiki_view',
+        icon: 'icon-lux-edit',
+        title: 'Edit wiki settings',
+        type: BreadcrumbType::TYPE_ACTION,
+    )]
     public function editAction(
         Request $request,
         #[MapEntity(mapping: ['wikiName' => 'name'])] Wiki $wiki,
@@ -226,6 +248,14 @@ class WikiController extends AbstractController
     }
 
     #[Route('/{wikiName}', name: 'wiki_view', methods: ['GET'])]
+    #[Breadcrumb(
+        label: '{wikiName}',
+        parentRoute: 'wiki_index',
+        icon: 'icon-lux-article',
+        title: 'View wiki',
+        type: BreadcrumbType::TYPE_ENTITY,
+    )]
+    #[NebulaNav(template: '@LinkORBWiki/nav/wiki-context.html.twig')]
     public function viewAction(
         WikiPageService $wikiPageService,
         #[MapEntity(mapping: ['wikiName' => 'name'])] Wiki $wiki,
