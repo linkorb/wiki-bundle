@@ -1,33 +1,36 @@
-{% extends '@LinkORBWiki/base.wiki.html.twig' %}
+{% extends '@LinkORBNebula/module/base.html.twig' %}
 
-{% block body %}
+{% block context_header_actions %}
+  {% if wikiPage and is_granted('modify', wiki) %}
+    <a href="{{ path('wiki_page_edit', {'wikiName': wikiPage.wiki.name, 'pageName': wikiPage.name}) }}" class="btn btn-sm btn-outline-primary">
+      <i class="icon-lux-edit me-1"></i> Edit
+    </a>
+  {% endif %}
+{% endblock %}
 
+{% block context_content %}
   {% if not wikiPage %}
-    <center>
-      <p>This page does not (yet) exist: <b>{{ pageName }}</b></p>
+    <div class="text-center py-5">
+      <p class="lead">This page does not (yet) exist: <strong>{{ pageName }}</strong></p>
       {% if is_granted('modify', wiki) %}
-      <a href="{{ path('wiki_page_add', {'wikiName': wiki.name, 'pageName': pageName } ) }}" class="btn btn-success">Add
-        now</a>
+        <a href="{{ path('wiki_page_add', {'wikiName': wiki.name, 'pageName': pageName}) }}" class="btn btn-success">
+          <i class="icon-lux-add me-1"></i> Create Page
+        </a>
       {% endif %}
-    </center>
+    </div>
   {% else %}
     <div class="wiki-page-content">
-      <div>
-        <h1 style="display: inline">{{ wikiPage.name }}</h1>
-        {% if is_granted('modify', wiki) %}
-          <a href="{{ path('wiki_page_edit', {'wikiName':  wikiPage.wiki.name, 'pageName': wikiPage.name }) }}">
-            <i class="fa fa-edit fa-fw" aria-hidden="true"></i> Edit page
-          </a>
-        {% endif %}
-      </div>
-      <div class="mt-2 wiki-content">
+      <h1 class="mb-4">{{ wikiPage.name }}</h1>
+      <div class="wiki-content">
         {{ contentHtml|raw }}
       </div>
     </div>
 
     {% if wikiPage.wiki.hasAccessControlExpression %}
-      <div class="mt-4 small">Restricted to <code>{{ wikiPage.wiki.getAccessControlExpression }}</code></div>
+      <div class="mt-4 small text-muted">
+        <i class="icon-lux-lock me-1"></i> Restricted to <code>{{ wikiPage.wiki.getAccessControlExpression }}</code>
+      </div>
     {% endif %}
   {% endif %}
-
 {% endblock %}
+
