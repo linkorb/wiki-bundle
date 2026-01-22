@@ -1,54 +1,47 @@
-{% extends '@LinkORBWiki/base.wiki.html.twig' %}
+{% extends '@LinkORBNebula/module/base.html.twig' %}
 
-{% block title %}Wiki: {{ wiki.name }} :Pages {% endblock %}
+{% block context_content %}
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Name</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% macro renderPageTree(pages, wiki, level) %}
+        {% import _self as macros %}
+        {% for page in pages %}
+          <tr>
+            <td>
+              {% if level > 0 %}
+                <span class="ms-{{ level * 3 }} text-muted">└─</span>
+              {% endif %}
+              <i class="icon-lux-file-text me-2"></i>
+              <a href="{{ path('wiki_page_view', {'wikiName': wiki.name, 'pageName': page.name}) }}">
+                {{ page.name }}
+              </a>
+            </td>
+          </tr>
+          {% if page.getChildPages()|length > 0 %}
+            {{ macros.renderPageTree(page.getChildPages(), wiki, level + 1) }}
+          {% endif %}
+        {% endfor %}
+      {% endmacro %}
 
-{% block body %}
-    <h1>All pages in this wiki</h1>
+      {% import _self as macros %}
+      {% if wikiPages|length > 0 %}
+        {{ macros.renderPageTree(wikiPages, wiki, 0) }}
+      {% else %}
+        <tr>
+          <td class="text-muted">No pages found</td>
+        </tr>
+      {% endif %}
+    </tbody>
+  </table>
 
-    <div class="row">
-      <div class="col-md-12">
-        <fieldset>
-          <table class="table tree">
-            <thead>
-              <tr>
-                <th>Name</th>
-              </tr>
-            </thead>
-              <tbody>
-                {% macro macroTree(wikiPages, wiki) %}
-
-                  {% import _self as macros %}
-
-                  {% for wikiPage in wikiPages %}
-                      <tr class="treegrid-{{ wikiPage.id}} {% if wikiPage.parentId %}  treegrid-parent-{{ wikiPage.parentId }}  {% endif %}" >
-                        <td>
-                          <i class="fa fa-file-o"></i>
-                          <a href="{{ path('wiki_page_view',{'wikiName': wiki.name, 'pageName': wikiPage.name}) }}">
-                              {{ wikiPage.name }}
-                          </a>
-                        </td>
-                      </tr>
-
-                      {% if wikiPage.getChildPages() %}
-                        {{ macros.macroTree( wikiPage.getChildPages(), wiki) }}
-                      {% endif %}
-
-                  {% else %}
-                      <tr>
-                          <td colspan="5">no pages found</td>
-                      </tr>
-                  {% endfor %}
-
-                {% endmacro %}
-
-                {% import _self as macros %}
-                {{ macros.macroTree(wikiPages, wiki) }}
-              </tbody>
-          </table>
-        </fieldset>
-        {% if wiki.hasAccessControlExpression %}
-          <small>Restricted to <code>{{ wiki.getAccessControlExpression }}</code></small>
-        {% endif %}
-      </div>
+  {% if wiki.hasAccessControlExpression %}
+    <div class="mt-3 small text-muted">
+      <i class="icon-lux-lock me-1"></i> Restricted to <code>{{ wiki.getAccessControlExpression }}</code>
     </div>
+  {% endif %}
 {% endblock %}

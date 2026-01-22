@@ -30,7 +30,6 @@
     <a href="{{ path('wiki_search', {'wikiName': wiki.name}) }}" class="nav-link{% if app.request.attributes.get('_route') == 'wiki_search' %} active{% endif %}">
         <i class="icon-lux-search me-2"></i> Search
     </a>
-    
     {% if is_granted('modify', wiki) %}
     <a href="{{ path('wiki_page_add', {'wikiName': wiki.name}) }}" class="nav-link{% if app.request.attributes.get('_route') == 'wiki_page_add' %} active{% endif %}">
         <i class="icon-lux-add me-2"></i> New Page
@@ -63,17 +62,19 @@
         {% macro pageTree(pages, wiki, currentPage) %}
             {% import _self as macros %}
             {% for page in pages %}
-                <a href="{{ path('wiki_page_view', {'wikiName': wiki.name, 'pageName': page.name}) }}" 
-                   class="nav-link py-1{% if currentPage is defined and currentPage and currentPage.id == page.id %} active{% endif %}"
-                   title="{{ page.name }}">
-                    <i class="icon-lux-file-text me-2"></i>
-                    <span class="text-truncate">{{ page.name }}</span>
-                </a>
-                {% if page.childPages|default([]) %}
-                    <div class="ms-3">
-                        {{ macros.pageTree(page.childPages, wiki, currentPage) }}
-                    </div>
-                {% endif %}
+                <div>
+                    <a href="{{ path('wiki_page_view', {'wikiName': wiki.name, 'pageName': page.name}) }}"
+                       class="nav-link py-1{% if currentPage is defined and currentPage and currentPage.id == page.id %} active{% endif %}"
+                       title="{{ page.name }}">
+                        <i class="icon-lux-file-text me-2"></i>
+                        <span class="text-truncate">{{ page.name }}</span>
+                    </a>
+                    {% if page.childPages|length > 0 %}
+                        <div class="ms-3">
+                            {{ macros.pageTree(page.childPages, wiki, currentPage) }}
+                        </div>
+                    {% endif %}
+                </div>
             {% endfor %}
         {% endmacro %}
         
@@ -86,11 +87,15 @@
     {% if is_granted('admin', 'wikis') %}
     <hr class="my-2">
     <div class="small text-muted mb-2">Admin</div>
-    <a href="{{ path('wiki_edit', {'wikiName': wiki.name}) }}" class="nav-link">
-        <i class="icon-lux-settings me-2"></i> Settings
-    </a>
-    <a href="{{ path('wiki_event_index', {'wikiName': wiki.name}) }}" class="nav-link">
-        <i class="icon-lux-list me-2"></i> Events
-    </a>
+    <div>
+        <a href="{{ path('wiki_edit', {'wikiName': wiki.name}) }}" class="nav-link">
+            <i class="icon-lux-settings me-2"></i> Settings
+        </a>
+    </div>
+    <div>
+        <a href="{{ path('wiki_event_index', {'wikiName': wiki.name}) }}" class="nav-link">
+            <i class="icon-lux-list me-2"></i> Events
+        </a>
+    </div>
     {% endif %}
 {% endif %}
