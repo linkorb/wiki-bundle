@@ -1,5 +1,14 @@
 {% extends '@LinkORBNebula/module/base.html.twig' %}
 
+{% block form_open %}
+<form name="{{ form.vars.name }}" method="post" action="{{ form.vars.action }}" id="{{ form.vars.id }}">
+{% endblock %}
+
+{% block form_close %}
+{{ form_rest(form) }}
+</form>
+{% endblock %}
+
 {% block context_header_actions %}
   {% if wikiPage.id %}
     <a href="{{ path('wiki_page_edit_advanced', {'wikiName': wikiPage.wiki.name, 'pageName': wikiPage.name}) }}" class="btn btn-sm btn-outline-primary">
@@ -9,14 +18,18 @@
 {% endblock %}
 
 {% block context_content %}
-  {{ form_start(form) }}
-    {{ form_widget(form) }}
-  {{ form_end(form) }}
+  {{ form_widget(form) }}
 {% endblock %}
 
 {% block context_footer_actions %}
   <div class="d-flex justify-content-between w-100">
-    <div>
+    {# Save button must come before delete form in DOM to avoid nested form issues #}
+    <div class="order-2">
+      <button type="submit" class="btn btn-success">
+        <i class="icon-lux-check me-1"></i> {{ button_label|default('Save') }}
+      </button>
+    </div>
+    <div class="order-1">
       {% if wikiPage.id and is_granted('delete', wikiPage) %}
         <form action="{{ path('wiki_page_delete', {'wikiName': wikiPage.wiki.name, 'pageName': wikiPage.name}) }}"
               method="post"
@@ -28,11 +41,6 @@
           </button>
         </form>
       {% endif %}
-    </div>
-    <div>
-      <button type="submit" form="{{ form.vars.id }}" class="btn btn-success">
-        <i class="icon-lux-check me-1"></i> {{ button_label|default('Save') }}
-      </button>
     </div>
   </div>
 {% endblock %}
@@ -72,6 +80,7 @@
           $.ajax({
             url: form.attr('action'),
             type: form.attr('method'),
+            contentType: 'application/json',
             data: JSON.stringify({content: editor.codemirror.getValue()}),
             success: function (html) {
               $('#msg').html('<label class="text-success">(Saved)</label>').fadeOut(1600);

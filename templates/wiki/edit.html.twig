@@ -1,14 +1,30 @@
 {% extends '@LinkORBNebula/module/base.html.twig' %}
 
+{% block form_open %}
+<form name="{{ form.vars.name }}" method="post" action="{{ form.vars.action }}" id="{{ form.vars.id }}">
+{% endblock %}
+
+{% block form_close %}
+{{ form_rest(form) }}
+</form>
+{% endblock %}
+
 {% block context_content %}
-  {{ form_start(form) }}
-    {{ form_widget(form) }}
-  {{ form_end(form) }}
+  {{ form_widget(form) }}
 {% endblock %}
 
 {% block context_footer_actions %}
   <div class="d-flex justify-content-between w-100">
-    <div>
+    {# Save button must come before delete form in DOM to avoid nested form issues #}
+    <div class="order-2">
+      <a href="{{ path('wiki_index') }}" class="btn btn-secondary me-2">
+        <i class="icon-lux-arrow-left me-1"></i> Back
+      </a>
+      <button type="submit" class="btn btn-success">
+        <i class="icon-lux-check me-1"></i> {{ button_label|default('Save') }}
+      </button>
+    </div>
+    <div class="order-1">
       {% if wiki.id and is_granted('delete', wiki) %}
         <form action="{{ path('wiki_delete', {'wikiName': wiki.name}) }}"
               method="post"
@@ -20,14 +36,6 @@
           </button>
         </form>
       {% endif %}
-    </div>
-    <div>
-      <a href="{{ path('wiki_index') }}" class="btn btn-secondary me-2">
-        <i class="icon-lux-arrow-left me-1"></i> Back
-      </a>
-      <button type="submit" form="{{ form.vars.id }}" class="btn btn-success">
-        <i class="icon-lux-check me-1"></i> {{ button_label|default('Save') }}
-      </button>
     </div>
   </div>
 {% endblock %}
