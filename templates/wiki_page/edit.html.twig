@@ -22,27 +22,20 @@
 {% endblock %}
 
 {% block context_footer_actions %}
-  <div class="d-flex justify-content-between w-100">
-    {# Save button must come before delete form in DOM to avoid nested form issues #}
-    <div class="order-2">
-      <button type="submit" class="btn btn-success">
-        <i class="icon-lux-check me-1"></i> {{ button_label|default('Save') }}
+  {% if wikiPage.id and is_granted('delete', wikiPage) %}
+    <form action="{{ path('wiki_page_delete', {'wikiName': wikiPage.wiki.name, 'pageName': wikiPage.name}) }}"
+          method="post"
+          onsubmit="return confirm('Are you sure you want to delete this page?')"
+          class="d-inline me-auto">
+      <input type="hidden" name="token" value="{{ csrf_token('delete-item') }}">
+      <button type="submit" class="btn btn-danger">
+        <i class="icon-lux-trash me-1"></i> Delete
       </button>
-    </div>
-    <div class="order-1">
-      {% if wikiPage.id and is_granted('delete', wikiPage) %}
-        <form action="{{ path('wiki_page_delete', {'wikiName': wikiPage.wiki.name, 'pageName': wikiPage.name}) }}"
-              method="post"
-              onsubmit="return confirm('Are you sure you want to delete this page?')"
-              class="d-inline">
-          <input type="hidden" name="token" value="{{ csrf_token('delete-item') }}">
-          <button type="submit" class="btn btn-danger">
-            <i class="icon-lux-trash me-1"></i> Delete
-          </button>
-        </form>
-      {% endif %}
-    </div>
-  </div>
+    </form>
+  {% endif %}
+  <button type="submit" class="btn btn-success">
+    <i class="icon-lux-check me-1"></i> {{ button_label|default('Save') }}
+  </button>
 {% endblock %}
 
 {% block scripts_custom %}

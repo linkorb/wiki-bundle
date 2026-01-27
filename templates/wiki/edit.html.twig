@@ -14,28 +14,21 @@
 {% endblock %}
 
 {% block context_footer_actions %}
-  <div class="d-flex justify-content-between w-100">
-    {# Save button must come before delete form in DOM to avoid nested form issues #}
-    <div class="order-2">
-      <a href="{{ path('wiki_index') }}" class="btn btn-secondary me-2">
-        <i class="icon-lux-arrow-left me-1"></i> Back
-      </a>
-      <button type="submit" class="btn btn-success">
-        <i class="icon-lux-check me-1"></i> {{ button_label|default('Save') }}
+  <a href="{{ path('wiki_index') }}" class="btn btn-outline-secondary me-2">
+    <i class="icon-lux-caret-left me-1"></i> Back
+  </a>
+  {% if wiki.id and is_granted('delete', wiki) %}
+    <form action="{{ path('wiki_delete', {'wikiName': wiki.name}) }}"
+          method="post"
+          onsubmit="return confirm('Are you sure you want to delete this wiki?')"
+          class="d-inline me-auto">
+      <input type="hidden" name="token" value="{{ csrf_token('delete-item') }}">
+      <button type="submit" class="btn btn-danger">
+        <i class="icon-lux-trash me-1"></i> Delete
       </button>
-    </div>
-    <div class="order-1">
-      {% if wiki.id and is_granted('delete', wiki) %}
-        <form action="{{ path('wiki_delete', {'wikiName': wiki.name}) }}"
-              method="post"
-              onsubmit="return confirm('Are you sure you want to delete this wiki?')"
-              class="d-inline">
-          <input type="hidden" name="token" value="{{ csrf_token('delete-item') }}">
-          <button type="submit" class="btn btn-danger">
-            <i class="icon-lux-trash me-1"></i> Delete
-          </button>
-        </form>
-      {% endif %}
-    </div>
-  </div>
+    </form>
+  {% endif %}
+  <button type="submit" class="btn btn-success">
+    <i class="icon-lux-check me-1"></i> {{ button_label|default('Save') }}
+  </button>
 {% endblock %}
