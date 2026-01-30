@@ -30,6 +30,21 @@ class WikiPage
     #[ORM\Column(type: 'integer', nullable: true, options: ['default' => 0])]
     private ?int $parent_id = null;
 
+    #[ORM\Column(type: 'text', nullable: true)]
+    private ?string $context = null;
+
+    #[ORM\Column(type: 'boolean', options: ['default' => false])]
+    private bool $aiGenerated = false;
+
+    #[ORM\Column(type: 'boolean', options: ['default' => false])]
+    private bool $twigEnabled = false;
+
+    #[ORM\Column(type: 'text', nullable: true)]
+    private ?string $generated = null;
+
+    #[ORM\Column(type: 'integer', nullable: true)]
+    private ?int $generatedAt = null;
+
     /* private variable */
     private int $points;
 
@@ -129,6 +144,83 @@ class WikiPage
     public function setPoints(int $points): self
     {
         $this->points = $points;
+
+        return $this;
+    }
+
+    public function getContext(): ?string
+    {
+        return $this->context;
+    }
+
+    public function setContext(?string $context): self
+    {
+        $this->context = $context;
+
+        return $this;
+    }
+
+    public function isAiGenerated(): bool
+    {
+        return $this->aiGenerated;
+    }
+
+    public function setAiGenerated(bool $aiGenerated): self
+    {
+        $this->aiGenerated = $aiGenerated;
+
+        return $this;
+    }
+
+    public function isTwigEnabled(): bool
+    {
+        return $this->twigEnabled;
+    }
+
+    public function setTwigEnabled(bool $twigEnabled): self
+    {
+        $this->twigEnabled = $twigEnabled;
+
+        return $this;
+    }
+
+    public function getGenerated(): ?string
+    {
+        return $this->generated;
+    }
+
+    public function setGenerated(?string $generated): self
+    {
+        $this->generated = $generated;
+
+        return $this;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function getGeneratedArray(): array
+    {
+        if (!$generated = $this->getGenerated()) {
+            return [];
+        }
+        $data = json_decode($generated, true);
+        if (!is_array($data)) {
+            return [];
+        }
+
+        /** @var array<string, mixed> $data */
+        return $data;
+    }
+
+    public function getGeneratedAt(): ?int
+    {
+        return $this->generatedAt;
+    }
+
+    public function setGeneratedAt(?int $generatedAt): self
+    {
+        $this->generatedAt = $generatedAt;
 
         return $this;
     }

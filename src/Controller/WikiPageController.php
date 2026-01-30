@@ -135,11 +135,27 @@ class WikiPageController extends AbstractController
         }
 
         $markdown = $wikiPage?->getContent();
+
+        // If Twig processing is enabled, process the markdown through Twig first
+        if ($wikiPage?->isTwigEnabled()) {
+            // Collect query parameters as Twig variables
+            $twigVars = [];
+            foreach ($request->query->all() as $k => $v) {
+                if (is_string($v)) {
+                    $twigVars[$k] = $v;
+                }
+            }
+            $markdown = $wikiService->processTwig($wiki, $markdown ?? '', $twigVars);
+        }
+
         $html = $wikiService->markdownToHtml($wiki, $markdown) ?? '';
 
-        foreach ($request->query->all() as $k => $v) {
-            if (is_string($v)) {
-                $html = str_replace('{{'.$k.'}}', htmlspecialchars($v, ENT_QUOTES, 'UTF-8'), $html);
+        // Legacy: simple string replacement for non-Twig pages
+        if (!$wikiPage?->isTwigEnabled()) {
+            foreach ($request->query->all() as $k => $v) {
+                if (is_string($v)) {
+                    $html = str_replace('{{'.$k.'}}', htmlspecialchars($v, ENT_QUOTES, 'UTF-8'), $html);
+                }
             }
         }
 
@@ -214,6 +230,52 @@ class WikiPageController extends AbstractController
 
         $wikiPageBeforeTitle = $wikiPage->getName();
         $wikiPageBeforeContent = $wikiPage->getContent();
+
+        // Handle AI page submission: save context and generate content
+        if ($wikiPage->isAiGenerated() && $request->isMethod('POST')) {
+            $aiContext = $request->request->get('ai_context');
+            if (is_string($aiContext)) {
+                $wikiPage->setContext($aiContext);
+            }
+
+            try {
+                $content = $wikiService->generatePageContent($wikiPage);
+                $wikiPage->setContent($content);
+
+                $em->persist($wikiPage);
+                $em->flush();
+
+                $eventData = [
+                    'updatedAt' => time(),
+                    'updatedBy' => $this->getUser() ? $this->getUser()->getUserIdentifier() : '',
+                    'name' => $wikiPage->getName(),
+                ];
+                if (0 !== strcmp((string) $wikiPageBeforeContent, (string) $wikiPage->getContent())) {
+                    $eventData['changes'][] = $wikiEventService->fieldDataChangeArray(
+                        'content',
+                        $wikiPageBeforeContent,
+                        $wikiPage->getContent()
+                    );
+                }
+
+                $wikiEventService->createEvent(
+                    'page.updated',
+                    $wikiPage->getWiki()->getId(),
+                    json_encode($eventData),
+                    $wikiPage->getId()
+                );
+
+                $this->publishPage($wikiPage, $wikiService);
+                $this->addFlash('success', 'Content generated successfully');
+            } catch (\Exception $e) {
+                $this->addFlash('error', 'Failed to generate content: ' . $e->getMessage());
+            }
+
+            return $this->redirectToRoute('wiki_page_view', [
+                'wikiName' => $wikiPage->getWiki()->getName(),
+                'pageName' => $wikiPage->getName(),
+            ]);
+        }
 
         $form = $this->createForm(WikiPageContentType::class, $wikiPage);
         $form->handleRequest($request);
@@ -315,6 +377,88 @@ class WikiPageController extends AbstractController
 
         $username = $this->getUser()->getUserIdentifier();
         $metaEntityService->toggleFavorite($username, $wikiPage::class.':'.$wikiPage->getId());
+
+        return $this->redirectToRoute('wiki_page_view', [
+            'wikiName' => $wiki->getName(),
+            'pageName' => $pageName,
+        ]);
+    }
+
+    #[Route('/pages/{pageName}/generate/preview', name: 'wiki_page_generate_preview', methods: ['GET'])]
+    public function generatePreviewAction(
+        #[MapEntity(mapping: ['wikiName' => 'name'])] Wiki $wiki,
+        string $pageName,
+        WikiPageRepository $wikiPageRepository,
+        WikiService $wikiService
+    ): JsonResponse
+    {
+        $this->denyAccessUnlessGranted('modify', $wiki);
+
+        $wikiId = $wiki->getId();
+        if ($wikiId === null) {
+            return new JsonResponse(['error' => 'Invalid wiki'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $wikiPage = $wikiPageRepository->findOneByWikiIdAndName($wikiId, $pageName);
+        if (!$wikiPage) {
+            return new JsonResponse(['error' => 'Page not found'], Response::HTTP_NOT_FOUND);
+        }
+
+        if (!$wikiPage->isAiGenerated()) {
+            return new JsonResponse(['error' => 'AI generation is not enabled for this page'], Response::HTTP_BAD_REQUEST);
+        }
+
+        try {
+            $preview = $wikiService->previewGenerateRequest($wikiPage);
+            return new JsonResponse($preview);
+        } catch (\Exception $e) {
+            return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    #[Route('/pages/{pageName}/generate', name: 'wiki_page_generate', methods: ['GET'])]
+    public function generateAction(
+        #[MapEntity(mapping: ['wikiName' => 'name'])] Wiki $wiki,
+        string $pageName,
+        WikiPageRepository $wikiPageRepository,
+        WikiService $wikiService,
+        EntityManagerInterface $em
+    ): Response
+    {
+        $this->denyAccessUnlessGranted('modify', $wiki);
+
+        $wikiId = $wiki->getId();
+        if ($wikiId === null) {
+            $this->addFlash('error', 'Invalid wiki');
+            return $this->redirectToRoute('wiki_view', ['wikiName' => $wiki->getName()]);
+        }
+
+        $wikiPage = $wikiPageRepository->findOneByWikiIdAndName($wikiId, $pageName);
+        if (!$wikiPage) {
+            $this->addFlash('error', 'Page not found');
+            return $this->redirectToRoute('wiki_view', ['wikiName' => $wiki->getName()]);
+        }
+
+        if (!$wikiPage->isAiGenerated()) {
+            $this->addFlash('error', 'AI generation is not enabled for this page');
+            return $this->redirectToRoute('wiki_page_view', [
+                'wikiName' => $wiki->getName(),
+                'pageName' => $pageName,
+            ]);
+        }
+
+        try {
+            $content = $wikiService->generatePageContent($wikiPage);
+
+            // Save the generated content
+            $wikiPage->setContent($content);
+            $em->persist($wikiPage);
+            $em->flush();
+
+            $this->addFlash('success', 'Content generated successfully');
+        } catch (\Exception $e) {
+            $this->addFlash('error', 'Failed to generate content: ' . $e->getMessage());
+        }
 
         return $this->redirectToRoute('wiki_page_view', [
             'wikiName' => $wiki->getName(),

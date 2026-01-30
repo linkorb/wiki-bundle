@@ -1,11 +1,18 @@
 {% extends '@LinkORBNebula/module/base.html.twig' %}
 
+{% set isAiPage = wikiPage.id and wikiPage.aiGenerated %}
+
 {% block form_open %}
 <form name="{{ form.vars.name }}" method="post" action="{{ form.vars.action }}" id="{{ form.vars.id }}">
 {% endblock %}
 
 {% block form_close %}
-{{ form_rest(form) }}
+{% if isAiPage %}
+  {# For AI pages, render form_rest hidden since we don't use the content field #}
+  <div style="display: none;">{{ form_rest(form) }}</div>
+{% else %}
+  {{ form_rest(form) }}
+{% endif %}
 </form>
 {% endblock %}
 
@@ -18,7 +25,19 @@
 {% endblock %}
 
 {% block context_content %}
-  {{ form_widget(form) }}
+  {% if isAiPage %}
+    {# AI Page: Edit context only #}
+    <div class="mb-3">
+      <label for="ai_context" class="form-label fw-bold">
+        <i class="icon-lux-sparkles me-1"></i> AI Context
+      </label>
+      <div class="form-text mb-2">Provide context/instructions for AI content generation (supports Markdown)</div>
+      <textarea id="ai_context" name="ai_context" class="form-control" style="display:none;">{{ wikiPage.context }}</textarea>
+    </div>
+  {% else %}
+    {# Regular Page: Edit content #}
+    {{ form_widget(form) }}
+  {% endif %}
 {% endblock %}
 
 {% block context_footer_actions %}
@@ -33,8 +52,17 @@
       </button>
     </form>
   {% endif %}
+  {% if isAiPage %}
+    <button type="button" id="preview-btn" class="btn btn-outline-secondary me-2">
+      <i class="icon-lux-eye me-1"></i> Preview
+    </button>
+  {% endif %}
   <button type="submit" class="btn btn-success">
-    <i class="icon-lux-check me-1"></i> {{ button_label|default('Save') }}
+    {% if isAiPage %}
+      <i class="icon-lux-sparkles me-1"></i> Generate
+    {% else %}
+      <i class="icon-lux-check me-1"></i> Save
+    {% endif %}
   </button>
 {% endblock %}
 
@@ -45,43 +73,126 @@
   <style>
     .CodeMirror {
       border: 1px solid #ece9e9;
+      {% if isAiPage %}
+      height: 200px !important;
+      {% else %}
       min-height: 400px !important;
+      {% endif %}
+    }
+    #preview-modal .modal-body pre {
+      max-height: 70vh;
+      overflow-y: auto;
+      background: #f8f9fa;
+      padding: 1rem;
+      border-radius: 4px;
+      font-size: 0.85em;
     }
   </style>
+
+  {% if isAiPage %}
+  <!-- Preview Modal -->
+  <div class="modal fade" id="preview-modal" tabindex="-1" aria-labelledby="preview-modal-label" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="preview-modal-label"><i class="icon-lux-eye me-2"></i>LLM Request Preview</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div id="preview-loading" class="text-center py-4">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+          </div>
+          <div id="preview-content" style="display: none;">
+            <pre id="preview-json"></pre>
+          </div>
+          <div id="preview-error" class="alert alert-danger" style="display: none;"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
   <script type="text/javascript">
     document.addEventListener('DOMContentLoaded', function () {
-      var editor = new Editor({
-        element: document.getElementById('wiki_page_content_content'),
-      })
-      editor.render();
+      {% if isAiPage %}
+        {# AI Page: Markdown editor for context #}
+        var editor = new Editor({
+          element: document.getElementById('ai_context'),
+        });
+        editor.render();
 
-      var content = editor.codemirror.getValue();
-      contentObj = $('#wiki_page_content_content');
-      $('<span id="msg" class="ml-2"></span>').insertBefore(contentObj);
+        // Preview button handler
+        var previewBtn = document.getElementById('preview-btn');
+        if (previewBtn) {
+          previewBtn.addEventListener('click', function() {
+            var modal = new bootstrap.Modal(document.getElementById('preview-modal'));
+            modal.show();
 
-      editor.codemirror.on('update', function (cm) {
-        (0 == content.localeCompare(editor.codemirror.getValue()))
-          ? $('#msg').html('').fadeIn(1600)
-          : $('#msg').html('<label class="text-danger">(modified)</label>').fadeIn(1600);
-      });
+            document.getElementById('preview-loading').style.display = 'block';
+            document.getElementById('preview-content').style.display = 'none';
+            document.getElementById('preview-error').style.display = 'none';
 
-      $(document).keydown(function (event) {
-        if ((event.ctrlKey || event.metaKey) && event.which == 83) {
-          event.preventDefault();
-
-          var form = $(contentObj).closest('form');
-          $.ajax({
-            url: form.attr('action'),
-            type: form.attr('method'),
-            contentType: 'application/json',
-            data: JSON.stringify({content: editor.codemirror.getValue()}),
-            success: function (html) {
-              $('#msg').html('<label class="text-success">(Saved)</label>').fadeOut(1600);
-              content = editor.codemirror.getValue();
-            }
+            $.ajax({
+              url: '{{ path('wiki_page_generate_preview', {'wikiName': wikiPage.wiki.name, 'pageName': wikiPage.name}) }}',
+              type: 'GET',
+              success: function(response) {
+                document.getElementById('preview-loading').style.display = 'none';
+                document.getElementById('preview-content').style.display = 'block';
+                document.getElementById('preview-json').textContent = JSON.stringify(response, null, 2);
+              },
+              error: function(xhr) {
+                document.getElementById('preview-loading').style.display = 'none';
+                document.getElementById('preview-error').style.display = 'block';
+                var errorMsg = 'Failed to load preview';
+                try {
+                  var resp = JSON.parse(xhr.responseText);
+                  if (resp.error) errorMsg = resp.error;
+                } catch(e) {}
+                document.getElementById('preview-error').textContent = errorMsg;
+              }
+            });
           });
-        };
-      });
+        }
+      {% else %}
+        {# Regular Page: Markdown editor for content #}
+        var editor = new Editor({
+          element: document.getElementById('wiki_page_content_content'),
+        });
+        editor.render();
+
+        var content = editor.codemirror.getValue();
+        contentObj = $('#wiki_page_content_content');
+        $('<span id="msg" class="ml-2"></span>').insertBefore(contentObj);
+
+        editor.codemirror.on('update', function (cm) {
+          (0 == content.localeCompare(editor.codemirror.getValue()))
+            ? $('#msg').html('').fadeIn(1600)
+            : $('#msg').html('<label class="text-danger">(modified)</label>').fadeIn(1600);
+        });
+
+        $(document).keydown(function (event) {
+          if ((event.ctrlKey || event.metaKey) && event.which == 83) {
+            event.preventDefault();
+
+            var form = $(contentObj).closest('form');
+            $.ajax({
+              url: form.attr('action'),
+              type: form.attr('method'),
+              contentType: 'application/json',
+              data: JSON.stringify({content: editor.codemirror.getValue()}),
+              success: function (html) {
+                $('#msg').html('<label class="text-success">(Saved)</label>').fadeOut(1600);
+                content = editor.codemirror.getValue();
+              }
+            });
+          };
+        });
+      {% endif %}
     });
   </script>
 {% endblock %}

@@ -11,9 +11,14 @@ use LinkORB\Bundle\WikiBundle\Entity\Wiki;
 use LinkORB\Bundle\WikiBundle\Entity\WikiPage;
 use LinkORB\Bundle\WikiBundle\Repository\WikiPageRepository;
 use LinkORB\Bundle\WikiBundle\Repository\WikiRepository;
+use LinkORB\Component\Llm\LlmManager;
+use LinkORB\Component\Llm\Prompt\PromptManagerInterface;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\Yaml\Yaml;
+use Twig\Extension\SandboxExtension;
+use Twig\Sandbox\SecurityPolicy;
 
 class WikiService
 {
@@ -25,6 +30,9 @@ class WikiService
         private readonly EntityManagerInterface $em,
         private readonly WikiEventService $wikiEventService,
         private readonly ParameterBagInterface $params,
+        private readonly LlmManager $llmManager,
+        private readonly PromptManagerInterface $promptManager,
+        private readonly LoggerInterface $logger,
         #[Autowire(param: 'wiki_bundle_data_dir')]
         private readonly string $gitDirPath
     ) {
@@ -206,6 +214,38 @@ class WikiService
         $loader = new \Twig\Loader\ArrayLoader($templates);
 
         $twig = new \Twig\Environment($loader);
+
+        // Define minimal safe tags, filters, and functions for sandbox
+        // Explicitly excludes: include, embed, use, import, extends, macro, sandbox
+        $allowedTags = ['if', 'for', 'set', 'spaceless', 'autoescape', 'verbatim', 'apply'];
+        $allowedFilters = [
+            'escape', 'e', 'raw',
+            'upper', 'lower', 'capitalize', 'title', 'trim',
+            'nl2br', 'join', 'split', 'replace',
+            'length', 'first', 'last', 'slice', 'reverse',
+            'default', 'abs', 'round', 'number_format',
+            'date', 'date_modify', 'format',
+            'json_encode', 'url_encode',
+            'keys', 'merge', 'sort', 'batch', 'column',
+        ];
+        $allowedFunctions = [
+            'range', 'cycle', 'random', 'min', 'max', 'date',
+        ];
+        // No object methods or properties allowed for security
+        $allowedMethods = [];
+        $allowedProperties = [];
+
+        $policy = new SecurityPolicy(
+            $allowedTags,
+            $allowedFilters,
+            $allowedMethods,
+            $allowedProperties,
+            $allowedFunctions
+        );
+
+        $sandbox = new SandboxExtension($policy, true);
+        $twig->addExtension($sandbox);
+
         $template = $twig->createTemplate($content);
 
         $config = Yaml::parse($wiki->getConfig() ?? '');
@@ -216,7 +256,7 @@ class WikiService
         foreach ($extra as $k => $v) {
             $parts[$k] = $v;
         }
-        // print_r($parts);
+
         $content = $template->render($parts);
 
         return $content;
@@ -464,6 +504,127 @@ class WikiService
 
         if ((int) $wiki->getLastPullAt() <= $dateTime) {
             $this->pull($wiki);
+        }
+    }
+
+    /**
+     * Build the data array for LLM prompt, including styleguide if available.
+     *
+     * @return array<string, mixed>
+     */
+    public function buildGeneratePromptData(WikiPage $wikiPage, ?string $context = null): array
+    {
+        $contextToUse = $context ?? $wikiPage->getContext();
+
+        if (empty($contextToUse)) {
+            throw new \RuntimeException('No context provided for AI content generation');
+        }
+
+        $wiki = $wikiPage->getWiki();
+        $wikiId = $wiki?->getId();
+
+        $data = [
+            'pageName' => $wikiPage->getName(),
+            'context' => $contextToUse,
+            'wikiName' => $wiki?->getName(),
+            'wikiDescription' => $wiki?->getDescription(),
+            'styleguide' => '',
+        ];
+
+        // Look for a page named "context" in the same wiki to use as styleguide
+        if ($wikiId !== null) {
+            $contextPage = $this->wikiPageRepository->findOneByWikiIdAndName($wikiId, 'context');
+            if ($contextPage && $contextPage->getContent()) {
+                $data['styleguide'] = $contextPage->getContent();
+            }
+        }
+
+        return $data;
+    }
+
+    /**
+     * Get a preview of the LLM request that would be sent.
+     *
+     * @return array<string, mixed>
+     */
+    public function previewGenerateRequest(WikiPage $wikiPage, ?string $context = null): array
+    {
+        $data = $this->buildGeneratePromptData($wikiPage, $context);
+        $prompt = $this->promptManager->getPrompt('wiki_page_generate');
+
+        // Build the messages array as it would be sent to the LLM
+        $messages = [];
+        foreach ($prompt->getMessages() as $message) {
+            $role = $message['role'] ?? 'user';
+            $content = $message['content'] ?? '';
+
+            // Replace template variables
+            foreach ($data as $key => $value) {
+                if (is_string($value)) {
+                    $content = str_replace('{{' . $key . '}}', $value, $content);
+                }
+            }
+
+            $messages[] = [
+                'role' => $role,
+                'content' => $content,
+            ];
+        }
+
+        return [
+            'model' => 'default',
+            'promptName' => 'wiki_page_generate',
+            'data' => $data,
+            'messages' => $messages,
+            'hasSchema' => $prompt->hasSchema(),
+        ];
+    }
+
+    /**
+     * Generate page content using AI based on the context field.
+     */
+    public function generatePageContent(WikiPage $wikiPage, ?string $context = null): string
+    {
+        $data = $this->buildGeneratePromptData($wikiPage, $context);
+
+        try {
+            $llm = $this->llmManager->getLlm('default');
+            $prompt = $this->promptManager->getPrompt('wiki_page_generate');
+
+            $completion = $llm->complete($prompt, $data);
+            $result = $completion->getContent();
+
+            if ($prompt->hasSchema()) {
+                $resultData = json_decode((string) $result, true);
+                if (json_last_error() !== JSON_ERROR_NONE) {
+                    $this->logger->error('JSON parsing failed during wiki page generation', [
+                        'pageId' => $wikiPage->getId(),
+                        'pageName' => $wikiPage->getName(),
+                        'jsonError' => json_last_error(),
+                        'jsonErrorMessage' => json_last_error_msg(),
+                    ]);
+                    throw new \RuntimeException('JSON parsing error: ' . json_last_error_msg());
+                }
+
+                // Store the full generated result
+                $wikiPage->setGenerated(json_encode($resultData, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+                $wikiPage->setGeneratedAt(time());
+
+                // Return the content field from the result
+                /** @var array<string, mixed> $resultData */
+                $content = $resultData['content'] ?? '';
+            } else {
+                $content = (string) $result;
+            }
+
+            return $content;
+        } catch (\Exception $e) {
+            $this->logger->error('Failed to generate wiki page content', [
+                'pageId' => $wikiPage->getId(),
+                'pageName' => $wikiPage->getName(),
+                'error' => $e->getMessage(),
+            ]);
+            throw $e;
         }
     }
 

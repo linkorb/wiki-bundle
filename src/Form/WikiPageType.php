@@ -7,6 +7,7 @@ use LinkORB\Bundle\WikiBundle\Entity\WikiPage;
 use LinkORB\Bundle\WikiBundle\Services\WikiPageService;
 use LinkORB\Bundle\WikiBundle\Services\WikiService;
 use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
@@ -93,6 +94,21 @@ class WikiPageType extends AbstractType
                 'data-lines' => '10',
             ],
         ]);
+
+        // Only show AI/Twig settings when editing an existing page
+        if ($entity->getId()) {
+            $builder->add('aiGenerated', CheckboxType::class, [
+                'required' => false,
+                'label' => 'AI Generated Page',
+                'help' => 'Enable to use AI to generate content from the context field',
+            ]);
+
+            $builder->add('twigEnabled', CheckboxType::class, [
+                'required' => false,
+                'label' => 'Enable Twig Processing',
+                'help' => 'Enable full Twig template processing for this page (query parameters available as variables)',
+            ]);
+        }
     }
 
     public function configureOptions(OptionsResolver $resolver): void
