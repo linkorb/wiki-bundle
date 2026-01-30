@@ -33,7 +33,7 @@ class WikiController extends AbstractController
     #[Route('/wikis', name: 'wiki_index', methods: ['GET'])]
     #[Breadcrumb(
         label: 'Wikis',
-        parentRoute: 'wiki_lander',
+        parentRoute: 'home',
         icon: 'icon-lux-article',
         title: 'Browse all wikis',
         type: BreadcrumbType::TYPE_ENTITY_INDEX,
