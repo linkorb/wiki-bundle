@@ -29,7 +29,7 @@
     {# AI Page: Edit context only #}
     <div class="mb-3">
       <label for="ai_context" class="form-label fw-bold">
-        <i class="icon-lux-sparkles me-1"></i> AI Context
+        <i class="icon-lux-lightbulb me-1"></i> AI Context
       </label>
       <div class="form-text mb-2">Provide context/instructions for AI content generation (supports Markdown)</div>
       <textarea id="ai_context" name="ai_context" class="form-control" style="display:none;">{{ wikiPage.context }}</textarea>
@@ -38,6 +38,67 @@
     {# Regular Page: Edit content #}
     {{ form_widget(form) }}
   {% endif %}
+{% endblock %}
+
+{% block details %}
+  <h6 class="mb-3"><i class="icon-lux-books me-1"></i> Rich content reference</h6>
+
+  <p class="text-muted small mb-2">
+    Wiki pages support <strong>Markdown</strong> and <strong>Twig</strong> expressions for dynamic content.
+  </p>
+
+  <div class="mb-3">
+    <strong class="small">Including resources</strong>
+    <p class="text-muted small mb-1">
+      Use <code>resource()</code> to include content from other wiki pages or registered resources:
+    </p>
+    <pre class="small bg-light p-2 rounded mb-1"><code>{{ '{{ resource("wiki://my-wiki/shared-header") }}' }}</code></pre>
+    <p class="text-muted small">
+      <a href="{{ path('resource_index') }}"><i class="icon-lux-arrow-square-out me-1"></i>Browse available resources</a>
+    </p>
+  </div>
+
+  <div class="mb-3">
+    <strong class="small">Variables</strong>
+    <p class="text-muted small mb-1">
+      Access wiki data variables defined in the wiki config:
+    </p>
+    <pre class="small bg-light p-2 rounded"><code>{{ '{{ data.company_name }}' }}
+{{ '{{ data.version }}' }}</code></pre>
+  </div>
+
+  <div class="mb-3">
+    <strong class="small">Conditionals</strong>
+    <pre class="small bg-light p-2 rounded"><code>{{ '{% if data.show_section %}' }}
+  Content here
+{{ '{% endif %}' }}</code></pre>
+  </div>
+
+  <div class="mb-3">
+    <strong class="small">Loops</strong>
+    <pre class="small bg-light p-2 rounded"><code>{{ '{% for item in data.items %}' }}
+  - {{ '{{ item }}' }}
+{{ '{% endfor %}' }}</code></pre>
+  </div>
+
+  <div class="mb-3">
+    <strong class="small">Filters</strong>
+    <pre class="small bg-light p-2 rounded"><code>{{ '{{ data.name | upper }}' }}
+{{ '{{ data.name | lower }}' }}
+{{ '{{ data.items | length }}' }}
+{{ '{{ data.items | join(", ") }}' }}
+{{ '{{ data.price | number_format(2) }}' }}</code></pre>
+  </div>
+
+  <div>
+    <strong class="small">Raw blocks</strong>
+    <p class="text-muted small mb-1">
+      Prevent Twig from processing a section:
+    </p>
+    <pre class="small bg-light p-2 rounded"><code>{{ '{% verbatim %}' }}
+  {{ '{{ not processed }}' }}
+{{ '{% endverbatim %}' }}</code></pre>
+  </div>
 {% endblock %}
 
 {% block context_footer_actions %}
@@ -53,17 +114,20 @@
     </form>
   {% endif %}
   {% if isAiPage %}
-    <button type="button" id="preview-btn" class="btn btn-outline-secondary me-2">
+    <a href="{{ path('wiki_page_generate_preview', {'wikiName': wikiPage.wiki.name, 'pageName': wikiPage.name}) }}" class="btn btn-outline-secondary me-2" target="_blank">
       <i class="icon-lux-eye me-1"></i> Preview
+    </a>
+    <button type="submit" name="ai_action" value="save" class="btn btn-outline-primary me-2">
+      <i class="icon-lux-check me-1"></i> Save
+    </button>
+    <button type="submit" name="ai_action" value="generate" class="btn btn-success">
+      <i class="icon-lux-lightbulb me-1"></i> Generate
+    </button>
+  {% else %}
+    <button type="submit" class="btn btn-success">
+      <i class="icon-lux-check me-1"></i> Save
     </button>
   {% endif %}
-  <button type="submit" class="btn btn-success">
-    {% if isAiPage %}
-      <i class="icon-lux-sparkles me-1"></i> Generate
-    {% else %}
-      <i class="icon-lux-check me-1"></i> Save
-    {% endif %}
-  </button>
 {% endblock %}
 
 {% block scripts_custom %}
@@ -79,43 +143,7 @@
       min-height: 400px !important;
       {% endif %}
     }
-    #preview-modal .modal-body pre {
-      max-height: 70vh;
-      overflow-y: auto;
-      background: #f8f9fa;
-      padding: 1rem;
-      border-radius: 4px;
-      font-size: 0.85em;
-    }
   </style>
-
-  {% if isAiPage %}
-  <!-- Preview Modal -->
-  <div class="modal fade" id="preview-modal" tabindex="-1" aria-labelledby="preview-modal-label" aria-hidden="true">
-    <div class="modal-dialog modal-xl modal-dialog-scrollable">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="preview-modal-label"><i class="icon-lux-eye me-2"></i>LLM Request Preview</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          <div id="preview-loading" class="text-center py-4">
-            <div class="spinner-border text-primary" role="status">
-              <span class="visually-hidden">Loading...</span>
-            </div>
-          </div>
-          <div id="preview-content" style="display: none;">
-            <pre id="preview-json"></pre>
-          </div>
-          <div id="preview-error" class="alert alert-danger" style="display: none;"></div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-        </div>
-      </div>
-    </div>
-  </div>
-  {% endif %}
 
   <script type="text/javascript">
     document.addEventListener('DOMContentLoaded', function () {
@@ -126,38 +154,6 @@
         });
         editor.render();
 
-        // Preview button handler
-        var previewBtn = document.getElementById('preview-btn');
-        if (previewBtn) {
-          previewBtn.addEventListener('click', function() {
-            var modal = new bootstrap.Modal(document.getElementById('preview-modal'));
-            modal.show();
-
-            document.getElementById('preview-loading').style.display = 'block';
-            document.getElementById('preview-content').style.display = 'none';
-            document.getElementById('preview-error').style.display = 'none';
-
-            $.ajax({
-              url: '{{ path('wiki_page_generate_preview', {'wikiName': wikiPage.wiki.name, 'pageName': wikiPage.name}) }}',
-              type: 'GET',
-              success: function(response) {
-                document.getElementById('preview-loading').style.display = 'none';
-                document.getElementById('preview-content').style.display = 'block';
-                document.getElementById('preview-json').textContent = JSON.stringify(response, null, 2);
-              },
-              error: function(xhr) {
-                document.getElementById('preview-loading').style.display = 'none';
-                document.getElementById('preview-error').style.display = 'block';
-                var errorMsg = 'Failed to load preview';
-                try {
-                  var resp = JSON.parse(xhr.responseText);
-                  if (resp.error) errorMsg = resp.error;
-                } catch(e) {}
-                document.getElementById('preview-error').textContent = errorMsg;
-              }
-            });
-          });
-        }
       {% else %}
         {# Regular Page: Markdown editor for content #}
         var editor = new Editor({

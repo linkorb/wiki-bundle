@@ -10,7 +10,7 @@
     wiki maintainers to create a custom navigation structure.
 #}
 <a href="{{ path('wiki_lander') }}" class="nav-link">
-    <i class="icon-lux-arrow-left me-2"></i> All Wikis
+    <i class="icon-lux-caret-left me-2"></i> All Wikis
 </a>
 <hr class="my-2">
 
@@ -66,7 +66,7 @@
                     <a href="{{ path('wiki_page_view', {'wikiName': wiki.name, 'pageName': page.name}) }}"
                        class="nav-link py-1{% if currentPage is defined and currentPage and currentPage.id == page.id %} active{% endif %}"
                        title="{{ page.name }}">
-                        <i class="icon-lux-file-text me-2"></i>
+                        <i class="icon-lux-article me-2"></i>
                         <span class="text-truncate">{{ page.name }}</span>
                     </a>
                     {% if page.childPages|length > 0 %}

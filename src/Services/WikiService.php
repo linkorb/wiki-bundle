@@ -7,6 +7,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use League\CommonMark\CommonMarkConverter;
 use League\CommonMark\Extension\Attributes\AttributesExtension;
 use League\CommonMark\Extension\Table\TableExtension;
+use LinkORB\Bundle\RichContentBundle\Service\RichContentRenderer;
 use LinkORB\Bundle\WikiBundle\Entity\Wiki;
 use LinkORB\Bundle\WikiBundle\Entity\WikiPage;
 use LinkORB\Bundle\WikiBundle\Repository\WikiPageRepository;
@@ -17,8 +18,6 @@ use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\Yaml\Yaml;
-use Twig\Extension\SandboxExtension;
-use Twig\Sandbox\SecurityPolicy;
 
 class WikiService
 {
@@ -33,6 +32,7 @@ class WikiService
         private readonly LlmManager $llmManager,
         private readonly PromptManagerInterface $promptManager,
         private readonly LoggerInterface $logger,
+        private readonly RichContentRenderer $richContentRenderer,
         #[Autowire(param: 'wiki_bundle_data_dir')]
         private readonly string $gitDirPath
     ) {
@@ -210,56 +210,18 @@ class WikiService
 
     public function processTwig(Wiki $wiki, string $content, array $extra = []): ?string
     {
-        $templates = [];
-        $loader = new \Twig\Loader\ArrayLoader($templates);
-
-        $twig = new \Twig\Environment($loader);
-
-        // Define minimal safe tags, filters, and functions for sandbox
-        // Explicitly excludes: include, embed, use, import, extends, macro, sandbox
-        $allowedTags = ['if', 'for', 'set', 'spaceless', 'autoescape', 'verbatim', 'apply'];
-        $allowedFilters = [
-            'escape', 'e', 'raw',
-            'upper', 'lower', 'capitalize', 'title', 'trim',
-            'nl2br', 'join', 'split', 'replace',
-            'length', 'first', 'last', 'slice', 'reverse',
-            'default', 'abs', 'round', 'number_format',
-            'date', 'date_modify', 'format',
-            'json_encode', 'url_encode',
-            'keys', 'merge', 'sort', 'batch', 'column',
-        ];
-        $allowedFunctions = [
-            'range', 'cycle', 'random', 'min', 'max', 'date',
-        ];
-        // No object methods or properties allowed for security
-        $allowedMethods = [];
-        $allowedProperties = [];
-
-        $policy = new SecurityPolicy(
-            $allowedTags,
-            $allowedFilters,
-            $allowedMethods,
-            $allowedProperties,
-            $allowedFunctions
-        );
-
-        $sandbox = new SandboxExtension($policy, true);
-        $twig->addExtension($sandbox);
-
-        $template = $twig->createTemplate($content);
-
         $config = Yaml::parse($wiki->getConfig() ?? '');
 
-        $parts = [
+        $variables = [
             'data' => $config['data'] ?? [],
         ];
         foreach ($extra as $k => $v) {
-            $parts[$k] = $v;
+            $variables[$k] = $v;
         }
 
-        $content = $template->render($parts);
-
-        return $content;
+        // Use the resource() function to include content from other pages
+        // instead of {% include %} which is disabled for security.
+        return $this->richContentRenderer->render($content, $variables);
     }
 
     public function markdownToHtml(Wiki $wiki, ?string $markdown): ?string
@@ -523,23 +485,35 @@ class WikiService
         $wiki = $wikiPage->getWiki();
         $wikiId = $wiki?->getId();
 
-        $data = [
-            'pageName' => $wikiPage->getName(),
-            'context' => $contextToUse,
-            'wikiName' => $wiki?->getName(),
-            'wikiDescription' => $wiki?->getDescription(),
-            'styleguide' => '',
-        ];
+        // Process the context through the RichContent renderer so that
+        // resource() calls and other Twig expressions are resolved
+        // before the content is sent to the LLM.
+        if ($wiki !== null) {
+            $contextToUse = $this->processTwig($wiki, $contextToUse);
+        }
+
+        $styleguide = '';
 
         // Look for a page named "context" in the same wiki to use as styleguide
         if ($wikiId !== null) {
             $contextPage = $this->wikiPageRepository->findOneByWikiIdAndName($wikiId, 'context');
             if ($contextPage && $contextPage->getContent()) {
-                $data['styleguide'] = $contextPage->getContent();
+                $styleguideContent = $contextPage->getContent();
+                // Also process the styleguide through RichContent
+                if ($wiki !== null) {
+                    $styleguideContent = $this->processTwig($wiki, $styleguideContent);
+                }
+                $styleguide = $styleguideContent;
             }
         }
 
-        return $data;
+        return [
+            'pageName' => $wikiPage->getName(),
+            'context' => $contextToUse,
+            'wikiName' => $wiki?->getName(),
+            'wikiDescription' => $wiki?->getDescription(),
+            'styleguide' => $styleguide,
+        ];
     }
 
     /**

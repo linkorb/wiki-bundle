@@ -11,14 +11,14 @@
 {% endblock %}
 
 {% block sidebar %}
-  <i class="fa fa-arrow-left align-middle"></i> <a class="align-middle" href="{{ path('wiki_index') }}">Wikis</a>
+  <i class="icon-lux-caret-left align-middle"></i> <a class="align-middle" href="{{ path('wiki_index') }}">Wikis</a>
   <hr/>
   {% if tocPage is defined %}
     <h4>Table of contents
       {% if is_granted('modify', wiki) %}
       <small><a class="text text-muted"
                 href="{{ path('wiki_page_edit', {'wikiName': wiki.name, 'id': tocPage.id } ) }}"><i
-            class="fa fa-edit"></i></a></small>
+            class="icon-lux-edit"></i></a></small>
       {% endif %}
     </h4>
     {{ tocPage.content|default('')|markdown_to_html }}
@@ -31,11 +31,11 @@
 
         {% for  page in  wikiPages %}
           <li class="text-truncate u-mb-1">
-            <i class="fa fa-angle-right fa-fw" aria-hidden="true"></i>
+            <i class="icon-lux-caret-right" aria-hidden="true"></i>
 
             {% if is_granted('modify', wiki) %}
             <a href="{{ path('wiki_page_add', {'wikiName': wiki.name, 'parentId': page.id } ) }}"
-               class="float-right text-primary"><i class="fa fa-plus align-middle"></i></a>
+               class="float-right text-primary"><i class="icon-lux-add align-middle"></i></a>
             {% endif %}
 
             <a href="{{ path('wiki_page_view', {'wikiName': wiki.name, 'pageName': page.name} ) }}"
@@ -103,17 +103,17 @@
                     </li>
                     <li class="c-dropdown__menu-item">
                       <a href="{{ path('wiki_export',{'wikiName': wiki.name}) }}" class="c-dropdown__menu-link">
-                        Export <i class="icon-lux-archive-fill"></i>
+                        Export <i class="icon-lux-download-fill"></i>
                       </a>
                     </li>
                     <li class="c-dropdown__menu-item">
                       <a href="{{ path('wiki_export_single_markdown', {'wikiName': wiki.name}) }}" class="c-dropdown__menu-link">
-                        Export single markdown <i class="icon-lux-file-arrow-down-fill"></i>
+                        Export single markdown <i class="icon-lux-download-simple-fill"></i>
                       </a>
                     </li>
                     <li class="c-dropdown__menu-item">
                       <a href="{{ path('wiki_export_single_html', {'wikiName': wiki.name}) }}" class="c-dropdown__menu-link">
-                        Export single HTML <i class="icon-lux-file-arrow-down"></i>
+                        Export single HTML <i class="icon-lux-download-simple"></i>
                       </a>
                     </li>
                   </ul>
@@ -144,7 +144,7 @@
         </div>
 
         <h4>
-          <i class="fa fa-book align-middle"></i>
+          <i class="icon-lux-books align-middle"></i>
           <a href="{{ path('wiki_view', {'wikiName': wiki.name } ) }}">
             {{ wiki.name }}
           </a>
@@ -172,7 +172,7 @@
                   {% endif %}
                 </a>
               {% else %}
-                <i class="fa fa-ellipsis-h text text-light"></i>
+                <i class="icon-lux-dots-three text text-light"></i>
               {% endif %}
             </small>
 

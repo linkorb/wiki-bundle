@@ -69,7 +69,7 @@ class WikiModule extends AbstractModule
                 label: 'Pages',
                 value: $pageCount,
                 route: 'wiki_index',
-                icon: 'icon-lux-file-text',
+                icon: 'icon-lux-article',
             ),
         ];
     }

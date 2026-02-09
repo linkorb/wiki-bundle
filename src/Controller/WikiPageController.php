@@ -231,45 +231,51 @@ class WikiPageController extends AbstractController
         $wikiPageBeforeTitle = $wikiPage->getName();
         $wikiPageBeforeContent = $wikiPage->getContent();
 
-        // Handle AI page submission: save context and generate content
+        // Handle AI page submission: save context and optionally generate content
         if ($wikiPage->isAiGenerated() && $request->isMethod('POST')) {
             $aiContext = $request->request->get('ai_context');
             if (is_string($aiContext)) {
                 $wikiPage->setContext($aiContext);
             }
 
-            try {
-                $content = $wikiService->generatePageContent($wikiPage);
-                $wikiPage->setContent($content);
+            $aiAction = $request->request->get('ai_action', 'generate');
 
-                $em->persist($wikiPage);
-                $em->flush();
-
-                $eventData = [
-                    'updatedAt' => time(),
-                    'updatedBy' => $this->getUser() ? $this->getUser()->getUserIdentifier() : '',
-                    'name' => $wikiPage->getName(),
-                ];
-                if (0 !== strcmp((string) $wikiPageBeforeContent, (string) $wikiPage->getContent())) {
-                    $eventData['changes'][] = $wikiEventService->fieldDataChangeArray(
-                        'content',
-                        $wikiPageBeforeContent,
-                        $wikiPage->getContent()
-                    );
+            if ($aiAction === 'generate') {
+                try {
+                    $content = $wikiService->generatePageContent($wikiPage);
+                    $wikiPage->setContent($content);
+                    $this->addFlash('success', 'Content generated successfully');
+                } catch (\Exception $e) {
+                    $this->addFlash('error', 'Failed to generate content: ' . $e->getMessage());
                 }
-
-                $wikiEventService->createEvent(
-                    'page.updated',
-                    $wikiPage->getWiki()->getId(),
-                    json_encode($eventData),
-                    $wikiPage->getId()
-                );
-
-                $this->publishPage($wikiPage, $wikiService);
-                $this->addFlash('success', 'Content generated successfully');
-            } catch (\Exception $e) {
-                $this->addFlash('error', 'Failed to generate content: ' . $e->getMessage());
+            } else {
+                $this->addFlash('success', 'Context saved');
             }
+
+            $em->persist($wikiPage);
+            $em->flush();
+
+            $eventData = [
+                'updatedAt' => time(),
+                'updatedBy' => $this->getUser() ? $this->getUser()->getUserIdentifier() : '',
+                'name' => $wikiPage->getName(),
+            ];
+            if (0 !== strcmp((string) $wikiPageBeforeContent, (string) $wikiPage->getContent())) {
+                $eventData['changes'][] = $wikiEventService->fieldDataChangeArray(
+                    'content',
+                    $wikiPageBeforeContent,
+                    $wikiPage->getContent()
+                );
+            }
+
+            $wikiEventService->createEvent(
+                'page.updated',
+                $wikiPage->getWiki()->getId(),
+                json_encode($eventData),
+                $wikiPage->getId()
+            );
+
+            $this->publishPage($wikiPage, $wikiService);
 
             return $this->redirectToRoute('wiki_page_view', [
                 'wikiName' => $wikiPage->getWiki()->getName(),
@@ -390,29 +396,34 @@ class WikiPageController extends AbstractController
         string $pageName,
         WikiPageRepository $wikiPageRepository,
         WikiService $wikiService
-    ): JsonResponse
+    ): Response
     {
         $this->denyAccessUnlessGranted('modify', $wiki);
 
         $wikiId = $wiki->getId();
         if ($wikiId === null) {
-            return new JsonResponse(['error' => 'Invalid wiki'], Response::HTTP_BAD_REQUEST);
+            return new Response('Invalid wiki', Response::HTTP_BAD_REQUEST, ['Content-Type' => 'text/plain']);
         }
 
         $wikiPage = $wikiPageRepository->findOneByWikiIdAndName($wikiId, $pageName);
         if (!$wikiPage) {
-            return new JsonResponse(['error' => 'Page not found'], Response::HTTP_NOT_FOUND);
+            return new Response('Page not found', Response::HTTP_NOT_FOUND, ['Content-Type' => 'text/plain']);
         }
 
         if (!$wikiPage->isAiGenerated()) {
-            return new JsonResponse(['error' => 'AI generation is not enabled for this page'], Response::HTTP_BAD_REQUEST);
+            return new Response('AI generation is not enabled for this page', Response::HTTP_BAD_REQUEST, ['Content-Type' => 'text/plain']);
         }
 
         try {
             $preview = $wikiService->previewGenerateRequest($wikiPage);
-            return new JsonResponse($preview);
+
+            return new Response(
+                json_encode($preview, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
+                Response::HTTP_OK,
+                ['Content-Type' => 'text/plain']
+            );
         } catch (\Exception $e) {
-            return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
+            return new Response('Error: ' . $e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR, ['Content-Type' => 'text/plain']);
         }
     }
 

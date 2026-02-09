@@ -16,7 +16,7 @@
               {% if level > 0 %}
                 <span class="ms-{{ level * 3 }} text-muted">└─</span>
               {% endif %}
-              <i class="icon-lux-file-text me-2"></i>
+              <i class="icon-lux-article me-2"></i>
               <a href="{{ path('wiki_page_view', {'wikiName': wiki.name, 'pageName': page.name}) }}">
                 {{ page.name }}
               </a>
