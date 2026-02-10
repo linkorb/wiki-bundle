@@ -211,9 +211,11 @@ class WikiService
     public function processTwig(Wiki $wiki, string $content, array $extra = []): ?string
     {
         $config = Yaml::parse($wiki->getConfig() ?? '');
+        /** @var array<string, mixed> $configArray */
+        $configArray = is_array($config) ? $config : [];
 
         $variables = [
-            'data' => $config['data'] ?? [],
+            'data' => $configArray['data'] ?? [],
         ];
         foreach ($extra as $k => $v) {
             $variables[$k] = $v;
