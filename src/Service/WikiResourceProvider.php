@@ -9,7 +9,7 @@ use LinkORB\Bundle\WikiBundle\Repository\WikiPageRepository;
 use LinkORB\Bundle\WikiBundle\Repository\WikiRepository;
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
-use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
+use Symfony\Component\Security\Core\Authorization\AccessDecisionManagerInterface;
 
 /**
  * Exposes wiki pages as resources through the ResourceBundle.
@@ -25,7 +25,7 @@ class WikiResourceProvider implements ResourceProviderInterface
     public function __construct(
         private readonly WikiRepository $wikiRepository,
         private readonly WikiPageRepository $wikiPageRepository,
-        private readonly AuthorizationCheckerInterface $authorizationChecker,
+        private readonly AccessDecisionManagerInterface $accessDecisionManager,
     ) {}
 
     public function getResources(): array
@@ -89,8 +89,9 @@ class WikiResourceProvider implements ResourceProviderInterface
             return false;
         }
 
-        // Delegate to the existing WikiVoter via the authorization checker
-        return $this->authorizationChecker->isGranted('access', $wiki);
+        // Delegate to the existing WikiVoter via the access decision manager,
+        // using the provided token so the correct user context is honored.
+        return $this->accessDecisionManager->decide($token, ['access'], $wiki);
     }
 
     /**
