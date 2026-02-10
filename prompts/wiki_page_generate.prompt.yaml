@@ -43,7 +43,25 @@ messages:
          - Code blocks for technical content
          - Tables where appropriate
          - Links using Markdown syntax
-      4. **Completeness**: Address all points mentioned in the context      
+      4. **Completeness**: Address all points mentioned in the context
+      5. **Wiki-style**: The content should fit naturally in a wiki/knowledge base
+      
+      ## Content Requirements
+      
+      - Start with a brief introduction/overview if appropriate
+      - Use clear section headings to organize content
+      - Include examples where helpful
+      - Keep the tone professional and informative
+      
+      {% if styleguide %}
+      <styleguide>
+      The following is a styleguide that defines the tone, style, and formatting conventions for this wiki. 
+      Follow these guidelines when generating content:
+      
+      {{styleguide}}
+      </styleguide>
+      {% endif %}
+      
   - role: user
     content: |
       Wiki: {{wikiName}}
