@@ -114,7 +114,7 @@
     </form>
   {% endif %}
   {% if isAiPage %}
-    <a href="{{ path('wiki_page_generate_preview', {'wikiName': wikiPage.wiki.name, 'pageName': wikiPage.name}) }}" class="btn btn-outline-secondary me-2" target="_blank">
+    <a href="{{ path('wiki_page_generate_preview', {'wikiName': wikiPage.wiki.name, 'pageName': wikiPage.name}) }}" class="btn btn-outline-secondary me-2" target="_blank" rel="noopener noreferrer">
       <i class="icon-lux-eye me-1"></i> Preview
     </a>
     <button type="submit" name="ai_action" value="save" class="btn btn-outline-primary me-2">
