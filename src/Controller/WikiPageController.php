@@ -230,6 +230,7 @@ class WikiPageController extends AbstractController
 
         $wikiPageBeforeTitle = $wikiPage->getName();
         $wikiPageBeforeContent = $wikiPage->getContent();
+        $wikiPageBeforeContext = $wikiPage->getContext();
 
         // Handle AI page submission: save context and optionally generate content
         if ($wikiPage->isAiGenerated() && $request->isMethod('POST')) {
@@ -265,6 +266,13 @@ class WikiPageController extends AbstractController
                     'content',
                     $wikiPageBeforeContent,
                     $wikiPage->getContent()
+                );
+            }
+            if (0 !== strcmp((string) $wikiPageBeforeContext, (string) $wikiPage->getContext())) {
+                $eventData['changes'][] = $wikiEventService->fieldDataChangeArray(
+                    'context',
+                    $wikiPageBeforeContext,
+                    $wikiPage->getContext()
                 );
             }
 
