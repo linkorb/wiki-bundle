@@ -283,7 +283,9 @@ class WikiPageController extends AbstractController
                 $wikiPage->getId()
             );
 
-            $this->publishPage($wikiPage, $wikiService);
+            if (!$this->publishPage($wikiPage, $wikiService)) {
+                $this->addFlash('warning', 'Page saved, but failed to publish to git repository.');
+            }
 
             return $this->redirectToRoute('wiki_page_view', [
                 'wikiName' => $wikiPage->getWiki()->getName(),
@@ -321,9 +323,12 @@ class WikiPageController extends AbstractController
                 $wikiPage->getId()
             );
 
-            $this->publishPage($wikiPage, $wikiService);
+            $published = $this->publishPage($wikiPage, $wikiService);
 
-            return new JsonResponse(['status' => 'success']);
+            return new JsonResponse([
+                'status' => 'success',
+                'publish_status' => $published ? 'ok' : 'failed',
+            ]);
         }
 
         if ($form->isSubmitted() && $form->isValid()) {
@@ -356,7 +361,9 @@ class WikiPageController extends AbstractController
                 $wikiPage->getId()
             );
 
-            $this->publishPage($wikiPage, $wikiService);
+            if (!$this->publishPage($wikiPage, $wikiService)) {
+                $this->addFlash('warning', 'Page saved, but failed to publish to git repository.');
+            }
 
             return $this->redirectToRoute('wiki_page_view', [
                 'wikiName' => $wikiPage->getWiki()->getName(),
@@ -579,7 +586,9 @@ class WikiPageController extends AbstractController
                 $wikiPage->getId()
             );
 
-            $this->publishPage($wikiPage, $wikiService);
+            if (!$this->publishPage($wikiPage, $wikiService)) {
+                $this->addFlash('warning', 'Page saved, but failed to publish to git repository.');
+            }
 
             if ($add) {
                 return $this->redirectToRoute('wiki_page_edit', [
@@ -604,9 +613,9 @@ class WikiPageController extends AbstractController
         return $this->render('@LinkORBWiki/wiki_page/advanced.html.twig', $data);
     }
 
-    private function publishPage(WikiPage $wikiPage, WikiService $wikiService): void
+    private function publishPage(WikiPage $wikiPage, WikiService $wikiService): bool
     {
-        $wikiService->publishWikiPage(
+        return $wikiService->publishWikiPage(
             $wikiPage->getWiki(),
             $wikiPage,
             $this->getUser()->getUserIdentifier(),

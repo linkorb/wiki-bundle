@@ -181,8 +181,12 @@
               type: form.attr('method'),
               contentType: 'application/json',
               data: JSON.stringify({content: editor.codemirror.getValue()}),
-              success: function (html) {
-                $('#msg').html('<label class="text-success">(Saved)</label>').fadeOut(1600);
+              success: function (response) {
+                if (response.publish_status === 'failed') {
+                  $('#msg').html('<label class="text-warning">(Saved, but git publish failed)</label>').fadeOut(4000);
+                } else {
+                  $('#msg').html('<label class="text-success">(Saved)</label>').fadeOut(1600);
+                }
                 content = editor.codemirror.getValue();
               }
             });

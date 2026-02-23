@@ -148,7 +148,13 @@ class WikiController extends AbstractController
         /** @var UserInterface $user */
         $user = $this->getUser();
 
-        $wikiService->publishWiki($wiki, $user->getUserIdentifier(), $user->getEmail());
+        $failures = $wikiService->publishWiki($wiki, $user->getUserIdentifier(), $user->getEmail());
+        if ($failures > 0) {
+            $total = count($wiki->getWikiPages());
+            $this->addFlash('warning', sprintf('%d of %d page(s) failed to publish to git repository.', $failures, $total));
+        } else {
+            $this->addFlash('success', 'Wiki published successfully.');
+        }
 
         return $this->redirectToRoute('wiki_view', ['wikiName' => $wiki->getName()]);
     }

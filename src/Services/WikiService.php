@@ -352,16 +352,13 @@ class WikiService
 
             return true;
         } catch (\Throwable $e) {
-            // Log git stderr (e.g. "fatal: detected dubious ownership") separately from
-            // $e->getMessage(), which can contain the remote URL with embedded credentials.
-            $gitStderr = null;
-            if ($e instanceof \CzProject\GitPhp\GitException) {
-                $gitStderr = $e->getRunnerResult()?->getErrorOutputAsString();
-            }
-            $this->logger->error('Failed to publish wiki page to git; wiki page changes may not be reflected in the configured git repository.', [
+            $message = preg_replace('#://[^@]+@#', '://***@', $e->getMessage());
+            $gitStderr = $e instanceof \CzProject\GitPhp\GitException
+                ? $e->getRunnerResult()?->getErrorOutputAsString()
+                : null;
+            $this->logger->error('Failed to publish wiki page to git: '.$message, [
                 'wiki' => $wiki->getName(),
                 'page' => $wikiPage->getName(),
-                'exception_class' => get_class($e),
                 'git_stderr' => $gitStderr,
                 'trace' => $e->getTraceAsString(),
             ]);
