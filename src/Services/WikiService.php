@@ -268,62 +268,70 @@ class WikiService
         return $html;
     }
 
-    public function publishWiki(Wiki $wiki, string $username, string $userEmail)
+    public function publishWiki(Wiki $wiki, string $username, string $userEmail): int
     {
+        $failures = 0;
         foreach ($wiki->getWikiPages() as $wikiPage) {
-            $this->publishWikiPage($wiki, $wikiPage, $username, $userEmail);
+            if (!$this->publishWikiPage($wiki, $wikiPage, $username, $userEmail)) {
+                $failures++;
+            }
         }
+        return $failures;
     }
 
-    public function publishWikiPage(Wiki $wiki, WikiPage $wikiPage, string $username, string $userEmail)
+    public function publishWikiPage(Wiki $wiki, WikiPage $wikiPage, string $username, string $userEmail): bool
     {
-        $wikiPath = $this->gitDirPath.'/'.$wiki->getName();
-        if (!is_dir($wikiPath)) {
-            mkdir($wikiPath, 0777, true);
-        }
-        if (!is_dir($wikiPath.'/.git')) {
-            $repo = $this->git->init($wikiPath, [
-                '--initial-branch=main',
-            ]);
-            $repo->execute('config', 'user.name', $username);
-            $repo->execute('config', 'user.email', $userEmail);
-        } else {
-            $repo = $this->git->open($wikiPath);
-            $repo->execute('config', 'committer.name', $username);
-            $repo->execute('config', 'committer.email', $userEmail);
+        $pushConfig = [];
+        foreach ($wiki->getConfigArray()['push'] ?? [] as $wikiPushConfig) {
+            if ('git' == $wikiPushConfig['type']) {
+                $pushConfig = $wikiPushConfig;
+                break;
+            }
         }
 
-        $contentFile = $wikiPath.'/'.$wikiPage->getName().'.md';
-        $dataFile = $wikiPath.'/'.$wikiPage->getName().'.yaml';
-
-        if (!file_exists($contentFile)) {
-            file_put_contents($contentFile, '');
-        }
-        if (!file_exists($dataFile)) {
-            file_put_contents($dataFile, '');
+        if (!$pushConfig) {
+            return true;
         }
 
-        if (0 !== strcmp((string) $wikiPage->getContent(), file_get_contents($contentFile))) {
-            file_put_contents($contentFile, $wikiPage->getContent());
-        }
-        if (0 !== strcmp((string) $wikiPage->getData(), file_get_contents($dataFile))) {
-            file_put_contents($dataFile, $wikiPage->getData());
-        }
-
-        if ($repo->hasChanges()) {
-            $repo->addAllChanges();
-            // exit('yo');
-            $repo->commit('docs: '.$wikiPage->getName().' updated', ["--author={$username} <{$userEmail}>"]);
-
-            $pushConfig = [];
-            foreach ($wiki->getConfigArray()['push'] ?? [] as $wikiPushConfig) {
-                if ('git' == $wikiPushConfig['type']) {
-                    $pushConfig = $wikiPushConfig;
-                    break;
-                }
+        try {
+            $wikiPath = $this->gitDirPath.'/'.$wiki->getName();
+            if (!is_dir($wikiPath)) {
+                mkdir($wikiPath, 0777, true);
             }
 
-            if ($pushConfig) {
+            if (!is_dir($wikiPath.'/.git')) {
+                $repo = $this->git->init($wikiPath, [
+                    '--initial-branch=main',
+                ]);
+                $repo->execute('config', 'user.name', $username);
+                $repo->execute('config', 'user.email', $userEmail);
+            } else {
+                $repo = $this->git->open($wikiPath);
+                $repo->execute('config', 'committer.name', $username);
+                $repo->execute('config', 'committer.email', $userEmail);
+            }
+
+            $contentFile = $wikiPath.'/'.$wikiPage->getName().'.md';
+            $dataFile = $wikiPath.'/'.$wikiPage->getName().'.yaml';
+
+            if (!file_exists($contentFile)) {
+                file_put_contents($contentFile, '');
+            }
+            if (!file_exists($dataFile)) {
+                file_put_contents($dataFile, '');
+            }
+
+            if (0 !== strcmp((string) $wikiPage->getContent(), file_get_contents($contentFile))) {
+                file_put_contents($contentFile, $wikiPage->getContent());
+            }
+            if (0 !== strcmp((string) $wikiPage->getData(), file_get_contents($dataFile))) {
+                file_put_contents($dataFile, $wikiPage->getData());
+            }
+
+            if ($repo->hasChanges()) {
+                $repo->addAllChanges();
+                $repo->commit('docs: '.$wikiPage->getName().' updated', ["--author={$username} <{$userEmail}>"]);
+
                 $remote = $repo->execute('remote', 'show');
                 if (!in_array('origin', $remote)) {
                     $repo->addRemote('origin', $pushConfig['url']);
@@ -341,6 +349,24 @@ class WikiService
 
                 $repo->push(null, [$pushConfig['url']]);
             }
+
+            return true;
+        } catch (\Throwable $e) {
+            // Log git stderr (e.g. "fatal: detected dubious ownership") separately from
+            // $e->getMessage(), which can contain the remote URL with embedded credentials.
+            $gitStderr = null;
+            if ($e instanceof \CzProject\GitPhp\GitException) {
+                $gitStderr = $e->getRunnerResult()?->getErrorOutputAsString();
+            }
+            $this->logger->error('Failed to publish wiki page to git; wiki page changes may not be reflected in the configured git repository.', [
+                'wiki' => $wiki->getName(),
+                'page' => $wikiPage->getName(),
+                'exception_class' => get_class($e),
+                'git_stderr' => $gitStderr,
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return false;
         }
     }
 
